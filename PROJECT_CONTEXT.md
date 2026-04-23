@@ -10,15 +10,16 @@
 
 > 항목은 작업 진행에 따라 직접 업데이트하세요.
 
-### 🔴 최우선 확인 필요
-- [ ] **백엔드 실제 연결 확인** — 프론트엔드 각 페이지가 실제 API와 연결됐는지 검증 필요 (git 다운로드 직후 미확인)
-- [ ] **DB 초기 데이터 확인** — SQL Server 접속 및 테이블 생성 여부 확인 (`backend/docs/db/database-setup.md` 참고)
-- [ ] **환경변수 세팅** — `application.yml` 기준 필수 변수(`DB_URL`, `JWT_SECRET`, `MAIL_*`, `AZURE_*`) 로컬 적용 여부 확인
+### 🔴 최우선 — 다음 세션 시작 시 진행
+- [x] **백엔드 실행 및 DB 마이그레이션 확인** — ✅ Flyway V1~V17 완료, 로그인(admin/password123) 동작 확인
+- [x] **Flyway 활성화 여부 결정** — ✅ `application.yml` `flyway.enabled: true` 로 변경
 
-### 🟡 기능 구현 현황 파악 필요
-- [ ] ComingSoonPage로 연결된 미구현 메뉴 목록 파악
+### 🟡 다음 작업
+- [ ] **프론트엔드 실행 확인** — `cd frontend && npm run dev` → `http://localhost:4000` 동작 검증
+- [ ] **ComingSoonPage로 연결된 미구현 메뉴 목록 파악** — App.tsx 라우팅 확인
 - [ ] 파일 업로드/다운로드 (`./uploads`) 실제 동작 여부 확인
 - [ ] 이메일 발송 (Office365 SMTP / Microsoft Graph) 연결 여부 확인
+
 
 ---
 
@@ -62,7 +63,17 @@
 
 > 항목이 10개 이상 쌓이면 `docs/ARCHIVE.md`로 이동 후 여기서 삭제
 
-(없음 — 작업 시작 전)
+- [x] gradle-wrapper.jar 다운로드 및 백엔드 빌드 성공 (2026-04-23)
+- [x] SQL Server Express TCP/IP 활성화 (포트 1433) + DB_URL 환경변수 수정 (2026-04-23)
+- [x] Flyway 활성화 (V1~V17 마이그레이션 완료) + 인증 로그인 동작 검증 (2026-04-23)
+- [x] V3 시드 bcrypt 해시 수정 (`password123` 올바른 해시로 교체) (2026-04-23)
+- [x] CLAUDE.md / PROJECT_CONTEXT.md / .claudeignore 작성 (2026-04-23)
+- [x] Git 초기화 및 본인 저장소 연결 — https://github.com/horsehihing3/penocean-main (2026-04-23)
+- [x] SQL Server 2025 Express 설치 (2026-04-23)
+- [x] PANOCEAN_EHS DB 생성 (Korean_Wansung_CI_AS collation) (2026-04-23)
+- [x] SA 계정 활성화 및 비밀번호 설정 (`Panocean!2026`) (2026-04-23)
+- [x] SQL Server 혼합 인증 모드 활성화 + 서비스 재시작 (2026-04-23)
+- [x] 환경변수 설정 — `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (Machine 레벨) (2026-04-23)
 
 ---
 
@@ -71,12 +82,15 @@
 | 에러 | 원인 | 해결 |
 |------|------|------|
 | SQL Server null 파라미터 오류 | MyBatis가 null을 VARBINARY(0)으로 전송 | `application.yml` `jdbc-type-for-null: NULL` 설정 (이미 적용됨) |
+| JDBC DB 연결 실패 (HikariPool) | SQL Server Express TCP/IP 비활성화 + Named Instance 접속 시 Browser 서비스 필요 | SQL Config Manager에서 TCP/IP 활성화, 포트 1433 고정. DB_URL을 `localhost\SQLEXPRESS` → `localhost:1433` 변경 |
+| admin 로그인 실패 (Bad credentials) | V3 시드 bcrypt 해시가 `password123`과 불일치 | DB UPDATE로 올바른 해시 적용, V3 SQL 파일도 수정 완료 |
+| gradle-wrapper.jar 없음 | git clone 시 jar 파일 누락 | GitHub에서 직접 다운로드: `Invoke-WebRequest` 사용 |
 
 ---
 
 ## ⚠️ 결정 보류 / 미확인 사항
 
-- **Flyway 활성화 여부** — `application.yml`에서 `flyway.enabled: false` — 수동 DDL 방식 유지할지 결정 필요
+- **Flyway 활성화** — ✅ `flyway.enabled: true` 로 결정, V1~V17 마이그레이션 완료
 - **Microsoft Graph vs SMTP** — 이메일 발송 방식 중 실제 사용할 것 결정 필요 (Azure 앱 등록 여부 확인)
 - **SOM 연동 범위** — `SomLookupController` 존재하나 외부 SOM 시스템 접근 방식 미확인
 - **파일 저장소** — 현재 로컬 디스크(`./uploads`), 향후 Azure Blob / S3 전환 여부 미결

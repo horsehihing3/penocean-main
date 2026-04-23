@@ -4,9 +4,10 @@
 --
 -- 비밀번호:
 --   - 모든 계정 평문 : "password123"  (admin 포함; 편의상 동일 해시 사용)
---   - BCrypt($2a$10$) hash:
---       $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+--   - BCrypt($2b$10$) hash:
+--       $2b$10$PC8CUkM4OztXSZItxBkZ6OvYwFV66LTA4pmgNTXVEppEUDvuyJcWu
 --   ※ 운영 투입 전 반드시 교체할 것.
+--   [2026-04-23] 기존 해시($2a$10$N9qo8u...) 는 password123과 불일치 확인 → 새 해시로 교체
 -- =====================================================================
 
 SET NOCOUNT ON;
@@ -89,7 +90,7 @@ GO
 --   contractor1..5 (CONTRACTOR)  : 3 APPROVED + 2 PENDING
 --   contract1..3   (CONTRACT_DEPT)
 -- =========================
-DECLARE @BCRYPT VARCHAR(255) = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+DECLARE @BCRYPT VARCHAR(255) = '$2b$10$PC8CUkM4OztXSZItxBkZ6OvYwFV66LTA4pmgNTXVEppEUDvuyJcWu';
 
 DECLARE @DEPT_SAFETY  BIGINT = (SELECT id FROM tb_department WHERE code = 'SAFETY_MGMT');
 DECLARE @DEPT_PURCH   BIGINT = (SELECT id FROM tb_department WHERE code = 'PURCHASING');

@@ -26,7 +26,7 @@ spring:
       connection-timeout: 30000
 
   flyway:
-    enabled: false
+    enabled: true  # [2026-04-23] V1~V17 마이그레이션 파일 확인 후 활성화
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
