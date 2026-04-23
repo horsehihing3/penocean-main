@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.EvaluationMapper">
+
+  <resultMap id="EvaluationResultMap" type="com.penocean.ehs.model.Evaluation">
+    <id property="id" column="id"/>
+    <result property="evaluationNo" column="evaluation_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodHalf" column="period_half"/>
+    <result property="evaluationType" column="evaluation_type"/>
+    <result property="evaluatorUserId" column="evaluator_user_id"/>
+    <result property="status" column="status"/>
+    <result property="totalScore" column="total_score"/>
+    <result property="maxTotalScore" column="max_total_score"/>
+    <result property="scorePercentage" column="score_percentage"/>
+    <result property="qualified" column="qualified"/>
+    <result property="qualificationThreshold" column="qualification_threshold"/>
+    <result property="comment" column="comment"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="approvedBy" column="approved_by"/>
+    <result property="approvedAt" column="approved_at"/>
+    <result property="rejectedReason" column="rejected_reason"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemResultMap" type="com.penocean.ehs.dto.response.EvaluationListItem">
+    <id property="id" column="id"/>
+    <result property="evaluationNo" column="evaluation_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodHalf" column="period_half"/>
+    <result property="evaluationType" column="evaluation_type"/>
+    <result property="status" column="status"/>
+    <result property="totalScore" column="total_score"/>
+    <result property="maxTotalScore" column="max_total_score"/>
+    <result property="scorePercentage" column="score_percentage"/>
+    <result property="qualified" column="qualified"/>
+    <result property="attachmentCount" column="attachment_count"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.EvaluationDetailResponse">
+    <id property="id" column="id"/>
+    <result property="evaluationNo" column="evaluation_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodHalf" column="period_half"/>
+    <result property="evaluationType" column="evaluation_type"/>
+    <result property="evaluatorUserId" column="evaluator_user_id"/>
+    <result property="evaluatorName" column="evaluator_name"/>
+    <result property="status" column="status"/>
+    <result property="totalScore" column="total_score"/>
+    <result property="maxTotalScore" column="max_total_score"/>
+    <result property="scorePercentage" column="score_percentage"/>
+    <result property="qualified" column="qualified"/>
+    <result property="qualificationThreshold" column="qualification_threshold"/>
+    <result property="comment" column="comment"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="approvedBy" column="approved_by"/>
+    <result property="approverName" column="approver_name"/>
+    <result property="approvedAt" column="approved_at"/>
+    <result property="rejectedReason" column="rejected_reason"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      ev.deleted = 0
+      <if test="status != null and status != ''">
+        AND ev.status = #{status}
+      </if>
+      <if test="companyId != null">
+        AND ev.company_id = #{companyId}
+      </if>
+      <if test="periodYear != null">
+        AND ev.period_year = #{periodYear}
+      </if>
+      <if test="periodHalf != null and periodHalf != ''">
+        AND ev.period_half = #{periodHalf}
+      </if>
+      <if test="evaluationType != null and evaluationType != ''">
+        AND ev.evaluation_type = #{evaluationType}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+             ev.evaluation_no LIKE '%' + #{keyword} + '%'
+          OR c.name LIKE '%' + #{keyword} + '%'
+          OR c.business_number LIKE '%' + #{keyword} + '%'
+        )
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="EvaluationResultMap">
+    SELECT id, evaluation_no, company_id, period_year, period_half, evaluation_type,
+           evaluator_user_id, status, total_score, max_total_score, score_percentage,
+           qualified, qualification_threshold, comment, submitted_at,
+           approved_by, approved_at, rejected_reason,
+           created_at, updated_at, deleted
+      FROM tb_evaluation
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailResultMap">
+    SELECT
+        ev.id,
+        ev.evaluation_no,
+        ev.company_id,
+        c.name AS company_name,
+        ev.period_year,
+        ev.period_half,
+        ev.evaluation_type,
+        ev.evaluator_user_id,
+        eu.name AS evaluator_name,
+        ev.status,
+        ev.total_score,
+        ev.max_total_score,
+        ev.score_percentage,
+        ev.qualified,
+        ev.qualification_threshold,
+        ev.comment,
+        ev.submitted_at,
+        ev.approved_by,
+        au.name AS approver_name,
+        ev.approved_at,
+        ev.rejected_reason,
+        ev.created_at,
+        ev.updated_at
+      FROM tb_evaluation ev
+      LEFT JOIN tb_company c ON c.id = ev.company_id AND c.deleted = 0
+      LEFT JOIN tb_user eu   ON eu.id = ev.evaluator_user_id AND eu.deleted = 0
+      LEFT JOIN tb_user au   ON au.id = ev.approved_by AND au.deleted = 0
+     WHERE ev.id = #{id} AND ev.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemResultMap">
+    SELECT
+        ev.id,
+        ev.evaluation_no,
+        ev.company_id,
+        c.name AS company_name,
+        c.business_number,
+        ev.period_year,
+        ev.period_half,
+        ev.evaluation_type,
+        ev.status,
+        ev.total_score,
+        ev.max_total_score,
+        ev.score_percentage,
+        ev.qualified,
+        (SELECT COUNT(1) FROM tb_evaluation_attachment a WHERE a.evaluation_id = ev.id) AS attachment_count,
+        ev.submitted_at,
+        ev.created_at
+      FROM tb_evaluation ev
+      LEFT JOIN tb_company c ON c.id = ev.company_id AND c.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY ev.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_evaluation ev
+      LEFT JOIN tb_company c ON c.id = ev.company_id AND c.deleted = 0
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_evaluation (
+      evaluation_no, company_id, period_year, period_half, evaluation_type,
+      evaluator_user_id, status, total_score, max_total_score, score_percentage,
+      qualified, qualification_threshold, comment,
+      submitted_at, approved_by, approved_at, rejected_reason,
+      created_at, deleted
+    ) VALUES (
+      #{evaluationNo}, #{companyId}, #{periodYear}, #{periodHalf},
+      <choose><when test="evaluationType != null and evaluationType != ''">#{evaluationType}</when><otherwise>'REGULAR'</otherwise></choose>,
+      #{evaluatorUserId},
+      <choose><when test="status != null and status != ''">#{status}</when><otherwise>'DRAFT'</otherwise></choose>,
+      #{totalScore}, #{maxTotalScore}, #{scorePercentage}, #{qualified},
+      <choose><when test="qualificationThreshold != null">#{qualificationThreshold}</when><otherwise>60.00</otherwise></choose>,
+      #{comment},
+      #{submittedAt}, #{approvedBy}, #{approvedAt}, #{rejectedReason},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="updateScores">
+    UPDATE tb_evaluation
+       SET total_score = #{totalScore},
+           max_total_score = #{maxTotalScore},
+           score_percentage = #{scorePercentage},
+           qualified = #{qualified},
+           comment = #{comment},
+           qualification_threshold = COALESCE(#{qualificationThreshold}, qualification_threshold),
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateStatus">
+    UPDATE tb_evaluation
+       SET status = #{status},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="submit">
+    UPDATE tb_evaluation
+       SET status = 'SUBMITTED',
+           submitted_at = SYSUTCDATETIME(),
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="approve">
+    UPDATE tb_evaluation
+       SET status = 'APPROVED',
+           approved_by = #{approverUserId},
+           approved_at = SYSUTCDATETIME(),
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="reject">
+    UPDATE tb_evaluation
+       SET status = 'REJECTED',
+           approved_by = #{approverUserId},
+           approved_at = SYSUTCDATETIME(),
+           rejected_reason = #{reason},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_evaluation
+       SET deleted = 1, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <select id="findMaxSeqByYearHalf" resultType="java.lang.Integer">
+    SELECT ISNULL(MAX(CAST(RIGHT(evaluation_no, 4) AS INT)), 0)
+      FROM tb_evaluation
+     WHERE period_year = #{periodYear} AND period_half = #{periodHalf}
+  </select>
+
+  <select id="countByCompanyAndPeriod" resultType="int">
+    SELECT COUNT(1)
+      FROM tb_evaluation
+     WHERE deleted = 0
+       AND company_id = #{companyId}
+       AND period_year = #{periodYear}
+       AND period_half = #{periodHalf}
+       AND evaluation_type = #{evaluationType}
+  </select>
+
+</mapper>

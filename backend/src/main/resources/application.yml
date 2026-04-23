@@ -1,0 +1,109 @@
+server:
+  port: 4001
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: penocean-ehs
+
+  profiles:
+    default: local
+
+  web:
+    resources:
+      add-mappings: false
+
+  datasource:
+    # 실제 접속정보는 application-local.yml 또는 환경변수(DB_URL/DB_USERNAME/DB_PASSWORD)로 설정
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=Penocean;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:CHANGE_ME}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  mail:
+    host: ${MAIL_HOST:smtp.office365.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+# MyBatis Configuration
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.penocean.ehs.model
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+    # SQL Server 는 null 파라미터를 기본 VARBINARY(0) 로 전송해서 datetime2/bigint/nvarchar 컬럼과 암시 변환 실패.
+    # NULL 로 바꾸면 java.sql.Types.NULL 로 보내서 어떤 컬럼이든 안전하게 null 저장.
+    jdbc-type-for-null: NULL
+
+# JWT Configuration — 운영에선 반드시 환경변수 JWT_SECRET 로 32자 이상 랜덤 값 주입
+jwt:
+  secret: ${JWT_SECRET:CHANGE_ME_TO_A_32_PLUS_CHARACTER_RANDOM_SECRET_FOR_HS256}
+  expiration: 86400000  # 24 hours in milliseconds
+  refresh-expiration: 604800000  # 7 days in milliseconds
+
+# File Storage Configuration
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+  max-size: 104857600  # 100MB
+
+# Microsoft Graph Configuration
+microsoft:
+  graph:
+    client-id: ${AZURE_CLIENT_ID:}
+    client-secret: ${AZURE_CLIENT_SECRET:}
+    tenant-id: ${AZURE_TENANT_ID:}
+
+# 메일 템플릿에 사용되는 포털 URL 및 문의 전화
+app:
+  portal-url: ${APP_PORTAL_URL:http://localhost:4000}
+  safety-team-phone: ${APP_SAFETY_TEAM_PHONE:02-316-0000}
+  # 팀메일 발송 대상 (근로자 의견/평가 제출 시). 쉼표 구분.
+  team-emails: ${APP_TEAM_EMAILS:}
+  # 발신자 주소 (공란이면 spring.mail.username 사용)
+  mail-from: ${APP_MAIL_FROM:}
+  # 가입 승인 자동 리마인더 (PPT slide 8)
+  registration:
+    reminder-threshold-hours: ${APP_REG_REMIND_HOURS:48}
+    reminder-cron: ${APP_REG_REMIND_CRON:0 0 9 * * *}
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.penocean: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Springdoc OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

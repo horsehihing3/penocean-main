@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.RoleMapper">
+
+  <resultMap id="RoleResultMap" type="com.penocean.ehs.model.Role">
+    <id property="id" column="id"/>
+    <result property="code" column="code"/>
+    <result property="name" column="name"/>
+  </resultMap>
+
+  <select id="findAll" resultMap="RoleResultMap">
+    SELECT id, code, name FROM tb_role ORDER BY id
+  </select>
+
+  <select id="findByCode" resultMap="RoleResultMap">
+    SELECT id, code, name FROM tb_role WHERE code = #{code}
+  </select>
+
+</mapper>

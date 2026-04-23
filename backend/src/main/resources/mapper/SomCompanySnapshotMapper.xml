@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.SomCompanySnapshotMapper">
+
+  <resultMap id="SomSnapshotResultMap" type="com.penocean.ehs.model.SomCompanySnapshot">
+    <id property="id" column="id"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="companyName" column="company_name"/>
+    <result property="ceoName" column="ceo_name"/>
+    <result property="address" column="address"/>
+    <result property="industry" column="industry"/>
+    <result property="employeeCount" column="employee_count"/>
+    <result property="annualRevenue" column="annual_revenue"/>
+    <result property="lastSyncedAt" column="last_synced_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <select id="findByBusinessNumber" resultMap="SomSnapshotResultMap">
+    SELECT id, business_number, company_name, ceo_name, address, industry,
+           employee_count, annual_revenue, last_synced_at, created_at, updated_at
+      FROM tb_som_company_snapshot
+     WHERE business_number = #{businessNumber}
+  </select>
+
+  <select id="findAll" resultMap="SomSnapshotResultMap">
+    SELECT id, business_number, company_name, ceo_name, address, industry,
+           employee_count, annual_revenue, last_synced_at, created_at, updated_at
+      FROM tb_som_company_snapshot
+    <where>
+      <if test="keyword != null and keyword != ''">
+        (business_number LIKE '%' + #{keyword} + '%' OR company_name LIKE '%' + #{keyword} + '%')
+      </if>
+    </where>
+    ORDER BY last_synced_at DESC, id DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_som_company_snapshot
+    <where>
+      <if test="keyword != null and keyword != ''">
+        (business_number LIKE '%' + #{keyword} + '%' OR company_name LIKE '%' + #{keyword} + '%')
+      </if>
+    </where>
+  </select>
+
+  <update id="upsert">
+    MERGE tb_som_company_snapshot AS t
+    USING (SELECT
+              #{businessNumber} AS business_number,
+              #{companyName}    AS company_name,
+              #{ceoName}        AS ceo_name,
+              #{address}        AS address,
+              #{industry}       AS industry,
+              #{employeeCount}  AS employee_count,
+              #{annualRevenue}  AS annual_revenue
+          ) AS s
+       ON t.business_number = s.business_number
+    WHEN MATCHED THEN
+      UPDATE SET
+        company_name   = s.company_name,
+        ceo_name       = s.ceo_name,
+        address        = s.address,
+        industry       = s.industry,
+        employee_count = s.employee_count,
+        annual_revenue = s.annual_revenue,
+        last_synced_at = SYSUTCDATETIME(),
+        updated_at     = SYSUTCDATETIME()
+    WHEN NOT MATCHED THEN
+      INSERT (business_number, company_name, ceo_name, address, industry,
+              employee_count, annual_revenue, last_synced_at, created_at)
+      VALUES (s.business_number, s.company_name, s.ceo_name, s.address, s.industry,
+              s.employee_count, s.annual_revenue, SYSUTCDATETIME(), SYSUTCDATETIME());
+  </update>
+
+</mapper>

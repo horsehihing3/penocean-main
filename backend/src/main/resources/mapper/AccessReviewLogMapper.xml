@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.AccessReviewLogMapper">
+
+  <resultMap id="ReviewLogItemResultMap" type="com.penocean.ehs.dto.response.AccessRequestDetailResponse$ReviewLogItem">
+    <id property="id" column="id"/>
+    <result property="action" column="action"/>
+    <result property="comment" column="comment"/>
+    <result property="actorUserId" column="actor_user_id"/>
+    <result property="actorName" column="actor_name"/>
+    <result property="actedAt" column="acted_at"/>
+  </resultMap>
+
+  <select id="findByRequest" resultMap="ReviewLogItemResultMap">
+    SELECT rl.id,
+           rl.action,
+           rl.comment,
+           rl.actor_user_id,
+           u.name AS actor_name,
+           rl.acted_at
+      FROM tb_access_review_log rl
+      LEFT JOIN tb_user u ON u.id = rl.actor_user_id AND u.deleted = 0
+     WHERE rl.access_request_id = #{accessRequestId}
+     ORDER BY rl.acted_at DESC
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_access_review_log (
+      access_request_id, action, comment, actor_user_id, acted_at, created_at
+    ) VALUES (
+      #{accessRequestId}, #{action}, #{comment}, #{actorUserId},
+      SYSUTCDATETIME(), SYSUTCDATETIME()
+    )
+  </insert>
+
+</mapper>

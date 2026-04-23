@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.AuditInspectionMapper">
+
+  <resultMap id="AuditResultMap" type="com.penocean.ehs.model.AuditInspection">
+    <id property="id" column="id"/>
+    <result property="inspectionType" column="inspection_type"/>
+    <result property="targetCompanyId" column="target_company_id"/>
+    <result property="targetVesselId" column="target_vessel_id"/>
+    <result property="inspectionDate" column="inspection_date"/>
+    <result property="inspectorUserId" column="inspector_user_id"/>
+    <result property="findings" column="findings"/>
+    <result property="actionItems" column="action_items"/>
+    <result property="status" column="status"/>
+    <result property="closedAt" column="closed_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemMap" type="com.penocean.ehs.dto.response.AuditInspectionListItem">
+    <id property="id" column="id"/>
+    <result property="inspectionType" column="inspection_type"/>
+    <result property="targetCompanyId" column="target_company_id"/>
+    <result property="targetCompanyName" column="target_company_name"/>
+    <result property="targetVesselId" column="target_vessel_id"/>
+    <result property="targetVesselName" column="target_vessel_name"/>
+    <result property="inspectionDate" column="inspection_date"/>
+    <result property="inspectorUserId" column="inspector_user_id"/>
+    <result property="inspectorName" column="inspector_name"/>
+    <result property="status" column="status"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailMap" type="com.penocean.ehs.dto.response.AuditInspectionDetailResponse">
+    <id property="id" column="id"/>
+    <result property="inspectionType" column="inspection_type"/>
+    <result property="targetCompanyId" column="target_company_id"/>
+    <result property="targetCompanyName" column="target_company_name"/>
+    <result property="targetVesselId" column="target_vessel_id"/>
+    <result property="targetVesselName" column="target_vessel_name"/>
+    <result property="inspectionDate" column="inspection_date"/>
+    <result property="inspectorUserId" column="inspector_user_id"/>
+    <result property="inspectorName" column="inspector_name"/>
+    <result property="findings" column="findings"/>
+    <result property="actionItems" column="action_items"/>
+    <result property="status" column="status"/>
+    <result property="closedAt" column="closed_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      a.deleted = 0
+      <if test="inspectionType != null and inspectionType != ''">AND a.inspection_type = #{inspectionType}</if>
+      <if test="status != null and status != ''">AND a.status = #{status}</if>
+      <if test="dateFrom != null">AND a.inspection_date &gt;= #{dateFrom}</if>
+      <if test="dateTo != null">AND a.inspection_date &lt;= #{dateTo}</if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="AuditResultMap">
+    SELECT id, inspection_type, target_company_id, target_vessel_id, inspection_date,
+           inspector_user_id, findings, action_items, status, closed_at,
+           created_at, updated_at, deleted
+      FROM tb_audit_inspection
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailMap">
+    SELECT a.id, a.inspection_type,
+           a.target_company_id, c.name AS target_company_name,
+           a.target_vessel_id, v.name AS target_vessel_name,
+           a.inspection_date, a.inspector_user_id, u.name AS inspector_name,
+           a.findings, a.action_items, a.status, a.closed_at,
+           a.created_at, a.updated_at
+      FROM tb_audit_inspection a
+      LEFT JOIN tb_company c ON c.id = a.target_company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = a.target_vessel_id  AND v.deleted = 0
+      LEFT JOIN tb_user    u ON u.id = a.inspector_user_id AND u.deleted = 0
+     WHERE a.id = #{id} AND a.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemMap">
+    SELECT a.id, a.inspection_type,
+           a.target_company_id, c.name AS target_company_name,
+           a.target_vessel_id, v.name AS target_vessel_name,
+           a.inspection_date, a.inspector_user_id, u.name AS inspector_name,
+           a.status, a.created_at
+      FROM tb_audit_inspection a
+      LEFT JOIN tb_company c ON c.id = a.target_company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = a.target_vessel_id  AND v.deleted = 0
+      LEFT JOIN tb_user    u ON u.id = a.inspector_user_id AND u.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY a.inspection_date DESC, a.id DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1) FROM tb_audit_inspection a
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_audit_inspection (
+      inspection_type, target_company_id, target_vessel_id, inspection_date,
+      inspector_user_id, findings, action_items, status, created_at, deleted
+    ) VALUES (
+      #{inspectionType}, #{targetCompanyId}, #{targetVesselId}, #{inspectionDate},
+      #{inspectorUserId}, #{findings}, #{actionItems},
+      <choose><when test="status != null and status != ''">#{status}</when><otherwise>'OPEN'</otherwise></choose>,
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="updateStatus">
+    UPDATE tb_audit_inspection
+       SET status = #{status},
+           closed_at = CASE WHEN #{status} = 'CLOSED' THEN SYSUTCDATETIME() ELSE closed_at END,
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_audit_inspection SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.SeaCrewIncidentMapper">
+
+  <resultMap id="IncidentResultMap" type="com.penocean.ehs.model.SeaCrewIncident">
+    <id property="id" column="id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="crewName" column="crew_name"/>
+    <result property="crewRole" column="crew_role"/>
+    <result property="incidentType" column="incident_type"/>
+    <result property="incidentDate" column="incident_date"/>
+    <result property="diagnosis" column="diagnosis"/>
+    <result property="evacuationRequired" column="evacuation_required"/>
+    <result property="returnToDutyDate" column="return_to_duty_date"/>
+    <result property="excelUploadId" column="excel_upload_id"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="IncidentResponseResultMap" type="com.penocean.ehs.dto.response.SeaCrewIncidentResponse">
+    <id property="id" column="id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="crewName" column="crew_name"/>
+    <result property="crewRole" column="crew_role"/>
+    <result property="incidentType" column="incident_type"/>
+    <result property="incidentDate" column="incident_date"/>
+    <result property="diagnosis" column="diagnosis"/>
+    <result property="evacuationRequired" column="evacuation_required"/>
+    <result property="returnToDutyDate" column="return_to_duty_date"/>
+    <result property="excelUploadId" column="excel_upload_id"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      sc.deleted = 0
+      <if test="vesselId != null">
+        AND sc.vessel_id = #{vesselId}
+      </if>
+      <if test="year != null">
+        AND sc.period_year = #{year}
+      </if>
+      <if test="month != null">
+        AND sc.period_month = #{month}
+      </if>
+      <if test="incidentType != null and incidentType != ''">
+        AND sc.incident_type = #{incidentType}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="IncidentResultMap">
+    SELECT id, vessel_id, period_year, period_month, crew_name, crew_role,
+           incident_type, incident_date, diagnosis, evacuation_required,
+           return_to_duty_date, excel_upload_id, created_at, updated_at, deleted
+      FROM tb_sea_crew_incident
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="IncidentResponseResultMap">
+    SELECT
+        sc.id, sc.vessel_id, v.name AS vessel_name,
+        sc.period_year, sc.period_month, sc.crew_name, sc.crew_role,
+        sc.incident_type, sc.incident_date, sc.diagnosis,
+        sc.evacuation_required, sc.return_to_duty_date,
+        sc.excel_upload_id, sc.created_at
+      FROM tb_sea_crew_incident sc
+      LEFT JOIN tb_vessel v ON v.id = sc.vessel_id
+    <include refid="filterClause"/>
+    ORDER BY sc.incident_date DESC, sc.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_sea_crew_incident sc
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_sea_crew_incident (
+      vessel_id, period_year, period_month, crew_name, crew_role,
+      incident_type, incident_date, diagnosis, evacuation_required,
+      return_to_duty_date, excel_upload_id, created_at, deleted
+    ) VALUES (
+      #{vesselId}, #{periodYear}, #{periodMonth}, #{crewName}, #{crewRole},
+      #{incidentType}, #{incidentDate}, #{diagnosis},
+      <choose><when test="evacuationRequired != null">#{evacuationRequired}</when><otherwise>0</otherwise></choose>,
+      #{returnToDutyDate}, #{excelUploadId}, SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <insert id="bulkInsert">
+    INSERT INTO tb_sea_crew_incident (
+      vessel_id, period_year, period_month, crew_name, crew_role,
+      incident_type, incident_date, diagnosis, evacuation_required,
+      return_to_duty_date, excel_upload_id, created_at, deleted
+    ) VALUES
+    <foreach collection="list" item="it" separator=",">
+      (
+        #{it.vesselId}, #{it.periodYear}, #{it.periodMonth}, #{it.crewName}, #{it.crewRole},
+        #{it.incidentType}, #{it.incidentDate}, #{it.diagnosis},
+        <choose><when test="it.evacuationRequired != null">#{it.evacuationRequired}</when><otherwise>0</otherwise></choose>,
+        #{it.returnToDutyDate}, #{it.excelUploadId}, SYSUTCDATETIME(), 0
+      )
+    </foreach>
+  </insert>
+
+  <update id="softDelete">
+    UPDATE tb_sea_crew_incident SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

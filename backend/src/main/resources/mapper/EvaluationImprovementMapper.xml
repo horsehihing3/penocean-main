@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.EvaluationImprovementMapper">
+
+  <resultMap id="ImprovementResultMap" type="com.penocean.ehs.model.EvaluationImprovement">
+    <id property="id" column="id"/>
+    <result property="evaluationId" column="evaluation_id"/>
+    <result property="itemId" column="item_id"/>
+    <result property="requestedBy" column="requested_by"/>
+    <result property="requestedAt" column="requested_at"/>
+    <result property="requestContent" column="request_content"/>
+    <result property="responseContent" column="response_content"/>
+    <result property="responseUserId" column="response_user_id"/>
+    <result property="respondedAt" column="responded_at"/>
+    <result property="responseDueDate" column="response_due_date"/>
+    <result property="status" column="status"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ImprovementDetailMap" type="com.penocean.ehs.dto.response.EvaluationImprovementResponse">
+    <id property="id" column="id"/>
+    <result property="evaluationId" column="evaluation_id"/>
+    <result property="evaluationNo" column="evaluation_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="itemId" column="item_id"/>
+    <result property="itemTitle" column="item_title"/>
+    <result property="requestedBy" column="requested_by"/>
+    <result property="requesterName" column="requester_name"/>
+    <result property="requestedAt" column="requested_at"/>
+    <result property="requestContent" column="request_content"/>
+    <result property="responseContent" column="response_content"/>
+    <result property="responseUserId" column="response_user_id"/>
+    <result property="responderName" column="responder_name"/>
+    <result property="respondedAt" column="responded_at"/>
+    <result property="responseDueDate" column="response_due_date"/>
+    <result property="status" column="status"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      im.deleted = 0
+      <if test="evaluationId != null">
+        AND im.evaluation_id = #{evaluationId}
+      </if>
+      <if test="status != null and status != ''">
+        AND im.status = #{status}
+      </if>
+      <if test="companyId != null">
+        AND ev.company_id = #{companyId}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findPage" resultMap="ImprovementDetailMap">
+    SELECT
+        im.id,
+        im.evaluation_id,
+        ev.evaluation_no,
+        ev.company_id,
+        c.name AS company_name,
+        im.item_id,
+        i.title AS item_title,
+        im.requested_by,
+        ru.name AS requester_name,
+        im.requested_at,
+        im.request_content,
+        im.response_content,
+        im.response_user_id,
+        au.name AS responder_name,
+        im.responded_at,
+        im.response_due_date,
+        im.status,
+        im.created_at
+      FROM tb_evaluation_improvement im
+      LEFT JOIN tb_evaluation ev     ON ev.id = im.evaluation_id AND ev.deleted = 0
+      LEFT JOIN tb_company    c      ON c.id = ev.company_id AND c.deleted = 0
+      LEFT JOIN tb_evaluation_item i ON i.id = im.item_id AND i.deleted = 0
+      LEFT JOIN tb_user ru           ON ru.id = im.requested_by AND ru.deleted = 0
+      LEFT JOIN tb_user au           ON au.id = im.response_user_id AND au.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY im.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_evaluation_improvement im
+      LEFT JOIN tb_evaluation ev ON ev.id = im.evaluation_id AND ev.deleted = 0
+    <include refid="filterClause"/>
+  </select>
+
+  <select id="findById" resultMap="ImprovementResultMap">
+    SELECT id, evaluation_id, item_id, requested_by, requested_at, request_content,
+           response_content, response_user_id, responded_at, response_due_date,
+           status, created_at, updated_at, deleted
+      FROM tb_evaluation_improvement
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdDetail" resultMap="ImprovementDetailMap">
+    SELECT
+        im.id,
+        im.evaluation_id,
+        ev.evaluation_no,
+        ev.company_id,
+        c.name AS company_name,
+        im.item_id,
+        i.title AS item_title,
+        im.requested_by,
+        ru.name AS requester_name,
+        im.requested_at,
+        im.request_content,
+        im.response_content,
+        im.response_user_id,
+        au.name AS responder_name,
+        im.responded_at,
+        im.response_due_date,
+        im.status,
+        im.created_at
+      FROM tb_evaluation_improvement im
+      LEFT JOIN tb_evaluation ev     ON ev.id = im.evaluation_id AND ev.deleted = 0
+      LEFT JOIN tb_company    c      ON c.id = ev.company_id AND c.deleted = 0
+      LEFT JOIN tb_evaluation_item i ON i.id = im.item_id AND i.deleted = 0
+      LEFT JOIN tb_user ru           ON ru.id = im.requested_by AND ru.deleted = 0
+      LEFT JOIN tb_user au           ON au.id = im.response_user_id AND au.deleted = 0
+     WHERE im.id = #{id} AND im.deleted = 0
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_evaluation_improvement (
+      evaluation_id, item_id, requested_by, requested_at, request_content,
+      response_due_date, status, created_at, deleted
+    ) VALUES (
+      #{evaluationId}, #{itemId}, #{requestedBy}, SYSUTCDATETIME(), #{requestContent},
+      #{responseDueDate},
+      <choose><when test="status != null and status != ''">#{status}</when><otherwise>'OPEN'</otherwise></choose>,
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="respond">
+    UPDATE tb_evaluation_improvement
+       SET response_content = #{responseContent},
+           response_user_id = #{responseUserId},
+           responded_at = SYSUTCDATETIME(),
+           status = 'RESPONDED',
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="close">
+    UPDATE tb_evaluation_improvement
+       SET status = 'CLOSED',
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+</mapper>

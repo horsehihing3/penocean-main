@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.SafetyRuleMapper">
+
+  <resultMap id="SafetyRuleResultMap" type="com.penocean.ehs.model.SafetyRule">
+    <id property="id" column="id"/>
+    <result property="industryCode" column="industry_code"/>
+    <result property="ruleNo" column="rule_no"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="severity" column="severity"/>
+    <result property="sortOrder" column="sort_order"/>
+    <result property="active" column="active"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <select id="findById" resultMap="SafetyRuleResultMap">
+    SELECT id, industry_code, rule_no, title, content, severity, sort_order, active,
+           created_at, updated_at, deleted
+      FROM tb_safety_rule
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findAll" resultMap="SafetyRuleResultMap">
+    SELECT id, industry_code, rule_no, title, content, severity, sort_order, active,
+           created_at, updated_at, deleted
+      FROM tb_safety_rule
+    <where>
+      deleted = 0
+      <if test="industryCode != null and industryCode != ''">AND industry_code = #{industryCode}</if>
+      <if test="activeOnly != null and activeOnly == true">AND active = 1</if>
+    </where>
+    ORDER BY industry_code, sort_order, id
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_safety_rule (
+      industry_code, rule_no, title, content, severity, sort_order, active,
+      created_at, deleted
+    ) VALUES (
+      #{industryCode}, #{ruleNo}, #{title}, #{content},
+      <choose><when test="severity != null and severity != ''">#{severity}</when><otherwise>'NORMAL'</otherwise></choose>,
+      <choose><when test="sortOrder != null">#{sortOrder}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="active != null">#{active}</when><otherwise>1</otherwise></choose>,
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_safety_rule
+       SET industry_code = #{industryCode},
+           rule_no = #{ruleNo},
+           title = #{title},
+           content = #{content},
+           severity = #{severity},
+           sort_order = #{sortOrder},
+           active = #{active},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateSortOrder">
+    UPDATE tb_safety_rule SET sort_order = #{sortOrder}, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_safety_rule SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

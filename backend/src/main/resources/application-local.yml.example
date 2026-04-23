@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:sqlserver://YOUR_DB_HOST:YOUR_PORT;databaseName=Penocean;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USERNAME:YOUR_USERNAME}
+    password: ${DB_PASSWORD:YOUR_PASSWORD}
+
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.penocean: DEBUG
+    org.springframework.security: DEBUG
+    org.mybatis: DEBUG

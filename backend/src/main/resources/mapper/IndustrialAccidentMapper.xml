@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.IndustrialAccidentMapper">
+
+  <resultMap id="AccidentResultMap" type="com.penocean.ehs.model.IndustrialAccident">
+    <id property="id" column="id"/>
+    <result property="accidentNo" column="accident_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="accidentDate" column="accident_date"/>
+    <result property="accidentLocation" column="accident_location"/>
+    <result property="victimName" column="victim_name"/>
+    <result property="victimAge" column="victim_age"/>
+    <result property="victimGender" column="victim_gender"/>
+    <result property="victimRole" column="victim_role"/>
+    <result property="accidentType" column="accident_type"/>
+    <result property="severity" column="severity"/>
+    <result property="description" column="description"/>
+    <result property="treatmentDays" column="treatment_days"/>
+    <result property="absenceDays" column="absence_days"/>
+    <result property="reportedBy" column="reported_by"/>
+    <result property="reportedAt" column="reported_at"/>
+    <result property="reportFileUrl" column="report_file_url"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemResultMap" type="com.penocean.ehs.dto.response.IndustrialAccidentListItem">
+    <id property="id" column="id"/>
+    <result property="accidentNo" column="accident_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="accidentDate" column="accident_date"/>
+    <result property="accidentLocation" column="accident_location"/>
+    <result property="victimName" column="victim_name"/>
+    <result property="accidentType" column="accident_type"/>
+    <result property="severity" column="severity"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.IndustrialAccidentDetailResponse">
+    <id property="id" column="id"/>
+    <result property="accidentNo" column="accident_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="accidentDate" column="accident_date"/>
+    <result property="accidentLocation" column="accident_location"/>
+    <result property="victimName" column="victim_name"/>
+    <result property="victimAge" column="victim_age"/>
+    <result property="victimGender" column="victim_gender"/>
+    <result property="victimRole" column="victim_role"/>
+    <result property="accidentType" column="accident_type"/>
+    <result property="severity" column="severity"/>
+    <result property="description" column="description"/>
+    <result property="treatmentDays" column="treatment_days"/>
+    <result property="absenceDays" column="absence_days"/>
+    <result property="reportedBy" column="reported_by"/>
+    <result property="reporterName" column="reporter_name"/>
+    <result property="reportedAt" column="reported_at"/>
+    <result property="reportFileUrl" column="report_file_url"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      ia.deleted = 0
+      <if test="companyId != null">
+        AND ia.company_id = #{companyId}
+      </if>
+      <if test="businessNumber != null and businessNumber != ''">
+        AND ia.business_number = #{businessNumber}
+      </if>
+      <if test="severity != null and severity != ''">
+        AND ia.severity = #{severity}
+      </if>
+      <if test="accidentType != null and accidentType != ''">
+        AND ia.accident_type = #{accidentType}
+      </if>
+      <if test="dateFrom != null">
+        AND ia.accident_date >= #{dateFrom}
+      </if>
+      <if test="dateTo != null">
+        AND ia.accident_date &lt;= #{dateTo}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="AccidentResultMap">
+    SELECT id, accident_no, company_id, business_number, vessel_id,
+           accident_date, accident_location, victim_name, victim_age,
+           victim_gender, victim_role, accident_type, severity, description,
+           treatment_days, absence_days, reported_by, reported_at,
+           report_file_url, created_at, updated_at, deleted
+      FROM tb_industrial_accident
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailResultMap">
+    SELECT
+        ia.id, ia.accident_no, ia.company_id, c.name AS company_name,
+        ia.business_number, ia.vessel_id, v.name AS vessel_name,
+        ia.accident_date, ia.accident_location, ia.victim_name,
+        ia.victim_age, ia.victim_gender, ia.victim_role,
+        ia.accident_type, ia.severity, ia.description,
+        ia.treatment_days, ia.absence_days,
+        ia.reported_by, ru.name AS reporter_name,
+        ia.reported_at, ia.report_file_url,
+        ia.created_at, ia.updated_at
+      FROM tb_industrial_accident ia
+      LEFT JOIN tb_company c ON c.id = ia.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = ia.vessel_id
+      LEFT JOIN tb_user    ru ON ru.id = ia.reported_by AND ru.deleted = 0
+     WHERE ia.id = #{id} AND ia.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemResultMap">
+    SELECT
+        ia.id, ia.accident_no, ia.company_id, c.name AS company_name,
+        ia.business_number, ia.accident_date, ia.accident_location,
+        ia.victim_name, ia.accident_type, ia.severity, ia.created_at
+      FROM tb_industrial_accident ia
+      LEFT JOIN tb_company c ON c.id = ia.company_id AND c.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY ia.accident_date DESC, ia.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_industrial_accident ia
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_industrial_accident (
+      accident_no, company_id, business_number, vessel_id, accident_date,
+      accident_location, victim_name, victim_age, victim_gender, victim_role,
+      accident_type, severity, description, treatment_days, absence_days,
+      reported_by, reported_at, report_file_url, created_at, deleted
+    ) VALUES (
+      #{accidentNo}, #{companyId}, #{businessNumber}, #{vesselId}, #{accidentDate},
+      #{accidentLocation}, #{victimName}, #{victimAge}, #{victimGender}, #{victimRole},
+      #{accidentType}, #{severity}, #{description}, #{treatmentDays}, #{absenceDays},
+      #{reportedBy}, SYSUTCDATETIME(), #{reportFileUrl}, SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_industrial_accident
+       SET business_number = #{businessNumber},
+           vessel_id = #{vesselId},
+           accident_date = #{accidentDate},
+           accident_location = #{accidentLocation},
+           victim_name = #{victimName},
+           victim_age = #{victimAge},
+           victim_gender = #{victimGender},
+           victim_role = #{victimRole},
+           accident_type = #{accidentType},
+           severity = #{severity},
+           description = #{description},
+           treatment_days = #{treatmentDays},
+           absence_days = #{absenceDays},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateReportFileUrl">
+    UPDATE tb_industrial_accident
+       SET report_file_url = #{reportFileUrl},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_industrial_accident SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+  <select id="findMaxSeqByDate" resultType="java.lang.Integer">
+    SELECT ISNULL(MAX(CAST(RIGHT(accident_no, 4) AS INT)), 0)
+      FROM tb_industrial_accident
+     WHERE accident_no LIKE 'IA-' + #{dateStr} + '-%'
+  </select>
+
+</mapper>

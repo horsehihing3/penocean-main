@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.WorkerVoiceMapper">
+
+  <resultMap id="WorkerVoiceResultMap" type="com.penocean.ehs.model.WorkerVoice">
+    <id property="id" column="id"/>
+    <result property="voiceNo" column="voice_no"/>
+    <result property="voiceType" column="voice_type"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="companyId" column="company_id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="reporterUserId" column="reporter_user_id"/>
+    <result property="reporterAnonymous" column="reporter_anonymous"/>
+    <result property="severity" column="severity"/>
+    <result property="status" column="status"/>
+    <result property="assignedTo" column="assigned_to"/>
+    <result property="resolvedAt" column="resolved_at"/>
+    <result property="resolution" column="resolution"/>
+    <result property="emailSentTo" column="email_sent_to"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemResultMap" type="com.penocean.ehs.dto.response.WorkerVoiceListItem">
+    <id property="id" column="id"/>
+    <result property="voiceNo" column="voice_no"/>
+    <result property="voiceType" column="voice_type"/>
+    <result property="title" column="title"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="severity" column="severity"/>
+    <result property="status" column="status"/>
+    <result property="reporterAnonymous" column="reporter_anonymous"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.WorkerVoiceDetailResponse">
+    <id property="id" column="id"/>
+    <result property="voiceNo" column="voice_no"/>
+    <result property="voiceType" column="voice_type"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="reporterUserId" column="reporter_user_id"/>
+    <result property="reporterName" column="reporter_name"/>
+    <result property="reporterAnonymous" column="reporter_anonymous"/>
+    <result property="severity" column="severity"/>
+    <result property="status" column="status"/>
+    <result property="assignedTo" column="assigned_to"/>
+    <result property="assigneeName" column="assignee_name"/>
+    <result property="resolvedAt" column="resolved_at"/>
+    <result property="resolution" column="resolution"/>
+    <result property="emailSentTo" column="email_sent_to"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      wv.deleted = 0
+      <if test="voiceType != null and voiceType != ''">
+        AND wv.voice_type = #{voiceType}
+      </if>
+      <if test="status != null and status != ''">
+        AND wv.status = #{status}
+      </if>
+      <if test="companyId != null">
+        AND wv.company_id = #{companyId}
+      </if>
+      <if test="vesselId != null">
+        AND wv.vessel_id = #{vesselId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+             wv.voice_no LIKE '%' + #{keyword} + '%'
+          OR wv.title LIKE '%' + #{keyword} + '%'
+        )
+      </if>
+      <if test="dateFrom != null">
+        AND wv.created_at >= #{dateFrom}
+      </if>
+      <if test="dateTo != null">
+        AND wv.created_at &lt; DATEADD(DAY, 1, #{dateTo})
+      </if>
+      <if test="excludeAnonymous != null and excludeAnonymous == true">
+        AND wv.reporter_anonymous = 0
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="WorkerVoiceResultMap">
+    SELECT id, voice_no, voice_type, title, content, company_id, vessel_id,
+           reporter_user_id, reporter_anonymous, severity, status, assigned_to,
+           resolved_at, resolution, email_sent_to, created_at, updated_at, deleted
+      FROM tb_worker_voice
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailResultMap">
+    SELECT
+        wv.id, wv.voice_no, wv.voice_type, wv.title, wv.content,
+        wv.company_id, c.name AS company_name,
+        wv.vessel_id, v.name AS vessel_name,
+        wv.reporter_user_id, ru.name AS reporter_name,
+        wv.reporter_anonymous, wv.severity, wv.status,
+        wv.assigned_to, au.name AS assignee_name,
+        wv.resolved_at, wv.resolution, wv.email_sent_to,
+        wv.created_at, wv.updated_at
+      FROM tb_worker_voice wv
+      LEFT JOIN tb_company c ON c.id = wv.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = wv.vessel_id
+      LEFT JOIN tb_user    ru ON ru.id = wv.reporter_user_id AND ru.deleted = 0
+      LEFT JOIN tb_user    au ON au.id = wv.assigned_to AND au.deleted = 0
+     WHERE wv.id = #{id} AND wv.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemResultMap">
+    SELECT
+        wv.id, wv.voice_no, wv.voice_type, wv.title,
+        wv.company_id, c.name AS company_name,
+        wv.severity, wv.status, wv.reporter_anonymous, wv.created_at
+      FROM tb_worker_voice wv
+      LEFT JOIN tb_company c ON c.id = wv.company_id AND c.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY wv.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_worker_voice wv
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_worker_voice (
+      voice_no, voice_type, title, content, company_id, vessel_id,
+      reporter_user_id, reporter_anonymous, severity, status,
+      assigned_to, resolved_at, resolution, email_sent_to,
+      created_at, deleted
+    ) VALUES (
+      #{voiceNo}, #{voiceType}, #{title}, #{content}, #{companyId}, #{vesselId},
+      #{reporterUserId},
+      <choose><when test="reporterAnonymous != null">#{reporterAnonymous}</when><otherwise>0</otherwise></choose>,
+      #{severity},
+      <choose><when test="status != null and status != ''">#{status}</when><otherwise>'SUBMITTED'</otherwise></choose>,
+      #{assignedTo}, #{resolvedAt}, #{resolution}, #{emailSentTo},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="updateStatus">
+    UPDATE tb_worker_voice
+       SET status = #{status},
+           assigned_to = COALESCE(#{assignedTo}, assigned_to),
+           resolution = COALESCE(#{resolution}, resolution),
+           resolved_at = CASE WHEN #{status} IN ('RESOLVED', 'CLOSED')
+                              THEN SYSUTCDATETIME() ELSE resolved_at END,
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_worker_voice SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+  <select id="findMaxSeqByDate" resultType="java.lang.Integer">
+    SELECT ISNULL(MAX(CAST(RIGHT(voice_no, 4) AS INT)), 0)
+      FROM tb_worker_voice
+     WHERE voice_no LIKE 'WV-' + #{dateStr} + '-%'
+  </select>
+
+</mapper>

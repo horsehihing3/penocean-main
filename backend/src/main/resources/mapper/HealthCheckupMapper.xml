@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.HealthCheckupMapper">
+
+  <resultMap id="CheckupResultMap" type="com.penocean.ehs.model.HealthCheckup">
+    <id property="id" column="id"/>
+    <result property="userId" column="user_id"/>
+    <result property="companyId" column="company_id"/>
+    <result property="checkupDate" column="checkup_date"/>
+    <result property="hospitalName" column="hospital_name"/>
+    <result property="checkupType" column="checkup_type"/>
+    <result property="summary" column="summary"/>
+    <result property="reportFileUrl" column="report_file_url"/>
+    <result property="uploadedBy" column="uploaded_by"/>
+    <result property="uploadedAt" column="uploaded_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemMap" type="com.penocean.ehs.dto.response.HealthCheckupListItem">
+    <id property="id" column="id"/>
+    <result property="userId" column="user_id"/>
+    <result property="userName" column="user_name"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="checkupDate" column="checkup_date"/>
+    <result property="hospitalName" column="hospital_name"/>
+    <result property="checkupType" column="checkup_type"/>
+    <result property="summary" column="summary"/>
+    <result property="reportFileUrl" column="report_file_url"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailMap" type="com.penocean.ehs.dto.response.HealthCheckupDetailResponse">
+    <id property="id" column="id"/>
+    <result property="userId" column="user_id"/>
+    <result property="userName" column="user_name"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="checkupDate" column="checkup_date"/>
+    <result property="hospitalName" column="hospital_name"/>
+    <result property="checkupType" column="checkup_type"/>
+    <result property="summary" column="summary"/>
+    <result property="reportFileUrl" column="report_file_url"/>
+    <result property="uploadedBy" column="uploaded_by"/>
+    <result property="uploadedAt" column="uploaded_at"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      hc.deleted = 0
+      <if test="userId != null">AND hc.user_id = #{userId}</if>
+      <if test="companyId != null">AND hc.company_id = #{companyId}</if>
+      <if test="checkupType != null and checkupType != ''">AND hc.checkup_type = #{checkupType}</if>
+      <if test="dateFrom != null">AND hc.checkup_date &gt;= #{dateFrom}</if>
+      <if test="dateTo != null">AND hc.checkup_date &lt;= #{dateTo}</if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="CheckupResultMap">
+    SELECT id, user_id, company_id, checkup_date, hospital_name, checkup_type,
+           summary, report_file_url, uploaded_by, uploaded_at,
+           created_at, updated_at, deleted
+      FROM tb_health_checkup
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailMap">
+    SELECT hc.id, hc.user_id, u.name AS user_name,
+           hc.company_id, c.name AS company_name,
+           hc.checkup_date, hc.hospital_name, hc.checkup_type,
+           hc.summary, hc.report_file_url, hc.uploaded_by, hc.uploaded_at, hc.created_at
+      FROM tb_health_checkup hc
+      LEFT JOIN tb_user u    ON u.id = hc.user_id AND u.deleted = 0
+      LEFT JOIN tb_company c ON c.id = hc.company_id AND c.deleted = 0
+     WHERE hc.id = #{id} AND hc.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemMap">
+    SELECT hc.id, hc.user_id, u.name AS user_name,
+           hc.company_id, c.name AS company_name,
+           hc.checkup_date, hc.hospital_name, hc.checkup_type,
+           hc.summary, hc.report_file_url, hc.created_at
+      FROM tb_health_checkup hc
+      LEFT JOIN tb_user u    ON u.id = hc.user_id AND u.deleted = 0
+      LEFT JOIN tb_company c ON c.id = hc.company_id AND c.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY hc.checkup_date DESC, hc.id DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_health_checkup hc
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_health_checkup (
+      user_id, company_id, checkup_date, hospital_name, checkup_type,
+      summary, report_file_url, uploaded_by, uploaded_at, created_at, deleted
+    ) VALUES (
+      #{userId}, #{companyId}, #{checkupDate}, #{hospitalName}, #{checkupType},
+      #{summary}, #{reportFileUrl}, #{uploadedBy}, SYSUTCDATETIME(), SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="softDelete">
+    UPDATE tb_health_checkup SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

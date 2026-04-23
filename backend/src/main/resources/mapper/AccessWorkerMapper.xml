@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.AccessWorkerMapper">
+
+  <resultMap id="AccessWorkerResultMap" type="com.penocean.ehs.model.AccessWorker">
+    <id property="id" column="id"/>
+    <result property="accessRequestId" column="access_request_id"/>
+    <result property="workerName" column="worker_name"/>
+    <result property="workerBirth" column="worker_birth"/>
+    <result property="workerPhone" column="worker_phone"/>
+    <result property="workerRole" column="worker_role"/>
+    <result property="safetyEduCompleted" column="safety_edu_completed"/>
+    <result property="safetyEduCompletedAt" column="safety_edu_completed_at"/>
+    <result property="safetyEduCertificateUrl" column="safety_edu_certificate_url"/>
+    <result property="checkByShip" column="check_by_ship"/>
+    <result property="checkByShipAt" column="check_by_ship_at"/>
+    <result property="checkByShipUserId" column="check_by_ship_user_id"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <select id="findByRequest" resultMap="AccessWorkerResultMap">
+    SELECT id, access_request_id, worker_name, worker_birth, worker_phone, worker_role,
+           safety_edu_completed, safety_edu_completed_at, safety_edu_certificate_url,
+           check_by_ship, check_by_ship_at, check_by_ship_user_id,
+           created_at, updated_at, deleted
+      FROM tb_access_worker
+     WHERE access_request_id = #{accessRequestId} AND deleted = 0
+     ORDER BY id ASC
+  </select>
+
+  <select id="findById" resultMap="AccessWorkerResultMap">
+    SELECT id, access_request_id, worker_name, worker_birth, worker_phone, worker_role,
+           safety_edu_completed, safety_edu_completed_at, safety_edu_certificate_url,
+           check_by_ship, check_by_ship_at, check_by_ship_user_id,
+           created_at, updated_at, deleted
+      FROM tb_access_worker
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_access_worker (
+      access_request_id, worker_name, worker_birth, worker_phone, worker_role,
+      safety_edu_completed, safety_edu_completed_at, safety_edu_certificate_url,
+      created_at, deleted
+    ) VALUES (
+      #{accessRequestId}, #{workerName}, #{workerBirth}, #{workerPhone}, #{workerRole},
+      <choose>
+        <when test="safetyEduCompleted != null">#{safetyEduCompleted}</when>
+        <otherwise>0</otherwise>
+      </choose>,
+      #{safetyEduCompletedAt}, #{safetyEduCertificateUrl},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <insert id="bulkInsert">
+    INSERT INTO tb_access_worker (
+      access_request_id, worker_name, worker_birth, worker_phone, worker_role,
+      safety_edu_completed, created_at, deleted
+    ) VALUES
+    <foreach collection="list" item="w" separator=",">
+      (
+        #{w.accessRequestId}, #{w.workerName}, #{w.workerBirth}, #{w.workerPhone}, #{w.workerRole},
+        <choose>
+          <when test="w.safetyEduCompleted != null">#{w.safetyEduCompleted}</when>
+          <otherwise>0</otherwise>
+        </choose>,
+        SYSUTCDATETIME(), 0
+      )
+    </foreach>
+  </insert>
+
+  <select id="countByRequest" resultType="int">
+    SELECT COUNT(1) FROM tb_access_worker
+     WHERE access_request_id = #{accessRequestId} AND deleted = 0
+  </select>
+
+  <update id="deleteByRequest">
+    UPDATE tb_access_worker
+       SET deleted = 1, updated_at = SYSUTCDATETIME()
+     WHERE access_request_id = #{accessRequestId}
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_access_worker
+       SET deleted = 1, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <update id="updateEduStatus">
+    UPDATE tb_access_worker
+       SET safety_edu_completed = <choose><when test="completed">1</when><otherwise>0</otherwise></choose>,
+           safety_edu_completed_at =
+             <choose>
+               <when test="completed">SYSUTCDATETIME()</when>
+               <otherwise>NULL</otherwise>
+             </choose>,
+           safety_edu_certificate_url = #{certificateUrl},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <update id="updateCheckByShip">
+    UPDATE tb_access_worker
+       SET check_by_ship = <choose><when test="checked">1</when><otherwise>0</otherwise></choose>,
+           check_by_ship_at =
+             <choose>
+               <when test="checked">SYSUTCDATETIME()</when>
+               <otherwise>NULL</otherwise>
+             </choose>,
+           check_by_ship_user_id =
+             <choose>
+               <when test="checked">#{userId}</when>
+               <otherwise>NULL</otherwise>
+             </choose>,
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+</mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.DepartmentMapper">
+
+  <resultMap id="DepartmentResultMap" type="com.penocean.ehs.model.Department">
+    <id property="id" column="id"/>
+    <result property="code" column="code"/>
+    <result property="name" column="name"/>
+    <result property="parentId" column="parent_id"/>
+    <result property="managerUserId" column="manager_user_id"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <select id="findAll" resultMap="DepartmentResultMap">
+    SELECT id, code, name, parent_id, manager_user_id, created_at, updated_at, deleted
+      FROM tb_department
+     WHERE deleted = 0
+     ORDER BY id ASC
+  </select>
+
+  <select id="findById" resultMap="DepartmentResultMap">
+    SELECT id, code, name, parent_id, manager_user_id, created_at, updated_at, deleted
+      FROM tb_department
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByCode" resultMap="DepartmentResultMap">
+    SELECT id, code, name, parent_id, manager_user_id, created_at, updated_at, deleted
+      FROM tb_department
+     WHERE code = #{code} AND deleted = 0
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_department (code, name, parent_id, manager_user_id, created_at, deleted)
+    VALUES (#{code}, #{name}, #{parentId}, #{managerUserId}, SYSUTCDATETIME(), 0)
+  </insert>
+
+  <update id="update">
+    UPDATE tb_department
+       SET name = #{name},
+           parent_id = #{parentId},
+           manager_user_id = #{managerUserId},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_department
+       SET deleted = 1, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+</mapper>
