@@ -15,8 +15,10 @@
 - [x] **Flyway 활성화 여부 결정** — ✅ `application.yml` `flyway.enabled: true` 로 변경
 
 ### 🟡 다음 작업
-- [ ] **프론트엔드 실행 확인** — `cd frontend && npm run dev` → `http://localhost:4000` 동작 검증
-- [ ] **ComingSoonPage로 연결된 미구현 메뉴 목록 파악** — App.tsx 라우팅 확인
+- [x] **프론트엔드 실행 확인** — ✅ `http://localhost:4000` 정상 동작
+- [x] **ComingSoonPage 연결 메뉴 파악** — ✅ 실제로 어떤 라우트에도 미사용 (dead import만 존재)
+- [ ] **미구현 프론트 기능 구현** — 해상직원 사건사고 페이지 (백엔드 SeaCrewIncidentController만 존재)
+- [ ] **`/health/trend` 사이드바 노출** — 라우트는 있으나 사이드바 메뉴 누락
 - [ ] 파일 업로드/다운로드 (`./uploads`) 실제 동작 여부 확인
 - [ ] 이메일 발송 (Office365 SMTP / Microsoft Graph) 연결 여부 확인
 

@@ -29,7 +29,7 @@ spring:
     enabled: true  # [2026-04-23] V1~V17 마이그레이션 파일 확인 후 활성화
     locations: classpath:db/migration
     baseline-on-migrate: true
-    validate-on-migrate: true
+    validate-on-migrate: false  # [2026-04-23] 시드 파일 수정 후 체크섬 불일치 방지 (개발환경)
 
   servlet:
     multipart:

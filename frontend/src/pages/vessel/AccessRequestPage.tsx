@@ -1,3 +1,5 @@
+// [2026-04-23] PPT 슬라이드 13 기준으로 컬럼 구조 수정
+// No. / 상태 / 구분 / 업종 / 방문사업장/선박 / 지역/항구 / 작업일정 / 작업상세 / 출입신청인원
 import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -25,6 +27,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
+import PrintIcon from '@mui/icons-material/Print'
 import * as XLSX from 'xlsx'
 import AppDatePicker from '../../components/common/AppDatePicker'
 import { useTranslation } from 'react-i18next'
@@ -58,14 +61,15 @@ const AccessRequestPage: React.FC = () => {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
 
+  // 모바일에서는 일부 컬럼 숨김
   const columnVisibilityModel: GridColumnVisibilityModel = useMemo(
     () =>
       isMobile
         ? {
-            companyName: false,
-            plannedStartDate: false,
-            plannedEndDate: false,
-            workerCount: false,
+            siteType: false,
+            industryName: false,
+            portName: false,
+            schedule: false,
           }
         : {},
     [isMobile]
@@ -90,7 +94,7 @@ const AccessRequestPage: React.FC = () => {
 
   const formatDate = (iso: string) => {
     try {
-      return format(parseISO(iso), 'yyyy-MM-dd')
+      return format(parseISO(iso), 'yyyy.MM.dd')
     } catch {
       return iso
     }
@@ -99,51 +103,22 @@ const AccessRequestPage: React.FC = () => {
   const statusLabel = (s: AccessRequestStatus) =>
     t(`accessRequest.status.${s}`)
 
+  // PPT 슬라이드 13 기준 컬럼 순서
   const columns: GridColDef<AccessRequestListItem>[] = [
     {
-      field: 'requestNo',
-      headerName: t('accessRequest.requestNo'),
-      width: 160,
-    },
-    {
-      field: 'companyName',
-      headerName: t('accessRequest.company'),
-      flex: 1,
-      minWidth: 150,
-    },
-    {
-      field: 'vesselName',
-      headerName: t('accessRequest.vessel'),
-      flex: 1,
-      minWidth: 140,
-    },
-    {
-      field: 'workType',
-      headerName: t('accessRequest.workType'),
-      width: 140,
-    },
-    {
-      field: 'plannedStartDate',
-      headerName: t('accessRequest.plannedStart'),
-      width: 130,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    {
-      field: 'plannedEndDate',
-      headerName: t('accessRequest.plannedEnd'),
-      width: 130,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    {
-      field: 'workerCount',
-      headerName: t('accessRequest.workerCount'),
-      width: 90,
-      type: 'number',
+      field: 'rowNo',
+      headerName: 'No.',
+      width: 60,
+      sortable: false,
+      renderCell: (p) => {
+        const idx = (listQuery.data?.content ?? []).findIndex((r) => r.id === p.row.id)
+        return page * pageSize + idx + 1
+      },
     },
     {
       field: 'status',
       headerName: t('accessRequest.colStatus'),
-      width: 140,
+      width: 120,
       renderCell: (p) => (
         <Chip
           size="small"
@@ -153,6 +128,58 @@ const AccessRequestPage: React.FC = () => {
         />
       ),
     },
+    {
+      field: 'siteType',
+      headerName: t('accessRequest.siteType'),
+      width: 80,
+      sortable: false,
+      valueGetter: () => t('accessRequest.siteTypeVessel'),  // 항상 "선박"
+    },
+    {
+      field: 'industryName',
+      headerName: t('accessRequest.industryType'),
+      width: 120,
+      valueGetter: (p) => p.value ?? '-',
+    },
+    {
+      field: 'vesselName',
+      headerName: t('accessRequest.vesselSite'),
+      flex: 1,
+      minWidth: 140,
+    },
+    {
+      field: 'portName',
+      headerName: t('accessRequest.portRegion'),
+      width: 100,
+      valueGetter: (p) => p.value ?? '-',
+    },
+    {
+      field: 'schedule',
+      headerName: t('accessRequest.workSchedule'),
+      width: 180,
+      sortable: false,
+      renderCell: (p) => {
+        const start = p.row.plannedStartDate ? formatDate(p.row.plannedStartDate) : ''
+        const end = p.row.plannedEndDate ? formatDate(p.row.plannedEndDate) : ''
+        return (
+          <Box sx={{ lineHeight: 1.3 }}>
+            <Typography variant="caption" display="block">{start}</Typography>
+            <Typography variant="caption" display="block" color="text.secondary">~{end}</Typography>
+          </Box>
+        )
+      },
+    },
+    {
+      field: 'workType',
+      headerName: t('accessRequest.workDetail'),
+      width: 120,
+    },
+    {
+      field: 'workerCount',
+      headerName: t('accessRequest.workerCountCol'),
+      width: 100,
+      type: 'number',
+    },
   ]
 
   const applyKeyword = () => {
@@ -160,32 +187,33 @@ const AccessRequestPage: React.FC = () => {
     setPage(0)
   }
 
-  // PPT slide 13/24: 출입신청(허가) 목록 Excel 다운로드
+  // PPT 슬라이드 13: Excel 다운로드
   const handleExcelExport = () => {
     const rows = listQuery.data?.content ?? []
-    const data = rows.map((r) => ({
-      '신청번호': r.requestNo ?? '',
+    const data = rows.map((r, i) => ({
+      'No.': i + 1,
       '상태': r.status ?? '',
-      '회사': r.companyName ?? '',
-      '사업자등록번호': r.businessNumber ?? '',
-      '선박': r.vesselName ?? '',
-      '항구': r.portName ?? '',
-      '작업유형': r.workType ?? '',
-      '작업 시작': r.plannedStartDate ?? '',
-      '작업 종료': r.plannedEndDate ?? '',
-      '작업자 수': r.workerCount ?? 0,
-      '제출일': r.submittedAt ?? '',
+      '구분': '선박',
+      '업종': r.industryName ?? '',
+      '방문사업장/선박': r.vesselName ?? '',
+      '지역/항구': r.portName ?? '',
+      '작업시작일': r.plannedStartDate ?? '',
+      '작업종료일': r.plannedEndDate ?? '',
+      '작업상세': r.workType ?? '',
+      '출입신청인원': r.workerCount ?? 0,
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     ws['!cols'] = [
-      { wch: 14 }, { wch: 10 }, { wch: 20 }, { wch: 16 }, { wch: 16 },
-      { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 18 },
+      { wch: 6 }, { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 18 },
+      { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
     ]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, isPermitView ? '출입허가' : '출입신청')
     const ts = new Date().toISOString().slice(0, 10)
     XLSX.writeFile(wb, `${isPermitView ? 'access_permits' : 'access_requests'}_${ts}.xlsx`)
   }
+
+  const handlePrint = () => window.print()
 
   const handleRowClick = (params: GridRowParams<AccessRequestListItem>) => {
     navigate(`${basePath}/${params.row.id}`)
@@ -195,27 +223,44 @@ const AccessRequestPage: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* PPT 슬라이드 13: 상단 헤더 — 타이틀 + Excel/인쇄 버튼 */}
       <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'stretch', sm: 'center' }}
+        direction="row"
+        alignItems="center"
         justifyContent="space-between"
-        spacing={1}
       >
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           {t(isPermitView ? 'accessRequest.permitPageTitle' : 'accessRequest.pageTitle')}
         </Typography>
-        {canCreate && !isPermitView && (
+        <Stack direction="row" spacing={1}>
+          {canCreate && !isPermitView && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/vessel/access-request/new')}
+            >
+              {t('accessRequest.create')}
+            </Button>
+          )}
           <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/vessel/access-request/new')}
+            variant="outlined"
+            startIcon={<FileDownloadIcon />}
+            onClick={handleExcelExport}
+            disabled={!(listQuery.data?.content?.length)}
           >
-            {t('accessRequest.create')}
+            Excel
           </Button>
-        )}
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={handlePrint}
+          >
+            {t('common.print')}
+          </Button>
+        </Stack>
       </Stack>
 
-      {/* Filter bar */}
+      {/* 필터 영역 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
@@ -247,7 +292,7 @@ const AccessRequestPage: React.FC = () => {
           <TextField
             size="small"
             label={t('approval.filterKeyword')}
-            placeholder={t('accessRequest.vessel') + ' / ' + t('accessRequest.company')}
+            placeholder={t('accessRequest.vesselSite') + ' / ' + t('accessRequest.company')}
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             onKeyDown={(e) => {
@@ -281,14 +326,6 @@ const AccessRequestPage: React.FC = () => {
             onClick={applyKeyword}
           >
             {t('common.search')}
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<FileDownloadIcon />}
-            onClick={handleExcelExport}
-            disabled={!(listQuery.data?.content?.length)}
-          >
-            Excel
           </Button>
         </Stack>
       </Paper>

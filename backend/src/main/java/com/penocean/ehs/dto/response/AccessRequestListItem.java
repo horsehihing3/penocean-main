@@ -20,6 +20,8 @@ public class AccessRequestListItem {
     private String companyName;
     private Long vesselId;
     private String vesselName;
+    private String portName;        // [2026-04-23] PPT 슬라이드 13: 지역/항구 컬럼 추가
+    private String industryName;    // [2026-04-23] PPT 슬라이드 13: 업종 컬럼 추가 (tb_code_master)
     private String workType;
     private LocalDate plannedStartDate;
     private LocalDate plannedEndDate;

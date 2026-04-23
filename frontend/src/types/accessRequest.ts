@@ -26,6 +26,8 @@ export interface AccessRequestListItem {
   requestNo: string
   companyName: string
   vesselName: string
+  portName: string | null      // [2026-04-23] PPT 슬라이드 13: 지역/항구
+  industryName: string | null  // [2026-04-23] PPT 슬라이드 13: 업종
   workType: string
   plannedStartDate: string
   plannedEndDate: string

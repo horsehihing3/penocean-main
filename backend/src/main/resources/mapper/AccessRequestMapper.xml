@@ -32,6 +32,8 @@
     <result property="companyName" column="company_name"/>
     <result property="vesselId" column="vessel_id"/>
     <result property="vesselName" column="vessel_name"/>
+    <result property="portName" column="port_name"/>
+    <result property="industryName" column="industry_name"/>
     <result property="workType" column="work_type"/>
     <result property="plannedStartDate" column="planned_start_date"/>
     <result property="plannedEndDate" column="planned_end_date"/>
@@ -135,9 +137,11 @@
         ar.id,
         ar.request_no,
         ar.company_id,
-        c.name AS company_name,
+        c.name  AS company_name,
         ar.vessel_id,
-        v.name AS vessel_name,
+        v.name  AS vessel_name,
+        p.name  AS port_name,
+        ic.name AS industry_name,
         ar.work_type,
         ar.planned_start_date,
         ar.planned_end_date,
@@ -146,8 +150,10 @@
         ar.submitted_at,
         ar.created_at
       FROM tb_access_request ar
-      LEFT JOIN tb_company c ON c.id = ar.company_id AND c.deleted = 0
-      LEFT JOIN tb_vessel  v ON v.id = ar.vessel_id
+      LEFT JOIN tb_company c  ON c.id  = ar.company_id  AND c.deleted = 0
+      LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
+      LEFT JOIN tb_port    p  ON p.id  = ar.port_id     AND p.deleted = 0
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
     <include refid="filterClause"/>
     ORDER BY ar.created_at DESC
     OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
