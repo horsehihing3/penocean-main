@@ -47,6 +47,7 @@ const emptyForm: EvaluationItemSavePayload = {
   category: '',
   title: '',
   description: '',
+  referenceDoc: '',
   maxScore: 10,
   weight: 1,
   sortOrder: 0,
@@ -143,6 +144,7 @@ const EvaluationItemPage: React.FC = () => {
       category: item.category,
       title: item.title,
       description: item.description ?? '',
+      referenceDoc: item.referenceDoc ?? '',
       maxScore: item.maxScore,
       weight: item.weight,
       sortOrder: item.sortOrder,
@@ -167,6 +169,7 @@ const EvaluationItemPage: React.FC = () => {
         category: item.category,
         title: item.title,
         description: item.description ?? '',
+        referenceDoc: item.referenceDoc ?? '',
         maxScore: item.maxScore,
         weight: item.weight,
         sortOrder: item.sortOrder,
@@ -213,6 +216,7 @@ const EvaluationItemPage: React.FC = () => {
                 <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.category')}</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.title')}</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>{t('evaluationItem.description')}</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 200 }}>첨부파일</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.maxScore')}</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.active')}</TableCell>
                 <TableCell sx={{ width: 100 }} />
@@ -221,14 +225,14 @@ const EvaluationItemPage: React.FC = () => {
             <TableBody>
               {itemsQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
               )}
               {!itemsQuery.isLoading && items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">
+                  <TableCell colSpan={7} align="center">
                     <Typography variant="body2" color="text.secondary">
                       {t('common.noData')}
                     </Typography>
@@ -242,7 +246,7 @@ const EvaluationItemPage: React.FC = () => {
                   <>
                     {isNewCategory && (
                       <TableRow key={`cat-${item.category}`} sx={{ bgcolor: 'primary.50' }}>
-                        <TableCell colSpan={6} sx={{ py: 0.5, fontWeight: 700, fontSize: '0.8rem', color: 'primary.dark', pl: 2 }}>
+                        <TableCell colSpan={7} sx={{ py: 0.5, fontWeight: 700, fontSize: '0.8rem', color: 'primary.dark', pl: 2 }}>
                           {item.category}
                         </TableCell>
                       </TableRow>
@@ -257,6 +261,11 @@ const EvaluationItemPage: React.FC = () => {
                       <TableCell>
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                           {item.description ?? '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                          {item.referenceDoc ?? '-'}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">{item.maxScore}</TableCell>
@@ -354,6 +363,15 @@ const EvaluationItemPage: React.FC = () => {
                 fullWidth
                 multiline
                 minRows={2}
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="첨부파일"
+                value={form.referenceDoc ?? ''}
+                onChange={(e) => setForm({ ...form, referenceDoc: e.target.value })}
+                fullWidth
                 size="small"
               />
             </Grid>

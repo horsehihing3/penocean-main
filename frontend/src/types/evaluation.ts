@@ -41,6 +41,7 @@ export interface EvaluationItem {
   category: string
   title: string
   description?: string
+  referenceDoc?: string | null   // [2026-04-24] PPT 슬라이드 25: 첨부파일
   maxScore: number
   weight: number
   sortOrder: number
@@ -54,6 +55,7 @@ export interface EvaluationItemSavePayload {
   category: string
   title: string
   description?: string
+  referenceDoc?: string | null   // [2026-04-24] PPT 슬라이드 25: 첨부파일
   maxScore: number
   weight: number
   sortOrder?: number

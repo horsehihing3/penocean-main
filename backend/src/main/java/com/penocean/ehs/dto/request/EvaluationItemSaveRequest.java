@@ -17,6 +17,7 @@ public class EvaluationItemSaveRequest {
     private String category;
     private String title;
     private String description;
+    private String referenceDoc;    // [2026-04-24] PPT 슬라이드 25: 첨부파일(참고서류)
     private Integer maxScore;
     private BigDecimal weight;
     private Integer sortOrder;

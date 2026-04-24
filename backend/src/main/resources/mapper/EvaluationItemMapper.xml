@@ -9,6 +9,7 @@
     <result property="category" column="category"/>
     <result property="title" column="title"/>
     <result property="description" column="description"/>
+    <result property="referenceDoc" column="reference_doc"/>
     <result property="maxScore" column="max_score"/>
     <result property="weight" column="weight"/>
     <result property="sortOrder" column="sort_order"/>
@@ -19,7 +20,7 @@
   </resultMap>
 
   <sql id="columns">
-    id, code, category, title, description, max_score, weight,
+    id, code, category, title, description, reference_doc, max_score, weight,
     sort_order, active, created_at, updated_at, deleted
   </sql>
 
@@ -57,10 +58,10 @@
 
   <insert id="insert" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO tb_evaluation_item (
-      code, category, title, description, max_score, weight,
+      code, category, title, description, reference_doc, max_score, weight,
       sort_order, active, created_at, deleted
     ) VALUES (
-      #{code}, #{category}, #{title}, #{description},
+      #{code}, #{category}, #{title}, #{description}, #{referenceDoc},
       <choose><when test="maxScore != null">#{maxScore}</when><otherwise>10</otherwise></choose>,
       <choose><when test="weight != null">#{weight}</when><otherwise>1.00</otherwise></choose>,
       <choose><when test="sortOrder != null">#{sortOrder}</when><otherwise>0</otherwise></choose>,
@@ -75,6 +76,7 @@
            category = #{category},
            title = #{title},
            description = #{description},
+           reference_doc = #{referenceDoc},
            max_score = #{maxScore},
            weight = #{weight},
            sort_order = #{sortOrder},
