@@ -109,8 +109,15 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.adminEvalItem', icon: <FactCheckIcon />, path: '/admin/eval-item' },
       { textKey: 'nav.adminSafetyRule', icon: <RuleIcon />, path: '/admin/safety-rule' },
       { textKey: 'nav.adminAccidentReport', icon: <ReportIcon />, path: '/admin/accident-report' },
-      { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
+    ],
+  },
+  {
+    textKey: 'nav.safetyPerformance',
+    icon: <AssessmentIcon />,
+    allowedRoles: ['ADMIN'],
+    children: [
       { textKey: 'nav.dailySafetyLog', icon: <WorkIcon />, path: '/admin/daily-safety-log' },
+      { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
       { textKey: 'nav.performanceLand', icon: <AssessmentIcon />, path: '/admin/safety-performance/land' },
       { textKey: 'nav.performanceSea', icon: <DirectionsBoatIcon />, path: '/admin/safety-performance/sea' },
     ],
