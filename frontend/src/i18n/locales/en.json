@@ -150,6 +150,7 @@
     "admin": "Admin",
     "adminApproval": "Registration List & Company Mgmt",
     "adminCompany": "Info Collection",
+    "adminAccessApproval": "Access Request Approval",
     "adminCodeMaster": "Code Master",
     "adminEvalItem": "Evaluation Items",
     "adminSafetyRule": "Safety Rules",

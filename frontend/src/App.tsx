@@ -36,6 +36,7 @@ import NoticeBoardPage from './pages/notice/NoticeBoardPage'
 import FormLibraryPage from './pages/notice/FormLibraryPage'
 import SafetyRulePage from './pages/admin/SafetyRulePage'
 import CompanyManagePage from './pages/admin/CompanyManagePage'
+import AdminAccessApprovalPage from './pages/admin/AdminAccessApprovalPage'
 import CodeMasterPage from './pages/admin/CodeMasterPage'
 import AuditInspectionPage from './pages/admin/AuditInspectionPage'
 
@@ -133,6 +134,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <CompanyManagePage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/access-approval"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <AdminAccessApprovalPage />
             </RoleRoute>
           }
         />
