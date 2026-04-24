@@ -148,7 +148,7 @@
     "noticeBoard": "Announcements",
     "noticeForms": "Form Library",
     "admin": "Admin",
-    "adminApproval": "Registration Approval",
+    "adminApproval": "Registration List & Company Mgmt",
     "adminCompany": "Company Management",
     "adminCodeMaster": "Code Master",
     "adminEvalItem": "Evaluation Items",
@@ -206,7 +206,7 @@
     "passwordComplexity": "Include letters, digits and one of @!%#?& (8-20 chars)"
   },
   "approval": {
-    "pageTitle": "Contractor Registration Approval",
+    "pageTitle": "Registration List & Company Mgmt",
     "goToCompanyMgmt": "Go to Company Mgmt",
     "filterStatus": "Status",
     "filterKeyword": "Search",

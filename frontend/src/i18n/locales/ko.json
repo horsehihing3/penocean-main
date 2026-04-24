@@ -148,7 +148,7 @@
     "noticeBoard": "공지",
     "noticeForms": "양식함",
     "admin": "관리자",
-    "adminApproval": "가입승인",
+    "adminApproval": "가입신청List & 업체관리",
     "adminCompany": "업체관리",
     "adminCodeMaster": "코드 마스터",
     "adminEvalItem": "평가항목",
@@ -206,7 +206,7 @@
     "passwordComplexity": "영문/숫자/특수문자[ @!%#?& ]가 각각 1개 이상, 8~20자"
   },
   "approval": {
-    "pageTitle": "협력업체 가입 승인",
+    "pageTitle": "가입신청List & 업체관리",
     "goToCompanyMgmt": "업체관리로 이동",
     "filterStatus": "상태",
     "filterKeyword": "검색",
