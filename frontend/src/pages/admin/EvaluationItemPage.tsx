@@ -6,7 +6,6 @@ import {
   Typography,
   TextField,
   Button,
-  Chip,
   Alert,
   Switch,
   Dialog,
@@ -210,98 +209,86 @@ const EvaluationItemPage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 80 }}>{t('evaluationItem.order')}</TableCell>
-                <TableCell sx={{ width: 110 }}>{t('evaluationItem.code')}</TableCell>
-                <TableCell sx={{ width: 140 }}>{t('evaluationItem.category')}</TableCell>
-                <TableCell>{t('evaluationItem.title')}</TableCell>
-                <TableCell align="right" sx={{ width: 80 }}>
-                  {t('evaluationItem.maxScore')}
-                </TableCell>
-                <TableCell align="right" sx={{ width: 80 }}>
-                  {t('evaluationItem.weight')}
-                </TableCell>
-                <TableCell align="center" sx={{ width: 80 }}>
-                  {t('evaluationItem.active')}
-                </TableCell>
-                <TableCell sx={{ width: 120 }} />
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.category')}</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.title')}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t('evaluationItem.description')}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.maxScore')}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.active')}</TableCell>
+                <TableCell sx={{ width: 100 }} />
               </TableRow>
             </TableHead>
             <TableBody>
               {itemsQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={6} align="center">
                     <CircularProgress size={24} />
                   </TableCell>
                 </TableRow>
               )}
               {!itemsQuery.isLoading && items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={6} align="center">
                     <Typography variant="body2" color="text.secondary">
                       {t('common.noData')}
                     </Typography>
                   </TableCell>
                 </TableRow>
               )}
-              {items.map((item, idx) => (
-                <TableRow key={item.id} hover>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5}>
-                      <IconButton
-                        size="small"
-                        disabled={idx === 0 || reorderMut.isPending}
-                        onClick={() => handleMove(idx, -1)}
-                      >
-                        <ArrowUpwardIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        disabled={idx === items.length - 1 || reorderMut.isPending}
-                        onClick={() => handleMove(idx, 1)}
-                      >
-                        <ArrowDownwardIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip label={item.code} size="small" />
-                  </TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {item.title}
-                    </Typography>
-                    {item.description && !isMobile && (
-                      <Typography variant="caption" color="text.secondary">
-                        {item.description}
-                      </Typography>
+              {items.map((item, idx) => {
+                const prevCategory = idx > 0 ? items[idx - 1].category : null
+                const isNewCategory = item.category !== prevCategory
+                return (
+                  <>
+                    {isNewCategory && (
+                      <TableRow key={`cat-${item.category}`} sx={{ bgcolor: 'primary.50' }}>
+                        <TableCell colSpan={6} sx={{ py: 0.5, fontWeight: 700, fontSize: '0.8rem', color: 'primary.dark', pl: 2 }}>
+                          {item.category}
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </TableCell>
-                  <TableCell align="right">{item.maxScore}</TableCell>
-                  <TableCell align="right">{item.weight}</TableCell>
-                  <TableCell align="center">
-                    <Switch
-                      size="small"
-                      checked={item.active}
-                      onChange={() => handleToggleActive(item)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5}>
-                      <IconButton size="small" onClick={() => handleEdit(item)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => setConfirmDelete(item)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <TableRow key={item.id} hover>
+                      <TableCell sx={{ pl: 3, fontSize: '0.82rem', color: 'text.secondary' }}>
+                        {item.category}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.title}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                          {item.description ?? '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">{item.maxScore}</TableCell>
+                      <TableCell align="center">
+                        <Switch
+                          size="small"
+                          checked={item.active}
+                          onChange={() => handleToggleActive(item)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5}>
+                          <IconButton size="small" onClick={() => handleEdit(item)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" onClick={() => setConfirmDelete(item)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" disabled={idx === 0 || reorderMut.isPending}
+                            onClick={() => handleMove(idx, -1)}>
+                            <ArrowUpwardIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" disabled={idx === items.length - 1 || reorderMut.isPending}
+                            onClick={() => handleMove(idx, 1)}>
+                            <ArrowDownwardIcon fontSize="small" />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  </>
+                )
+              })}
             </TableBody>
           </Table>
         </TableContainer>

@@ -106,7 +106,6 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.adminCompany', icon: <BusinessIcon />, path: '/admin/company' },
       { textKey: 'nav.adminAccessApproval', icon: <LoginIcon />, path: '/admin/access-approval' },
       { textKey: 'nav.adminEvalReview', icon: <AssessmentIcon />, path: '/admin/eval-review' },
-      { textKey: 'nav.adminCodeMaster', icon: <ArticleIcon />, path: '/admin/code-masters' },
       { textKey: 'nav.adminEvalItem', icon: <FactCheckIcon />, path: '/admin/eval-item' },
       { textKey: 'nav.adminSafetyRule', icon: <RuleIcon />, path: '/admin/safety-rule' },
       { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
