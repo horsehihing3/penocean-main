@@ -40,6 +40,7 @@ import AdminAccessApprovalPage from './pages/admin/AdminAccessApprovalPage'
 import AdminEvaluationReviewPage from './pages/admin/AdminEvaluationReviewPage'
 import CodeMasterPage from './pages/admin/CodeMasterPage'
 import AuditInspectionPage from './pages/admin/AuditInspectionPage'
+import AdminAccidentReportPage from './pages/admin/AdminAccidentReportPage'
 
 function App() {
   return (
@@ -175,6 +176,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <SafetyRulePage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/accident-report"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <AdminAccidentReportPage />
             </RoleRoute>
           }
         />

@@ -108,6 +108,7 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.adminEvalReview', icon: <AssessmentIcon />, path: '/admin/eval-review' },
       { textKey: 'nav.adminEvalItem', icon: <FactCheckIcon />, path: '/admin/eval-item' },
       { textKey: 'nav.adminSafetyRule', icon: <RuleIcon />, path: '/admin/safety-rule' },
+      { textKey: 'nav.adminAccidentReport', icon: <ReportIcon />, path: '/admin/accident-report' },
       { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
       { textKey: 'nav.dailySafetyLog', icon: <WorkIcon />, path: '/admin/daily-safety-log' },
       { textKey: 'nav.performanceLand', icon: <AssessmentIcon />, path: '/admin/safety-performance/land' },
