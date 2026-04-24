@@ -109,17 +109,16 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.adminEvalItem', icon: <FactCheckIcon />, path: '/admin/eval-item' },
       { textKey: 'nav.adminSafetyRule', icon: <RuleIcon />, path: '/admin/safety-rule' },
       { textKey: 'nav.adminAccidentReport', icon: <ReportIcon />, path: '/admin/accident-report' },
-    ],
-  },
-  {
-    textKey: 'nav.safetyPerformance',
-    icon: <AssessmentIcon />,
-    allowedRoles: ['ADMIN'],
-    children: [
-      { textKey: 'nav.dailySafetyLog', icon: <WorkIcon />, path: '/admin/daily-safety-log' },
-      { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
-      { textKey: 'nav.performanceLand', icon: <AssessmentIcon />, path: '/admin/safety-performance/land' },
-      { textKey: 'nav.performanceSea', icon: <DirectionsBoatIcon />, path: '/admin/safety-performance/sea' },
+      {
+        textKey: 'nav.safetyPerformance',
+        icon: <AssessmentIcon />,
+        children: [
+          { textKey: 'nav.dailySafetyLog', icon: <WorkIcon />, path: '/admin/daily-safety-log' },
+          { textKey: 'nav.auditInspection', icon: <FactCheckIcon />, path: '/admin/audit-inspection' },
+          { textKey: 'nav.performanceLand', icon: <AssessmentIcon />, path: '/admin/safety-performance/land' },
+          { textKey: 'nav.performanceSea', icon: <DirectionsBoatIcon />, path: '/admin/safety-performance/sea' },
+        ],
+      },
     ],
   },
 ]
@@ -156,9 +155,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
     const active = visibleMenuItems.find((item) =>
       item.children?.some(
         (child) => child.path && (location.pathname === child.path || (child.path !== '/' && location.pathname.startsWith(child.path)))
+          || child.children?.some(
+            (gc) => gc.path && (location.pathname === gc.path || (gc.path !== '/' && location.pathname.startsWith(gc.path)))
+          )
       )
     )
-    return active ? [active.textKey] : []
+    const activeSubKey = visibleMenuItems.flatMap(item => item.children ?? []).find(
+      child => child.children?.some(
+        gc => gc.path && (location.pathname === gc.path || (gc.path !== '/' && location.pathname.startsWith(gc.path)))
+      )
+    )?.textKey
+    return [
+      ...(active ? [active.textKey] : []),
+      ...(activeSubKey ? [activeSubKey] : []),
+    ]
   })
 
   // Theme-aware sidebar colors
@@ -250,59 +260,110 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
             <List disablePadding sx={{ backgroundColor: colors.subMenuBg }}>
               {item.children!.map((child) => {
-                const childActive = child.path ? isPathActive(child.path) : false
+                const childHasChildren = !!child.children?.length
+                const childActive = child.path ? isPathActive(child.path) : child.children?.some(gc => gc.path && isPathActive(gc.path)) ?? false
+                const childExpanded = expandedMenus.includes(child.textKey)
                 const showApprovalBadge =
                   isAdmin && child.path === '/admin/approval' && pendingApprovalCount > 0
                 return (
-                  <ListItem key={child.textKey} disablePadding>
-                    <ListItemButton
-                      onClick={() => {
-                        if (child.path) {
-                          navigate(child.path)
-                          onMenuClick?.()
-                        }
-                      }}
-                      sx={{
-                        py: 1,
-                        pl: 4,
-                        pr: 2,
-                        borderLeft: childActive ? `4px solid ${colors.activeBorder}` : '4px solid transparent',
-                        backgroundColor: childActive ? colors.activeBackground : 'transparent',
-                        color: childActive ? 'white' : colors.inactiveText,
-                        '&:hover': {
-                          backgroundColor: childActive ? colors.activeBackground : colors.sidebarHover,
-                        },
-                      }}
-                    >
-                      <ListItemText
-                        primary={`•  ${t(child.textKey)}`}
-                        primaryTypographyProps={{
-                          fontSize: '0.8rem',
-                          fontWeight: childActive ? 600 : 400,
+                  <Box key={child.textKey}>
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          if (childHasChildren) {
+                            setExpandedMenus(prev =>
+                              prev.includes(child.textKey)
+                                ? prev.filter(k => k !== child.textKey)
+                                : [...prev, child.textKey]
+                            )
+                          } else if (child.path) {
+                            navigate(child.path)
+                            onMenuClick?.()
+                          }
                         }}
-                      />
-                      {showApprovalBadge && (
-                        <Box
-                          sx={{
-                            ml: 1,
-                            minWidth: 22,
-                            height: 20,
-                            px: 0.75,
-                            borderRadius: '10px',
-                            backgroundColor: 'error.main',
-                            color: 'white',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                        sx={{
+                          py: 1,
+                          pl: 4,
+                          pr: 2,
+                          borderLeft: childActive ? `4px solid ${colors.activeBorder}` : '4px solid transparent',
+                          backgroundColor: childActive ? colors.activeBackground : 'transparent',
+                          color: childActive ? 'white' : colors.inactiveText,
+                          '&:hover': {
+                            backgroundColor: childActive ? colors.activeBackground : colors.sidebarHover,
+                          },
+                        }}
+                      >
+                        <ListItemText
+                          primary={`•  ${t(child.textKey)}`}
+                          primaryTypographyProps={{
+                            fontSize: '0.8rem',
+                            fontWeight: childActive ? 600 : 400,
                           }}
-                        >
-                          {pendingApprovalCount}
-                        </Box>
-                      )}
-                    </ListItemButton>
-                  </ListItem>
+                        />
+                        {showApprovalBadge && (
+                          <Box
+                            sx={{
+                              ml: 1,
+                              minWidth: 22,
+                              height: 20,
+                              px: 0.75,
+                              borderRadius: '10px',
+                              backgroundColor: 'error.main',
+                              color: 'white',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {pendingApprovalCount}
+                          </Box>
+                        )}
+                        {childHasChildren && (childExpanded ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />)}
+                      </ListItemButton>
+                    </ListItem>
+                    {childHasChildren && (
+                      <Collapse in={childExpanded} timeout="auto" unmountOnExit>
+                        <List disablePadding>
+                          {child.children!.map((gc) => {
+                            const gcActive = gc.path ? isPathActive(gc.path) : false
+                            return (
+                              <ListItem key={gc.textKey} disablePadding>
+                                <ListItemButton
+                                  onClick={() => {
+                                    if (gc.path) {
+                                      navigate(gc.path)
+                                      onMenuClick?.()
+                                    }
+                                  }}
+                                  sx={{
+                                    py: 0.75,
+                                    pl: 6,
+                                    pr: 2,
+                                    borderLeft: gcActive ? `4px solid ${colors.activeBorder}` : '4px solid transparent',
+                                    backgroundColor: gcActive ? colors.activeBackground : 'transparent',
+                                    color: gcActive ? 'white' : colors.inactiveText,
+                                    '&:hover': {
+                                      backgroundColor: gcActive ? colors.activeBackground : colors.sidebarHover,
+                                    },
+                                  }}
+                                >
+                                  <ListItemText
+                                    primary={`-  ${t(gc.textKey)}`}
+                                    primaryTypographyProps={{
+                                      fontSize: '0.75rem',
+                                      fontWeight: gcActive ? 600 : 400,
+                                    }}
+                                  />
+                                </ListItemButton>
+                              </ListItem>
+                            )
+                          })}
+                        </List>
+                      </Collapse>
+                    )}
+                  </Box>
                 )
               })}
             </List>
