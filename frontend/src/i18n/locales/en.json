@@ -151,6 +151,7 @@
     "adminApproval": "Registration List & Company Mgmt",
     "adminCompany": "Info Collection",
     "adminAccessApproval": "Access Request Approval",
+    "adminEvalReview": "Safety Evaluation Review",
     "adminCodeMaster": "Code Master",
     "adminEvalItem": "Evaluation Items",
     "adminSafetyRule": "Safety Rules",
