@@ -120,6 +120,7 @@ public class EvaluationItemService {
                 .category(e.getCategory())
                 .title(e.getTitle())
                 .description(e.getDescription())
+                .referenceDoc(e.getReferenceDoc())
                 .maxScore(e.getMaxScore())
                 .weight(e.getWeight())
                 .sortOrder(e.getSortOrder())
