@@ -38,11 +38,16 @@ public class ApprovalController {
     @GetMapping
     @Operation(summary = "가입 신청 목록", description = "status 필터(기본 PENDING)와 keyword 검색 지원")
     public ResponseEntity<ApiResponse<PageResponse<ApprovalListItemResponse>>> list(
-            @RequestParam(required = false, defaultValue = "PENDING") String status,
+            @RequestParam(required = false, defaultValue = "") String status,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String businessNumber,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int size) {
-        PageResponse<ApprovalListItemResponse> result = approvalService.list(status, keyword, page, size);
+        PageResponse<ApprovalListItemResponse> result = approvalService.list(
+                status, keyword, companyName, businessNumber, dateFrom, dateTo, page, size);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 

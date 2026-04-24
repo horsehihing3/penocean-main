@@ -19,6 +19,7 @@ public class VisitPermitResponse {
     private String accessRequestNo;
     private Long companyId;
     private String companyName;
+    private String industryName;   // [2026-04-24] PPT 슬라이드 15: 업종(Business Type)
     private Long vesselId;
     private String vesselName;
     private LocalDateTime validFrom;

@@ -33,6 +33,12 @@ public class AccessRequestDetailResponse {
     private Long reviewedBy;
     private LocalDateTime reviewedAt;
     private String improvementRequestReason;
+    // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
+    private String safetyManagerName;
+    private String safetyManagerTel;
+    private String safetyManagerEmail;
+    // [2026-04-23] PPT 슬라이드 14: 업종명 (tb_code JOIN)
+    private String industryName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

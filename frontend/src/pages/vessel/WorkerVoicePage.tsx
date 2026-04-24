@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Paper,
@@ -42,18 +42,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { format, parseISO } from 'date-fns'
 import { workerVoiceApi } from '../../api/workerVoiceApi'
-import { lookupApi } from '../../api/lookupApi'
-import { companyAdminApi } from '../../api/companyAdminApi'
 import { useAuth } from '../../context/AuthContext'
 import {
   getWorkerVoiceStatusColor,
   getWorkerVoiceTypeColor,
-  getWorkerVoiceSeverityColor,
 } from '../../utils/status'
 import type {
   WorkerVoiceCreatePayload,
   WorkerVoiceListItem,
-  WorkerVoiceSeverity,
   WorkerVoiceStatus,
   WorkerVoiceType,
 } from '../../types/workerVoice'
@@ -77,18 +73,6 @@ const WorkerVoicePage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
 
-  const vesselsQuery = useQuery({
-    queryKey: ['lookup', 'vessels'],
-    queryFn: () => lookupApi.vessels(),
-  })
-  const vessels = vesselsQuery.data ?? []
-
-  const companiesQuery = useQuery({
-    queryKey: ['admin', 'companies', 'all'],
-    queryFn: () => companyAdminApi.list({ page: 0, size: 500, status: 'ACTIVE' }),
-    enabled: user?.role !== 'CONTRACTOR',
-  })
-  const companies = companiesQuery.data?.content ?? []
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
@@ -100,18 +84,45 @@ const WorkerVoicePage: React.FC = () => {
   const [assignedTo, setAssignedTo] = useState<string>('')
   const [resolution, setResolution] = useState('')
 
-  // Create form state
-  const emptyCreate: WorkerVoiceCreatePayload = {
+  // Create form state (PPT 슬라이드 17 기준)
+  type CreateForm = {
+    voiceType: WorkerVoiceType
+    reporterName: string
+    reporterEmail: string
+    companyName: string
+    industryName: string
+    phone: string
+    captchaInput: string
+    title: string
+    content: string
+  }
+  const emptyCreateForm: CreateForm = {
     voiceType: 'NEAR_MISS',
+    reporterName: '',
+    reporterEmail: '',
+    companyName: user?.name ?? '',
+    industryName: '',
+    phone: '',
+    captchaInput: '',
     title: '',
     content: '',
-    companyId: user?.companyId ?? null,
-    vesselId: null,
-    severity: null,
-    reporterAnonymous: false,
   }
-  const [createForm, setCreateForm] = useState<WorkerVoiceCreatePayload>(emptyCreate)
+  const [createForm, setCreateForm] = useState<CreateForm>(emptyCreateForm)
   const [consentChecked, setConsentChecked] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const genCaptcha = useCallback(() => String(Math.floor(1000 + Math.random() * 9000)), [])
+  const [captchaValue, setCaptchaValue] = useState(genCaptcha)
+
+  const openCreate = () => {
+    const code = genCaptcha()
+    setCaptchaValue(code)
+    setCreateForm({ ...emptyCreateForm, companyName: user?.name ?? '' })
+    setConsentChecked(false)
+    setPendingFile(null)
+    setCreateOpen(true)
+  }
 
   const canManage = user?.role === 'ADMIN' || user?.role === 'CONTRACT_DEPT'
 
@@ -151,13 +162,14 @@ const WorkerVoicePage: React.FC = () => {
   }
 
   const createMut = useMutation({
-    mutationFn: (payload: WorkerVoiceCreatePayload) => workerVoiceApi.create(payload),
+    mutationFn: async (payload: WorkerVoiceCreatePayload) => {
+      const { id } = await workerVoiceApi.create(payload)
+      if (pendingFile) await workerVoiceApi.uploadAttachment(id, pendingFile)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workerVoices'] })
       setSnackbar({ open: true, message: t('workerVoice.createSuccess'), severity: 'success' })
       setCreateOpen(false)
-      setCreateForm(emptyCreate)
-      setConsentChecked(false)
     },
     onError: (err) => {
       setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' })
@@ -201,89 +213,70 @@ const WorkerVoicePage: React.FC = () => {
   const statusLabel = (v: WorkerVoiceStatus) => t(`workerVoice.status.${v}`)
   const severityLabel = (v: WorkerVoiceSeverity) => t(`workerVoice.severity.${v}`)
 
+  // PPT 슬라이드 16: No | 분류 | 제목 | 댓글 | 등록일
   const columns: GridColDef<WorkerVoiceListItem>[] = [
     {
-      field: 'voiceNo',
-      headerName: t('workerVoice.voiceNo'),
-      width: 150,
+      field: '_no',
+      headerName: 'No',
+      width: 60,
+      sortable: false,
+      renderCell: (p) => {
+        const idx = (listQuery.data?.content ?? []).findIndex((r) => r.id === p.row.id)
+        return <span>{page * pageSize + idx + 1}</span>
+      },
     },
     {
       field: 'voiceType',
-      headerName: t('workerVoice.voiceType'),
-      width: 110,
+      headerName: '분류',
+      width: 130,
       renderCell: (p) => (
         <Chip
           size="small"
           label={typeLabel(p.value as WorkerVoiceType)}
           color={getWorkerVoiceTypeColor(p.value as WorkerVoiceType)}
+          variant="outlined"
           sx={{ fontWeight: 600 }}
         />
       ),
     },
     {
       field: 'title',
-      headerName: t('workerVoice.title'),
+      headerName: '제목',
       flex: 1,
-      minWidth: 180,
-    },
-    {
-      field: 'companyName',
-      headerName: t('workerVoice.company'),
-      width: 150,
-    },
-    {
-      field: 'severity',
-      headerName: t('workerVoice.severityCol'),
-      width: 100,
-      renderCell: (p) =>
-        p.value ? (
-          <Chip
-            size="small"
-            label={severityLabel(p.value as WorkerVoiceSeverity)}
-            color={getWorkerVoiceSeverityColor(p.value as WorkerVoiceSeverity)}
-            sx={{ fontWeight: 600 }}
-          />
-        ) : (
-          <span>-</span>
-        ),
-    },
-    {
-      field: 'status',
-      headerName: t('workerVoice.statusCol'),
-      width: 120,
+      minWidth: 200,
       renderCell: (p) => (
-        <Chip
-          size="small"
-          label={statusLabel(p.value as WorkerVoiceStatus)}
-          color={getWorkerVoiceStatusColor(p.value as WorkerVoiceStatus)}
-          sx={{ fontWeight: 600 }}
-        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', py: 0.5 }}>
+          <Typography variant="body2">
+            {p.row.reporterAnonymous ? '***** (비공개 처리)' : p.row.title}
+          </Typography>
+          {p.row.commentCount > 0 && (
+            <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600 }}>
+              A: 답변완료
+            </Typography>
+          )}
+        </Box>
+      ),
+    },
+    {
+      field: 'commentCount',
+      headerName: '댓글',
+      width: 70,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (p) => (
+        <Typography
+          variant="body2"
+          sx={{ color: p.row.commentCount > 0 ? 'error.main' : 'text.secondary', fontWeight: p.row.commentCount > 0 ? 700 : 400 }}
+        >
+          {p.row.commentCount}
+        </Typography>
       ),
     },
     {
       field: 'createdAt',
-      headerName: t('workerVoice.createdAt'),
+      headerName: '등록일',
       width: 120,
       valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    {
-      field: 'actions',
-      headerName: t('approval.colActions'),
-      width: 90,
-      sortable: false,
-      filterable: false,
-      renderCell: (p) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={(e) => {
-            e.stopPropagation()
-            setSelectedId(p.row.id)
-          }}
-        >
-          {t('approval.detail')}
-        </Button>
-      ),
     },
   ]
 
@@ -311,9 +304,20 @@ const WorkerVoicePage: React.FC = () => {
       setSnackbar({ open: true, message: t('errors.required'), severity: 'error' })
       return
     }
+    if (createForm.captchaInput.trim() !== captchaValue) {
+      setSnackbar({ open: true, message: '보안문자가 일치하지 않습니다.', severity: 'error' })
+      setCaptchaValue(genCaptcha())
+      setCreateForm((f) => ({ ...f, captchaInput: '' }))
+      return
+    }
     const payload: WorkerVoiceCreatePayload = {
-      ...createForm,
-      severity: createForm.voiceType === 'INCIDENT' ? createForm.severity : null,
+      voiceType: createForm.voiceType,
+      title: createForm.title,
+      content: createForm.content,
+      companyId: user?.companyId ?? null,
+      vesselId: null,
+      severity: null,
+      reporterAnonymous: false,
     }
     createMut.mutate(payload)
   }
@@ -342,10 +346,7 @@ const WorkerVoicePage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => {
-            setCreateForm({ ...emptyCreate, companyId: user?.companyId ?? null })
-            setCreateOpen(true)
-          }}
+          onClick={openCreate}
         >
           {t('workerVoice.new')}
         </Button>
@@ -473,368 +474,293 @@ const WorkerVoicePage: React.FC = () => {
           )}
           {detail && (
             <Stack spacing={2}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.voiceNo')}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {detail.voiceNo}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.voiceType')}
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      size="small"
-                      label={typeLabel(detail.voiceType)}
-                      color={getWorkerVoiceTypeColor(detail.voiceType)}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.title')}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {detail.title}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.company')}
-                  </Typography>
-                  <Typography variant="body1">
+              {/* ■ 상세 내용 */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                ■ 상세 내용
+              </Typography>
+
+              {/* 제목 */}
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                {detail.reporterAnonymous ? '***** (비공개 처리)' : detail.title}
+              </Typography>
+
+              {/* 메타 바: 작성자 | 분류 | 등록일 */}
+              <Paper
+                variant="outlined"
+                sx={{
+                  px: 2,
+                  py: 1,
+                  bgcolor: 'action.hover',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                  alignItems: 'center',
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  작성자:{' '}
+                  <strong>
                     {detail.reporterAnonymous
                       ? t('workerVoice.anonymous')
-                      : detail.companyName}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.vessel')}
-                  </Typography>
-                  <Typography variant="body1">{detail.vesselName || '-'}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.severityCol')}
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    {detail.severity ? (
-                      <Chip
-                        size="small"
-                        label={severityLabel(detail.severity)}
-                        color={getWorkerVoiceSeverityColor(detail.severity)}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    ) : (
-                      <Typography variant="body1">-</Typography>
-                    )}
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.statusCol')}
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
+                      : detail.reporterName ?? detail.companyName}
+                  </strong>
+                </Typography>
+                <Divider orientation="vertical" flexItem />
+                <Typography variant="body2" color="text.secondary">
+                  분류: <strong>{typeLabel(detail.voiceType)}</strong>
+                </Typography>
+                <Divider orientation="vertical" flexItem />
+                <Typography variant="body2" color="text.secondary">
+                  등록일: <strong>{detail.createdAt ? formatDate(detail.createdAt) : '-'}</strong>
+                </Typography>
+                {detail.status && (
+                  <>
+                    <Divider orientation="vertical" flexItem />
                     <Chip
                       size="small"
                       label={statusLabel(detail.status)}
                       color={getWorkerVoiceStatusColor(detail.status)}
                       sx={{ fontWeight: 600 }}
                     />
-                  </Box>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('workerVoice.content')}
-                  </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, whiteSpace: 'pre-wrap', mt: 0.5 }}>
-                    {detail.content}
-                  </Paper>
-                </Grid>
-                {detail.resolution && (
-                  <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('workerVoice.resolution')}
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 2, whiteSpace: 'pre-wrap', mt: 0.5 }}>
-                      {detail.resolution}
-                    </Paper>
-                  </Grid>
+                  </>
                 )}
-              </Grid>
+              </Paper>
 
-              {detail.attachments.length > 0 && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                      {t('accessRequest.tabAttachments')}
-                    </Typography>
-                    <Stack spacing={1}>
-                      {detail.attachments.map((att) => (
-                        <Stack key={att.id} direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">{att.fileName}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            ({Math.ceil(att.fileSize / 1024)} KB)
-                          </Typography>
-                        </Stack>
+              {/* 본문 + 첨부파일 */}
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+                  {detail.content}
+                </Typography>
+                {detail.attachments.length > 0 && (
+                  <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      첨부파일 :{' '}
+                      {detail.attachments.map((att, i) => (
+                        <span key={att.id}>
+                          {i > 0 && ', '}
+                          {att.fileName} ({Math.ceil(att.fileSize / 1024)} KB)
+                        </span>
                       ))}
-                    </Stack>
+                    </Typography>
                   </Box>
-                </>
+                )}
+              </Paper>
+
+              {/* ■ 의견 및 답변 */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                ■ 의견 및 답변 ({detail.resolution ? 1 : 0})
+              </Typography>
+
+              {/* 기존 답변 */}
+              {detail.resolution && (
+                <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                  <Box
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      bgcolor: 'action.hover',
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600 }}>
+                      ↳ {detail.assigneeName ?? '안전경영팀'} &nbsp;|&nbsp;{' '}
+                      {detail.resolvedAt
+                        ? `${formatDate(detail.resolvedAt)} ${format(parseISO(detail.resolvedAt), 'HH:mm')}`
+                        : detail.updatedAt
+                        ? formatDate(detail.updatedAt)
+                        : ''}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 2 }}>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+                      {detail.resolution}
+                    </Typography>
+                  </Box>
+                </Paper>
               )}
 
+              {/* 댓글 입력 (ADMIN/CONTRACT_DEPT) */}
               {canManage && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                      {t('workerVoice.changeStatus')}
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <FormControl size="small" fullWidth>
-                          <InputLabel>{t('workerVoice.statusCol')}</InputLabel>
-                          <Select
-                            label={t('workerVoice.statusCol')}
-                            value={newStatus}
-                            onChange={(e) => setNewStatus(e.target.value as WorkerVoiceStatus)}
-                          >
-                            <MenuItem value="SUBMITTED">{t('workerVoice.status.SUBMITTED')}</MenuItem>
-                            <MenuItem value="TRIAGED">{t('workerVoice.status.TRIAGED')}</MenuItem>
-                            <MenuItem value="IN_PROGRESS">{t('workerVoice.status.IN_PROGRESS')}</MenuItem>
-                            <MenuItem value="RESOLVED">{t('workerVoice.status.RESOLVED')}</MenuItem>
-                            <MenuItem value="CLOSED">{t('workerVoice.status.CLOSED')}</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          label={t('workerVoice.assignedTo')}
-                          value={assignedTo}
-                          onChange={(e) => setAssignedTo(e.target.value.replace(/\D/g, ''))}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          multiline
-                          minRows={3}
-                          label={t('workerVoice.resolution')}
-                          value={resolution}
-                          onChange={(e) => setResolution(e.target.value)}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </>
+                <Paper variant="outlined" sx={{ p: 2 }}>
+                  <Stack spacing={1.5}>
+                    <Stack direction="row" spacing={1}>
+                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>{t('workerVoice.statusCol')}</InputLabel>
+                        <Select
+                          label={t('workerVoice.statusCol')}
+                          value={newStatus}
+                          onChange={(e) => setNewStatus(e.target.value as WorkerVoiceStatus)}
+                        >
+                          <MenuItem value="SUBMITTED">{t('workerVoice.status.SUBMITTED')}</MenuItem>
+                          <MenuItem value="TRIAGED">{t('workerVoice.status.TRIAGED')}</MenuItem>
+                          <MenuItem value="IN_PROGRESS">{t('workerVoice.status.IN_PROGRESS')}</MenuItem>
+                          <MenuItem value="RESOLVED">{t('workerVoice.status.RESOLVED')}</MenuItem>
+                          <MenuItem value="CLOSED">{t('workerVoice.status.CLOSED')}</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="flex-end">
+                      <TextField
+                        size="small"
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        placeholder="댓글을 입력하세요..."
+                        value={resolution}
+                        onChange={(e) => setResolution(e.target.value)}
+                      />
+                      <Button
+                        variant="contained"
+                        disabled={!newStatus || statusMut.isPending}
+                        onClick={submitStatusChange}
+                        sx={{ minWidth: 64, height: 56 }}
+                      >
+                        {statusMut.isPending ? <CircularProgress size={18} /> : '등록'}
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Paper>
               )}
             </Stack>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          {canManage && (
-            <Button
-              variant="contained"
-              disabled={!newStatus || statusMut.isPending}
-              onClick={submitStatusChange}
-            >
-              {statusMut.isPending ? <CircularProgress size={20} /> : t('common.save')}
-            </Button>
-          )}
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={closeDetail}>{t('common.close')}</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Create Dialog */}
+      {/* Create Dialog — PPT 슬라이드 17 */}
       <Dialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          {t('workerVoice.new')}
-          <IconButton onClick={() => setCreateOpen(false)} size="small">
-            <CloseIcon />
-          </IconButton>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {t('workerVoice.pageTitle')}
+          <IconButton onClick={() => setCreateOpen(false)} size="small"><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: 'action.hover',
-                borderRadius: 1,
-                border: '1px solid',
-                borderColor: 'divider',
-                maxHeight: 180,
-                overflowY: 'auto',
-              }}
-            >
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                {t('workerVoice.consent.title')}
+          <Stack spacing={0}>
+            {/* 개인정보 동의 */}
+            <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" fontWeight={700}>
+                개인정보 수집 및 이용 등에 대한 동의
               </Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.secondary', lineHeight: 1.6 }}>
+              <FormControlLabel
+                control={<Checkbox size="small" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} />}
+                label={<Typography variant="caption">위 사항에 동의합니다.</Typography>}
+                sx={{ mr: 0 }}
+              />
+            </Stack>
+            <Box sx={{ p: 2, bgcolor: 'action.hover', border: '1px solid', borderColor: 'divider', borderRadius: 1, maxHeight: 160, overflowY: 'auto', mb: 2 }}>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.secondary', lineHeight: 1.7 }}>
                 {t('workerVoice.consent.body')}
               </Typography>
             </Box>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={consentChecked}
-                  onChange={(e) => setConsentChecked(e.target.checked)}
-                />
-              }
-              label={t('workerVoice.consent.agree')}
-            />
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', mb: 1 }}>
+              * 표시는 필수입력 항목입니다.
+            </Typography>
 
-            <FormControl size="small" fullWidth>
-              <InputLabel>{t('workerVoice.voiceType')}</InputLabel>
-              <Select
-                label={t('workerVoice.voiceType')}
-                value={createForm.voiceType}
-                onChange={(e) =>
-                  setCreateForm((f) => ({
-                    ...f,
-                    voiceType: e.target.value as WorkerVoiceType,
-                  }))
-                }
-              >
-                <MenuItem value="NEAR_MISS">{t('workerVoice.types.NEAR_MISS')}</MenuItem>
-                <MenuItem value="INCIDENT">{t('workerVoice.types.INCIDENT')}</MenuItem>
-                <MenuItem value="INQUIRY">{t('workerVoice.types.INQUIRY')}</MenuItem>
-              </Select>
-            </FormControl>
-
-            <TextField
-              size="small"
-              fullWidth
-              label={t('workerVoice.title')}
-              value={createForm.title}
-              onChange={(e) =>
-                setCreateForm((f) => ({ ...f, title: e.target.value }))
-              }
-            />
-
-            <TextField
-              size="small"
-              fullWidth
-              multiline
-              minRows={4}
-              label={t('workerVoice.content')}
-              value={createForm.content}
-              onChange={(e) =>
-                setCreateForm((f) => ({ ...f, content: e.target.value }))
-              }
-            />
-
-            {user?.role !== 'CONTRACTOR' && (
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t('approval.colCompany')}</InputLabel>
-                <Select
-                  label={t('approval.colCompany')}
-                  value={createForm.companyId ?? ''}
-                  onChange={(e) =>
-                    setCreateForm((f) => ({
-                      ...f,
-                      companyId: e.target.value === '' ? null : Number(e.target.value),
-                    }))
-                  }
-                >
-                  <MenuItem value="">
-                    <em>{t('common.selectPlaceholder', { defaultValue: '선택하세요' })}</em>
-                  </MenuItem>
-                  {companies.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name} ({c.businessNumber})
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            )}
-
-            <FormControl size="small" fullWidth>
-              <InputLabel>{t('accessRequest.vessel')}</InputLabel>
-              <Select
-                label={t('accessRequest.vessel')}
-                value={createForm.vesselId ?? ''}
-                onChange={(e) =>
-                  setCreateForm((f) => ({
-                    ...f,
-                    vesselId: e.target.value === '' ? null : Number(e.target.value),
-                  }))
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('common.selectPlaceholder', { defaultValue: '선택하세요' })}</em>
-                </MenuItem>
-                {vessels.map((v) => (
-                  <MenuItem key={v.id} value={v.id}>
-                    {v.name}
-                    {v.imoNumber ? ` (IMO ${v.imoNumber})` : ''}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {createForm.voiceType === 'INCIDENT' && (
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t('workerVoice.severityCol')}</InputLabel>
-                <Select
-                  label={t('workerVoice.severityCol')}
-                  value={createForm.severity ?? ''}
-                  onChange={(e) =>
-                    setCreateForm((f) => ({
-                      ...f,
-                      severity: (e.target.value as WorkerVoiceSeverity) || null,
-                    }))
-                  }
-                >
-                  <MenuItem value="LOW">{t('workerVoice.severity.LOW')}</MenuItem>
-                  <MenuItem value="MEDIUM">{t('workerVoice.severity.MEDIUM')}</MenuItem>
-                  <MenuItem value="HIGH">{t('workerVoice.severity.HIGH')}</MenuItem>
-                  <MenuItem value="CRITICAL">{t('workerVoice.severity.CRITICAL')}</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={createForm.reporterAnonymous}
-                  onChange={(e) =>
-                    setCreateForm((f) => ({
-                      ...f,
-                      reporterAnonymous: e.target.checked,
-                    }))
-                  }
-                />
-              }
-              label={t('workerVoice.anonymous')}
-            />
+            {/* 폼 필드 — PPT 라벨|필드|구분선 스타일 */}
+            {[
+              /* 구분 */
+              <Grid container alignItems="center" key="voiceType">
+                <Grid item xs={2}><Typography variant="body2" fontWeight={600}>구분 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={10}>
+                  <FormControl size="small" sx={{ minWidth: 240 }}>
+                    <Select
+                      displayEmpty
+                      value={createForm.voiceType}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, voiceType: e.target.value as WorkerVoiceType }))}
+                    >
+                      <MenuItem value="NEAR_MISS">{t('workerVoice.types.NEAR_MISS')}</MenuItem>
+                      <MenuItem value="INCIDENT">{t('workerVoice.types.INCIDENT')}</MenuItem>
+                      <MenuItem value="INQUIRY">{t('workerVoice.types.INQUIRY')}</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>,
+              /* 이름 + 이메일 */
+              <Grid container alignItems="center" spacing={2} key="name-email">
+                <Grid item xs={2}><Typography variant="body2" fontWeight={600}>이름 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <TextField size="small" fullWidth placeholder="이름을 입력해주세요" value={createForm.reporterName} onChange={(e) => setCreateForm((f) => ({ ...f, reporterName: e.target.value }))} />
+                </Grid>
+                <Grid item xs={2} sx={{ textAlign: 'right' }}><Typography variant="body2" fontWeight={600}>이메일 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <TextField size="small" fullWidth placeholder="이메일을 입력해주세요" value={createForm.reporterEmail} onChange={(e) => setCreateForm((f) => ({ ...f, reporterEmail: e.target.value }))} />
+                </Grid>
+              </Grid>,
+              /* 회사명 + 업종 */
+              <Grid container alignItems="center" spacing={2} key="company-industry">
+                <Grid item xs={2}><Typography variant="body2" fontWeight={600}>회사명 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <TextField size="small" fullWidth placeholder="회사명을 입력해주세요" value={createForm.companyName} onChange={(e) => setCreateForm((f) => ({ ...f, companyName: e.target.value }))} />
+                </Grid>
+                <Grid item xs={2} sx={{ textAlign: 'right' }}><Typography variant="body2" fontWeight={600}>업종 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <TextField size="small" fullWidth placeholder="업종을 입력해주세요" value={createForm.industryName} onChange={(e) => setCreateForm((f) => ({ ...f, industryName: e.target.value }))} />
+                </Grid>
+              </Grid>,
+              /* 연락처 + 보안문자 */
+              <Grid container alignItems="center" spacing={2} key="phone-captcha">
+                <Grid item xs={2}><Typography variant="body2" fontWeight={600}>연락처 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <TextField size="small" fullWidth placeholder="연락처를 입력해주세요" value={createForm.phone} onChange={(e) => setCreateForm((f) => ({ ...f, phone: e.target.value }))} />
+                </Grid>
+                <Grid item xs={2} sx={{ textAlign: 'right' }}><Typography variant="body2" fontWeight={600}>보안문자 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={4}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box sx={{ px: 2, py: 1, bgcolor: 'primary.main', color: 'primary.contrastText', borderRadius: 1, fontWeight: 700, fontSize: 18, letterSpacing: 4, minWidth: 72, textAlign: 'center' }}>
+                      {captchaValue}
+                    </Box>
+                    <TextField size="small" placeholder="보안문자를 입력해주세요" value={createForm.captchaInput} onChange={(e) => setCreateForm((f) => ({ ...f, captchaInput: e.target.value }))} sx={{ flex: 1 }} />
+                  </Stack>
+                </Grid>
+              </Grid>,
+              /* 제목 */
+              <Grid container alignItems="center" spacing={2} key="title">
+                <Grid item xs={2}><Typography variant="body2" fontWeight={600}>제목 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={10}>
+                  <TextField size="small" fullWidth placeholder="제목을 입력해주세요" value={createForm.title} onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))} />
+                </Grid>
+              </Grid>,
+              /* 내용 + 파일 */
+              <Grid container alignItems="flex-start" spacing={2} key="content">
+                <Grid item xs={2} sx={{ pt: '12px !important' }}><Typography variant="body2" fontWeight={600}>내용 <span style={{ color: 'red' }}>*</span></Typography></Grid>
+                <Grid item xs={10}>
+                  <TextField size="small" fullWidth multiline minRows={5} placeholder="내용을 입력해주세요" value={createForm.content} onChange={(e) => setCreateForm((f) => ({ ...f, content: e.target.value }))} />
+                  <Box sx={{ mt: 1 }}>
+                    <Button variant="outlined" size="small" component="label" sx={{ mr: 1 }}>
+                      파일 선택
+                      <input ref={fileInputRef} type="file" hidden onChange={(e) => { setPendingFile(e.target.files?.[0] ?? null); e.target.value = '' }} />
+                    </Button>
+                    <Typography variant="caption" color="text.secondary">
+                      {pendingFile ? pendingFile.name : '선택된 파일 없음'}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>,
+            ].map((row, i, arr) => (
+              <Box key={i}>
+                <Box sx={{ py: 2 }}>{row}</Box>
+                {i < arr.length - 1 && <Divider />}
+              </Box>
+            ))}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button onClick={() => setCreateOpen(false)}>{t('common.cancel')}</Button>
+        <DialogActions sx={{ p: 2, justifyContent: 'center' }}>
           <Button
             variant="contained"
+            size="large"
             disabled={createMut.isPending || !consentChecked}
             onClick={submitCreate}
+            sx={{ minWidth: 160 }}
           >
-            {createMut.isPending ? <CircularProgress size={20} /> : t('common.submit')}
+            {createMut.isPending ? <CircularProgress size={20} /> : '등록하기'}
           </Button>
         </DialogActions>
       </Dialog>

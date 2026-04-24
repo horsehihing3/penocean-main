@@ -15,6 +15,10 @@ export const approvalApi = {
         params: {
           status: params.status || undefined,
           keyword: params.keyword || undefined,
+          companyName: params.companyName || undefined,
+          businessNumber: params.businessNumber || undefined,
+          dateFrom: params.dateFrom || undefined,
+          dateTo: params.dateTo || undefined,
           page: params.page ?? 0,
           size: params.size ?? 20,
         },

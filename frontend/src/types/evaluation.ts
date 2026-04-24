@@ -92,6 +92,7 @@ export interface EvaluationItemScore {
   itemCode: string
   itemCategory: string
   itemTitle: string
+  itemDescription?: string | null // [2026-04-24] PPT 슬라이드 20: 평가내용
   score: number
   maxScore: number
   weight: number

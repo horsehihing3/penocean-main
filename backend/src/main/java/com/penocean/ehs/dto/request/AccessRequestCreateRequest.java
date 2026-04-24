@@ -22,6 +22,10 @@ public class AccessRequestCreateRequest {
     private String workDescription;
     private LocalDate plannedStartDate;
     private LocalDate plannedEndDate;
+    // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
+    private String safetyManagerName;
+    private String safetyManagerTel;
+    private String safetyManagerEmail;
     private List<WorkerItem> workers;
 
     @Data

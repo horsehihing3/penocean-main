@@ -30,6 +30,10 @@ public class AccessRequest {
     private Long reviewedBy;
     private LocalDateTime reviewedAt;
     private String improvementRequestReason;
+    // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
+    private String safetyManagerName;
+    private String safetyManagerTel;
+    private String safetyManagerEmail;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean deleted;

@@ -23,4 +23,6 @@ public class WorkerVoiceListItem {
     private String status;
     private Boolean reporterAnonymous;
     private LocalDateTime createdAt;
+    private LocalDateTime resolvedAt;   // [2026-04-24] PPT 슬라이드 16: 댓글(답변) 날짜
+    private Integer commentCount;       // [2026-04-24] PPT 슬라이드 16: 댓글 수 (resolution 유무)
 }

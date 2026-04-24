@@ -29,6 +29,7 @@
     <result property="accessRequestNo" column="access_request_no"/>
     <result property="companyId" column="company_id"/>
     <result property="companyName" column="company_name"/>
+    <result property="industryName" column="industry_name"/>
     <result property="vesselId" column="vessel_id"/>
     <result property="vesselName" column="vessel_name"/>
     <result property="validFrom" column="valid_from"/>
@@ -73,7 +74,7 @@
   <select id="findDetailById" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -81,13 +82,14 @@
       LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
       LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
       LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
      WHERE vp.id = #{id} AND vp.deleted = 0
   </select>
 
   <select id="findByPermitNo" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -95,13 +97,14 @@
       LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
       LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
       LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
      WHERE vp.permit_no = #{permitNo} AND vp.deleted = 0
   </select>
 
   <select id="findByAccessRequestId" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -109,6 +112,7 @@
       LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
       LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
       LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
      WHERE vp.access_request_id = #{accessRequestId} AND vp.deleted = 0
      ORDER BY vp.issued_at DESC
   </select>
@@ -116,7 +120,7 @@
   <select id="findPage" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -124,6 +128,7 @@
       LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
       LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
       LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
     <include refid="filterClause"/>
     ORDER BY vp.issued_at DESC
     OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+// [2026-04-24] PPT 슬라이드 22 기준으로 검색조건·목록컬럼·승인방식 전면 수정
+import { useState } from 'react'
 import {
   Box,
   Paper,
@@ -15,21 +16,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Grid,
-  Divider,
   IconButton,
   Snackbar,
   Alert,
   useMediaQuery,
   useTheme,
   CircularProgress,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  TablePagination,
 } from '@mui/material'
-import {
-  DataGrid,
-  GridColDef,
-  GridRowParams,
-  GridColumnVisibilityModel,
-} from '@mui/x-data-grid'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import CheckIcon from '@mui/icons-material/CheckCircleOutline'
@@ -37,7 +37,6 @@ import BlockIcon from '@mui/icons-material/Block'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import * as XLSX from 'xlsx'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { approvalApi } from '../../api/approvalApi'
@@ -48,70 +47,54 @@ type SnackbarState = { open: boolean; message: string; severity: 'success' | 'er
 
 const statusChipColor = (s: ApprovalStatus): 'warning' | 'success' | 'error' | 'default' => {
   switch (s) {
-    case 'PENDING':
-      return 'warning'
-    case 'APPROVED':
-      return 'success'
-    case 'REJECTED':
-      return 'error'
-    default:
-      return 'default'
+    case 'PENDING': return 'warning'
+    case 'APPROVED': return 'success'
+    case 'REJECTED': return 'error'
+    default: return 'default'
   }
 }
 
 const ApprovalPage: React.FC = () => {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const qc = useQueryClient()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
+  // 검색 조건 — PPT 슬라이드 22
   const [status, setStatus] = useState<StatusFilter>('PENDING')
-  const [keyword, setKeyword] = useState('')
-  const [keywordInput, setKeywordInput] = useState('')
+  const [companyNameInput, setCompanyNameInput] = useState('')
+  const [bizNoInput, setBizNoInput] = useState('')
+  const [dateFromInput, setDateFromInput] = useState('')
+  const [dateToInput, setDateToInput] = useState('')
+
+  // 실제 쿼리 파라미터 (검색 버튼 클릭 시 반영)
+  const [companyName, setCompanyName] = useState('')
+  const [bizNo, setBizNo] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
 
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
+  // 거절 사유 팝업
+  const [rejectTarget, setRejectTarget] = useState<ApprovalListItem | null>(null)
   const [rejectReason, setRejectReason] = useState('')
-  const [rejectOpen, setRejectOpen] = useState(false)
-  const [approveConfirmOpen, setApproveConfirmOpen] = useState(false)
 
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: '',
-    severity: 'success',
-  })
-
-  const columnVisibilityModel: GridColumnVisibilityModel = useMemo(
-    () =>
-      isMobile
-        ? {
-            createdAt: false,
-            email: false,
-            phone: false,
-            businessNumber: false,
-          }
-        : {},
-    [isMobile]
-  )
+  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' })
 
   const listQuery = useQuery({
-    queryKey: ['admin', 'approvals', { status, keyword, page, pageSize }],
+    queryKey: ['admin', 'approvals', { status, companyName, bizNo, dateFrom, dateTo, page, pageSize }],
     queryFn: () =>
       approvalApi.list({
         status: status || undefined,
-        keyword: keyword || undefined,
+        companyName: companyName || undefined,
+        businessNumber: bizNo || undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
         page,
         size: pageSize,
       }),
     placeholderData: (prev) => prev,
-  })
-
-  const detailQuery = useQuery({
-    queryKey: ['admin', 'approvals', 'detail', selectedUserId],
-    queryFn: () => approvalApi.detail(selectedUserId as number),
-    enabled: selectedUserId != null,
   })
 
   const extractErrorMessage = (err: unknown): string => {
@@ -128,12 +111,8 @@ const ApprovalPage: React.FC = () => {
       qc.invalidateQueries({ queryKey: ['admin', 'approvals'] })
       qc.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       setSnackbar({ open: true, message: t('approval.approveSuccess'), severity: 'success' })
-      setApproveConfirmOpen(false)
-      setSelectedUserId(null)
     },
-    onError: (err) => {
-      setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' })
-    },
+    onError: (err) => setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' }),
   })
 
   const rejectMut = useMutation({
@@ -143,449 +122,286 @@ const ApprovalPage: React.FC = () => {
       qc.invalidateQueries({ queryKey: ['admin', 'approvals'] })
       qc.invalidateQueries({ queryKey: ['dashboard', 'summary'] })
       setSnackbar({ open: true, message: t('approval.rejectSuccess'), severity: 'success' })
-      setRejectOpen(false)
+      setRejectTarget(null)
       setRejectReason('')
-      setSelectedUserId(null)
     },
-    onError: (err) => {
-      setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' })
-    },
+    onError: (err) => setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' }),
   })
 
   const formatDate = (iso: string) => {
     try {
-      const d = new Date(iso)
-      return d.toLocaleString(i18n.language === 'ko' ? 'ko-KR' : 'en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    } catch {
-      return iso
-    }
+      return new Date(iso).toLocaleDateString(i18n.language === 'ko' ? 'ko-KR' : 'en-US')
+    } catch { return iso }
   }
 
   const statusLabel = (s: ApprovalStatus): string => {
     switch (s) {
-      case 'PENDING':
-        return t('approval.statusPending')
-      case 'APPROVED':
-        return t('approval.statusApproved')
-      case 'REJECTED':
-        return t('approval.statusRejected')
-      case 'INACTIVE':
-        return t('approval.statusInactive')
+      case 'PENDING': return t('approval.statusPending')
+      case 'APPROVED': return t('approval.statusApproved')
+      case 'REJECTED': return t('approval.statusRejected')
+      case 'INACTIVE': return t('approval.statusInactive')
     }
   }
 
-  const columns: GridColDef<ApprovalListItem>[] = [
-    {
-      field: 'createdAt',
-      headerName: t('approval.colCreatedAt'),
-      width: 150,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    { field: 'name', headerName: t('approval.colName'), width: 120, flex: 0 },
-    { field: 'email', headerName: t('approval.colEmail'), flex: 1, minWidth: 180 },
-    { field: 'phone', headerName: t('approval.colPhone'), width: 140 },
-    { field: 'companyName', headerName: t('approval.colCompany'), flex: 1, minWidth: 160 },
-    { field: 'businessNumber', headerName: t('approval.colBusinessNumber'), width: 140 },
-    {
-      field: 'status',
-      headerName: t('approval.colStatus'),
-      width: 120,
-      renderCell: (p) => (
-        <Chip
-          size="small"
-          label={statusLabel(p.value as ApprovalStatus)}
-          color={statusChipColor(p.value as ApprovalStatus)}
-          sx={{ fontWeight: 600 }}
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: t('approval.colActions'),
-      width: 110,
-      sortable: false,
-      filterable: false,
-      renderCell: (p) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={(e) => {
-            e.stopPropagation()
-            setSelectedUserId(p.row.userId)
-          }}
-        >
-          {t('approval.detail')}
-        </Button>
-      ),
-    },
-  ]
-
-  const applyKeyword = () => {
-    setKeyword(keywordInput.trim())
+  const handleSearch = () => {
+    setCompanyName(companyNameInput.trim())
+    setBizNo(bizNoInput.trim())
+    setDateFrom(dateFromInput)
+    setDateTo(dateToInput)
     setPage(0)
   }
 
-  // PPT slide 22: 가입신청 LIST Excel export
   const handleExcelExport = () => {
     const rows = listQuery.data?.content ?? []
     const data = rows.map((r) => ({
-      '업체명': r.companyName ?? '',
+      '업종': r.industryName ?? '-',
+      '계약팀': r.contractDeptName ?? '-',
       '사업자등록번호': r.businessNumber ?? '',
-      '담당자명': r.name ?? '',
-      '이메일': r.email ?? '',
-      '연락처': r.phone ?? '',
+      '성명': r.name ?? '',
+      'Tel': r.phone ?? '',
+      'E-Mail': r.email ?? '',
       '상태': statusLabel(r.status as ApprovalStatus),
       '신청일': r.createdAt ? formatDate(r.createdAt) : '',
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     ws['!cols'] = [
-      { wch: 24 }, { wch: 18 }, { wch: 14 }, { wch: 28 }, { wch: 16 }, { wch: 10 }, { wch: 18 },
+      { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 14 },
     ]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, '가입신청')
-    const ts = new Date().toISOString().slice(0, 10)
-    XLSX.writeFile(wb, `approval_${ts}.xlsx`)
+    XLSX.writeFile(wb, `approval_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
-  const handleRowClick = (params: GridRowParams<ApprovalListItem>) => {
-    setSelectedUserId(params.row.userId)
-  }
-
-  const closeDetail = () => {
-    setSelectedUserId(null)
-    setRejectOpen(false)
-    setApproveConfirmOpen(false)
-    setRejectReason('')
-  }
-
-  const detail = detailQuery.data
-  const detailOpen = selectedUserId != null
+  const rows = listQuery.data?.content ?? []
+  const total = listQuery.data?.total ?? 0
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          {t('approval.pageTitle')}
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => navigate('/admin/company')}
-        >
-          {t('approval.goToCompanyMgmt')}
-        </Button>
-      </Stack>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        {t('approval.pageTitle')}
+      </Typography>
 
-      {/* Filter bar */}
+      {/* ── 검색 조건 — PPT 슬라이드 22 ── */}
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', sm: 'center' }}
-        >
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>{t('approval.filterStatus')}</InputLabel>
-            <Select
-              label={t('approval.filterStatus')}
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value as StatusFilter)
-                setPage(0)
-              }}
-            >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
-              <MenuItem value="PENDING">{t('approval.statusPending')}</MenuItem>
-              <MenuItem value="APPROVED">{t('approval.statusApproved')}</MenuItem>
-              <MenuItem value="REJECTED">{t('approval.statusRejected')}</MenuItem>
-              <MenuItem value="INACTIVE">{t('approval.statusInactive')}</MenuItem>
-            </Select>
-          </FormControl>
+        <Stack spacing={1.5}>
+          {/* 1행: 신청일 + 상태 */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+            <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>신청일</Typography>
+            <TextField
+              type="date"
+              size="small"
+              value={dateFromInput}
+              onChange={(e) => setDateFromInput(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: 160 }}
+            />
+            <Typography variant="body2">~</Typography>
+            <TextField
+              type="date"
+              size="small"
+              value={dateToInput}
+              onChange={(e) => setDateToInput(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ width: 160 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>{t('approval.filterStatus')}</InputLabel>
+              <Select
+                label={t('approval.filterStatus')}
+                value={status}
+                onChange={(e) => { setStatus(e.target.value as StatusFilter); setPage(0) }}
+              >
+                <MenuItem value="">{t('approval.filterAll')}</MenuItem>
+                <MenuItem value="PENDING">{t('approval.statusPending')}</MenuItem>
+                <MenuItem value="APPROVED">{t('approval.statusApproved')}</MenuItem>
+                <MenuItem value="REJECTED">{t('approval.statusRejected')}</MenuItem>
+                <MenuItem value="INACTIVE">{t('approval.statusInactive')}</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
 
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
-            placeholder={t('approval.filterKeywordPlaceholder')}
-            value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1 }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            onClick={applyKeyword}
-          >
-            {t('common.search')}
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<FileDownloadIcon />}
-            onClick={handleExcelExport}
-            disabled={!(listQuery.data?.content?.length)}
-          >
-            Excel
-          </Button>
+          {/* 2행: 협력업체명 + 사업자등록번호 + 버튼 */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+            <TextField
+              size="small"
+              label="협력업체명"
+              placeholder="업체명 검색"
+              value={companyNameInput}
+              onChange={(e) => setCompanyNameInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              size="small"
+              label="사업자등록번호"
+              placeholder="000-00-00000"
+              value={bizNoInput}
+              onChange={(e) => setBizNoInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              onClick={handleExcelExport}
+              disabled={!rows.length}
+            >
+              Excel
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={handleSearch}
+            >
+              {t('common.search')}
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
-      {/* DataGrid */}
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
-        }}
-      >
+      {/* ── 목록 — PPT 슬라이드 22 컬럼: 업종|계약팀|사업자등록번호|성명|Tel|E-Mail|승인/거절 ── */}
+      <Paper variant="outlined">
         {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
+          <Alert severity="error" sx={{ m: 2 }}>{t('approval.loadError')}</Alert>
         )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.userId}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.total ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{
-            noRowsLabel: t('approval.empty'),
-          }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell sx={{ fontWeight: 700 }}>업종</TableCell>
+                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>계약팀</TableCell>}
+                <TableCell sx={{ fontWeight: 700 }}>사업자등록번호</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>성명</TableCell>
+                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>Tel</TableCell>}
+                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>E-Mail</TableCell>}
+                <TableCell sx={{ fontWeight: 700 }}>신청일</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>상태</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, width: 140 }}>승인/거절</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {listQuery.isLoading && (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <CircularProgress size={28} />
+                  </TableCell>
+                </TableRow>
+              )}
+              {!listQuery.isLoading && rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                    {t('approval.empty')}
+                  </TableCell>
+                </TableRow>
+              )}
+              {rows.map((row) => (
+                <TableRow key={row.userId} hover>
+                  <TableCell>{row.industryName ?? '-'}</TableCell>
+                  {!isMobile && <TableCell>{row.contractDeptName ?? '-'}</TableCell>}
+                  <TableCell>{row.businessNumber}</TableCell>
+                  <TableCell>{row.name}</TableCell>
+                  {!isMobile && <TableCell>{row.phone}</TableCell>}
+                  {!isMobile && <TableCell>{row.email}</TableCell>}
+                  <TableCell>{formatDate(row.createdAt)}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={statusLabel(row.status as ApprovalStatus)}
+                      color={statusChipColor(row.status as ApprovalStatus)}
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    {row.status === 'PENDING' ? (
+                      <Stack direction="row" spacing={0.5} justifyContent="center">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="success"
+                          startIcon={approveMut.isPending ? <CircularProgress size={12} /> : <CheckIcon />}
+                          disabled={approveMut.isPending}
+                          onClick={() => approveMut.mutate(row.userId)}
+                          sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
+                        >
+                          승인
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<BlockIcon />}
+                          onClick={() => { setRejectTarget(row); setRejectReason('') }}
+                          sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
+                        >
+                          거절
+                        </Button>
+                      </Stack>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">-</Typography>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          rowsPerPage={pageSize}
+          rowsPerPageOptions={[10, 20, 50]}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
         />
       </Paper>
 
-      {/* Detail Dialog */}
+      {/* ── 거절 사유 팝업 — PPT 슬라이드 22 note: "거절을 누르면 사유를 쓸 수 있는 팝업" ── */}
       <Dialog
-        open={detailOpen}
-        onClose={closeDetail}
-        maxWidth="md"
+        open={rejectTarget != null}
+        onClose={() => setRejectTarget(null)}
+        maxWidth="sm"
         fullWidth
         fullScreen={isMobile}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {t('approval.detailTitle')}
-          <IconButton onClick={closeDetail} size="small">
-            <CloseIcon />
-          </IconButton>
+          <Typography variant="subtitle1" fontWeight={700}>거절 사유 입력</Typography>
+          <IconButton onClick={() => setRejectTarget(null)} size="small"><CloseIcon /></IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          {detailQuery.isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-              <CircularProgress size={32} />
-            </Box>
-          )}
-
-          {detail && (
-            <Stack spacing={3}>
-              {/* Basic info */}
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-                  {t('approval.sectionBasic')}
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colName')}
-                    </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {detail.name}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colEmail')}
-                    </Typography>
-                    <Typography variant="body1">{detail.email}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colPhone')}
-                    </Typography>
-                    <Typography variant="body1">{detail.phone}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colCompany')}
-                    </Typography>
-                    <Typography variant="body1">{detail.companyName}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colBusinessNumber')}
-                    </Typography>
-                    <Typography variant="body1">{detail.businessNumber}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colCreatedAt')}
-                    </Typography>
-                    <Typography variant="body1">{formatDate(detail.createdAt)}</Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" color="text.secondary">
-                      {t('approval.colStatus')}
-                    </Typography>
-                    <Box sx={{ mt: 0.5 }}>
-                      <Chip
-                        size="small"
-                        label={statusLabel(detail.status)}
-                        color={statusChipColor(detail.status)}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-
-              <Divider />
-
-              {/* Industries */}
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                  {t('approval.sectionIndustries')}
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {detail.industries.length === 0 && (
-                    <Typography variant="body2" color="text.secondary">
-                      {t('common.noData')}
-                    </Typography>
-                  )}
-                  {detail.industries.map((code) => (
-                    <Chip key={code} label={code} size="small" />
-                  ))}
-                </Stack>
-              </Box>
-
-              <Divider />
-
-              {/* Contract departments */}
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                  {t('approval.sectionDepartments')}
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  {detail.contractDepartments.length === 0 && (
-                    <Typography variant="body2" color="text.secondary">
-                      {t('common.noData')}
-                    </Typography>
-                  )}
-                  {detail.contractDepartments.map((d) => (
-                    <Chip key={d.code} label={d.name} size="small" color="primary" variant="outlined" />
-                  ))}
-                </Stack>
-              </Box>
-
-              {/* Reject reason entry */}
-              {detail.status === 'PENDING' && rejectOpen && (
-                <>
-                  <Divider />
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={3}
-                    label={t('approval.rejectReasonLabel')}
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                  />
-                </>
-              )}
-            </Stack>
-          )}
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {rejectTarget && (
+              <Typography variant="body2" color="text.secondary">
+                {rejectTarget.companyName} ({rejectTarget.businessNumber}) — {rejectTarget.name}
+              </Typography>
+            )}
+            <TextField
+              fullWidth
+              multiline
+              minRows={3}
+              label={t('approval.rejectReasonLabel')}
+              placeholder="거절 사유를 입력하면 협력업체 이메일로 자동 발송됩니다."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              autoFocus
+            />
+          </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
-          {detail?.status === 'PENDING' && !rejectOpen && !approveConfirmOpen && (
-            <>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<BlockIcon />}
-                onClick={() => setRejectOpen(true)}
-              >
-                {t('approval.reject')}
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<CheckIcon />}
-                onClick={() => setApproveConfirmOpen(true)}
-              >
-                {t('approval.approve')}
-              </Button>
-            </>
-          )}
-          {detail?.status === 'PENDING' && approveConfirmOpen && (
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-              <Typography variant="body2" sx={{ flex: 1 }}>
-                {t('approval.approveConfirm')}
-              </Typography>
-              <Button onClick={() => setApproveConfirmOpen(false)} disabled={approveMut.isPending}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                disabled={approveMut.isPending}
-                onClick={() => approveMut.mutate(detail.userId)}
-              >
-                {approveMut.isPending ? <CircularProgress size={20} /> : t('common.confirm')}
-              </Button>
-            </Stack>
-          )}
-          {detail?.status === 'PENDING' && rejectOpen && (
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%' }}>
-              <Typography variant="body2" sx={{ flex: 1 }}>
-                {t('approval.rejectConfirm')}
-              </Typography>
-              <Button
-                onClick={() => {
-                  setRejectOpen(false)
-                  setRejectReason('')
-                }}
-                disabled={rejectMut.isPending}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                disabled={rejectMut.isPending}
-                onClick={() =>
-                  rejectMut.mutate({ userId: detail.userId, reason: rejectReason.trim() || undefined })
-                }
-              >
-                {rejectMut.isPending ? <CircularProgress size={20} /> : t('common.confirm')}
-              </Button>
-            </Stack>
-          )}
-          {detail && detail.status !== 'PENDING' && (
-            <Button onClick={closeDetail} variant="contained">
-              {t('common.close')}
-            </Button>
-          )}
+          <Button onClick={() => setRejectTarget(null)}>{t('common.cancel')}</Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={rejectMut.isPending}
+            onClick={() =>
+              rejectMut.mutate({
+                userId: rejectTarget!.userId,
+                reason: rejectReason.trim() || undefined,
+              })
+            }
+          >
+            {rejectMut.isPending ? <CircularProgress size={20} /> : t('common.confirm')}
+          </Button>
         </DialogActions>
       </Dialog>
 

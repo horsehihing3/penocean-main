@@ -122,6 +122,9 @@ public class AccessRequestService {
                 .workerCount(workerCount)
                 .status("DRAFT")
                 .submittedBy(caller.getId())
+                .safetyManagerName(request.getSafetyManagerName())
+                .safetyManagerTel(request.getSafetyManagerTel())
+                .safetyManagerEmail(request.getSafetyManagerEmail())
                 .build();
         accessRequestMapper.insert(entity);
         Long id = entity.getId();
@@ -173,6 +176,9 @@ public class AccessRequestService {
                 .workerCount(source.getWorkerCount())
                 .status("DRAFT")
                 .submittedBy(caller.getId())
+                .safetyManagerName(source.getSafetyManagerName())
+                .safetyManagerTel(source.getSafetyManagerTel())
+                .safetyManagerEmail(source.getSafetyManagerEmail())
                 .build();
         accessRequestMapper.insert(copy);
         Long newId = copy.getId();
@@ -218,6 +224,9 @@ public class AccessRequestService {
         if (entity.getPlannedEndDate().isBefore(entity.getPlannedStartDate())) {
             throw new BadRequestException("plannedEndDate가 plannedStartDate보다 이전일 수 없습니다.");
         }
+        entity.setSafetyManagerName(request.getSafetyManagerName());
+        entity.setSafetyManagerTel(request.getSafetyManagerTel());
+        entity.setSafetyManagerEmail(request.getSafetyManagerEmail());
         accessRequestMapper.updateCore(entity);
 
         if (request.getWorkers() != null) {

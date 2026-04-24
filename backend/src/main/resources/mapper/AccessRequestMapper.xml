@@ -20,6 +20,9 @@
     <result property="reviewedBy" column="reviewed_by"/>
     <result property="reviewedAt" column="reviewed_at"/>
     <result property="improvementRequestReason" column="improvement_request_reason"/>
+    <result property="safetyManagerName" column="safety_manager_name"/>
+    <result property="safetyManagerTel" column="safety_manager_tel"/>
+    <result property="safetyManagerEmail" column="safety_manager_email"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
     <result property="deleted" column="deleted"/>
@@ -62,6 +65,10 @@
     <result property="reviewedBy" column="reviewed_by"/>
     <result property="reviewedAt" column="reviewed_at"/>
     <result property="improvementRequestReason" column="improvement_request_reason"/>
+    <result property="safetyManagerName" column="safety_manager_name"/>
+    <result property="safetyManagerTel" column="safety_manager_tel"/>
+    <result property="safetyManagerEmail" column="safety_manager_email"/>
+    <result property="industryName" column="industry_name"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
   </resultMap>
@@ -99,6 +106,7 @@
     SELECT id, request_no, company_id, vessel_id, port_id, work_type, work_description,
            planned_start_date, planned_end_date, worker_count, status,
            submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
+           safety_manager_name, safety_manager_tel, safety_manager_email,
            created_at, updated_at, deleted
       FROM tb_access_request
      WHERE id = #{id} AND deleted = 0
@@ -124,11 +132,16 @@
         ar.reviewed_by,
         ar.reviewed_at,
         ar.improvement_request_reason,
+        ar.safety_manager_name,
+        ar.safety_manager_tel,
+        ar.safety_manager_email,
+        ic.name AS industry_name,
         ar.created_at,
         ar.updated_at
       FROM tb_access_request ar
-      LEFT JOIN tb_company c ON c.id = ar.company_id AND c.deleted = 0
-      LEFT JOIN tb_vessel  v ON v.id = ar.vessel_id
+      LEFT JOIN tb_company c  ON c.id  = ar.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
      WHERE ar.id = #{id} AND ar.deleted = 0
   </select>
 
@@ -172,6 +185,7 @@
       request_no, company_id, vessel_id, port_id, work_type, work_description,
       planned_start_date, planned_end_date, worker_count, status,
       submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
+      safety_manager_name, safety_manager_tel, safety_manager_email,
       created_at, deleted
     ) VALUES (
       #{requestNo}, #{companyId}, #{vesselId},
@@ -190,6 +204,9 @@
       #{reviewedBy,jdbcType=BIGINT},
       #{reviewedAt,jdbcType=TIMESTAMP},
       #{improvementRequestReason,jdbcType=NVARCHAR},
+      #{safetyManagerName,jdbcType=NVARCHAR},
+      #{safetyManagerTel,jdbcType=NVARCHAR},
+      #{safetyManagerEmail,jdbcType=NVARCHAR},
       SYSUTCDATETIME(), 0
     )
   </insert>
@@ -202,6 +219,9 @@
            work_description = #{workDescription},
            planned_start_date = #{plannedStartDate},
            planned_end_date   = #{plannedEndDate},
+           safety_manager_name  = #{safetyManagerName,jdbcType=NVARCHAR},
+           safety_manager_tel   = #{safetyManagerTel,jdbcType=NVARCHAR},
+           safety_manager_email = #{safetyManagerEmail,jdbcType=NVARCHAR},
            updated_at = SYSUTCDATETIME()
      WHERE id = #{id} AND deleted = 0
   </update>

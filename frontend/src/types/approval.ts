@@ -21,6 +21,9 @@ export interface ApprovalListItem {
   businessNumber: string
   status: ApprovalStatus
   createdAt: string
+  // [2026-04-24] PPT 슬라이드 22
+  industryName?: string | null
+  contractDeptName?: string | null
 }
 
 export interface ContractDepartment {
@@ -40,6 +43,10 @@ export interface ApprovalActionRequest {
 export interface ApprovalListParams {
   status?: ApprovalStatus | ''
   keyword?: string
+  companyName?: string
+  businessNumber?: string
+  dateFrom?: string
+  dateTo?: string
   page?: number
   size?: number
 }

@@ -17,6 +17,11 @@
 ### 🟡 다음 작업
 - [x] **프론트엔드 실행 확인** — ✅ `http://localhost:4000` 정상 동작
 - [x] **ComingSoonPage 연결 메뉴 파악** — ✅ 실제로 어떤 라우트에도 미사용 (dead import만 존재)
+- [x] **V18 마이그레이션** — ✅ `tb_access_request`에 안전담당자 3개 컬럼 추가 (PPT 슬라이드 14)
+- [x] **V19 마이그레이션** — ✅ 평가항목 14개→21개 전체 교체 (PPT 슬라이드 20)
+- [x] **AccessRequestCreatePage 전면 재작성** — ✅ PPT 슬라이드 14 기준, 안전담당자·테이블형 작업자·첨부파일 UI
+- [x] **WorkerVoicePage / ApprovalPage / EvaluationCreatePage 재작성** — ✅ PPT 기준 업데이트
+- [x] **GoalPage** — ✅ iframe으로 교체 (`safety-goal-2025.html`)
 - [ ] **미구현 프론트 기능 구현** — 해상직원 사건사고 페이지 (백엔드 SeaCrewIncidentController만 존재)
 - [ ] **`/health/trend` 사이드바 노출** — 라우트는 있으나 사이드바 메뉴 누락
 - [ ] 파일 업로드/다운로드 (`./uploads`) 실제 동작 여부 확인
@@ -70,6 +75,10 @@
 - [x] Flyway 활성화 (V1~V17 마이그레이션 완료) + 인증 로그인 동작 검증 (2026-04-23)
 - [x] V3 시드 bcrypt 해시 수정 (`password123` 올바른 해시로 교체) (2026-04-23)
 - [x] CLAUDE.md / PROJECT_CONTEXT.md / .claudeignore 작성 (2026-04-23)
+- [x] V18 마이그레이션 — 안전담당자 컬럼 추가 / V19 마이그레이션 — 평가항목 21개 교체 (2026-04-24)
+- [x] AccessRequestCreatePage PPT 슬라이드 14 기준 전면 재작성 (2026-04-24)
+- [x] WorkerVoicePage / ApprovalPage / EvaluationCreatePage/DetailDialog PPT 기준 재작성 (2026-04-24)
+- [x] GoalPage — safety-goal-2025.html iframe 교체 (2026-04-24)
 - [x] Git 초기화 및 본인 저장소 연결 — https://github.com/horsehihing3/penocean-main (2026-04-23)
 - [x] SQL Server 2025 Express 설치 (2026-04-23)
 - [x] PANOCEAN_EHS DB 생성 (Korean_Wansung_CI_AS collation) (2026-04-23)

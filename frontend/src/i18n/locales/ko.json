@@ -250,8 +250,8 @@
     "tabAttachments": "첨부파일",
     "requestNo": "신청번호",
     "company": "업체",
-    "vessel": "선박",
-    "port": "항구",
+    "vessel": "방문사업장",
+    "port": "지역",
     "workType": "작업유형",
     "workDescription": "작업내용",
     "plannedStart": "시작일",
@@ -286,20 +286,34 @@
       "clone": "신청서 재사용",
       "cloned": "신청서가 복제되었습니다",
       "docReview": "서류 순차 검토",
-      "addToCalendar": "캘린더에 추가"
+      "addToCalendar": "캘린더에 추가",
+      "queryEdu": "교육이수 조회",
+      "applyEdu": "교육 신청",
+      "printCertPersonal": "이수증(개인) 출력",
+      "boardingRequest": "승선 신청"
     },
     "docReview": {
       "title": "서류 검토",
       "missing": "{{type}} 서류가 제출되지 않았습니다.",
       "finish": "검토 닫기"
     },
+    "safetyManager": "안전담당자",
+    "safetyManagerName": "성명",
+    "safetyManagerTel": "연락처(Tel)",
+    "safetyManagerEmail": "이메일",
+    "industryName": "업종",
+    "companyNameLabel": "회사명",
     "worker": {
       "name": "이름",
       "birth": "생년월일",
       "phone": "연락처",
-      "role": "역할",
+      "role": "역할·직종",
       "eduCompleted": "교육완료",
       "eduPending": "미완료",
+      "eduDate": "교육이수 일자",
+      "eduStatus": "이수확인",
+      "eduStatusCompleted": "이수",
+      "eduStatusPending": "미이수",
       "add": "작업자 추가",
       "uploadExcel": "엑셀 일괄등록",
       "certBtn": "이수증 출력",
@@ -310,8 +324,8 @@
     },
     "attachment": {
       "types": {
-        "RISK_ASSESSMENT": "위험성평가",
-        "PLEDGE": "서약서",
+        "RISK_ASSESSMENT": "위험성평가표",
+        "PLEDGE": "안전보건서약서",
         "WORK_PLAN": "작업계획서",
         "OTHER": "기타"
       },
@@ -319,7 +333,8 @@
       "drag": "파일을 여기에 드래그하거나 클릭",
       "fileName": "파일명",
       "size": "크기",
-      "uploadedAt": "업로드일"
+      "uploadedAt": "업로드일",
+      "noRiskAssessment": "위험성평가표없음"
     },
     "improvementReasonLabel": "개선 요청 사유",
     "viewPermit": "방문허가서 보기",

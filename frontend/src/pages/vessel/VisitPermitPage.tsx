@@ -209,24 +209,31 @@ const VisitPermitPage: React.FC = () => {
 
   const columns: GridColDef<VisitPermitResponse>[] = [
     { field: 'permitNo', headerName: t('visitPermit.permitNo'), width: 160 },
-    { field: 'companyName', headerName: t('accessRequest.company'), flex: 1, minWidth: 150 },
-    { field: 'vesselName', headerName: t('accessRequest.vessel'), flex: 1, minWidth: 140 },
+    { field: 'vesselName', headerName: '승선선박', flex: 1, minWidth: 140 },
+    { field: 'companyName', headerName: '회사명', flex: 1, minWidth: 150 },
     {
-      field: 'validFrom',
-      headerName: t('visitPermit.validFrom'),
+      field: 'industryName',
+      headerName: '업종',
       width: 130,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
+      renderCell: (p) => <span>{p.row.industryName ?? '-'}</span>,
     },
     {
-      field: 'validTo',
-      headerName: t('visitPermit.validTo'),
-      width: 130,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
+      field: 'validFrom',
+      headerName: '작업일정',
+      width: 220,
+      sortable: false,
+      renderCell: (p) => (
+        <span>
+          {p.row.validFrom && p.row.validTo
+            ? `${formatDate(p.row.validFrom)} ~ ${formatDate(p.row.validTo)}`
+            : '-'}
+        </span>
+      ),
     },
     {
       field: 'status',
       headerName: t('approval.colStatus'),
-      width: 120,
+      width: 110,
       sortable: false,
       renderCell: (p) => (
         <Chip
@@ -329,63 +336,42 @@ const VisitPermitPage: React.FC = () => {
           )}
           {detail && (
             <Stack spacing={2}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('visitPermit.permitNo')}
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                    {detail.permitNo}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('approval.colStatus')}
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Chip
-                      size="small"
-                      label={permitStatusLabel(detail)}
-                      color={getVisitPermitStatusColor(detail.revoked, detail.validTo)}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('accessRequest.company')}
-                  </Typography>
-                  <Typography variant="body1">{detail.companyName}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('accessRequest.vessel')}
-                  </Typography>
-                  <Typography variant="body1">{detail.vesselName}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('visitPermit.validFrom')}
-                  </Typography>
-                  <Typography variant="body1">{formatDate(detail.validFrom)}</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('visitPermit.validTo')}
-                  </Typography>
-                  <Typography variant="body1">{formatDate(detail.validTo)}</Typography>
-                </Grid>
-                {detail.revoked && detail.revokedReason && (
-                  <Grid item xs={12}>
-                    <Alert severity="error">
-                      <strong>{t('visitPermit.revokeReasonLabel')}:</strong>{' '}
-                      {detail.revokedReason}
-                    </Alert>
-                  </Grid>
-                )}
-              </Grid>
+              {/* 허가서 제목 + 상태 */}
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  방문 허가서 (Visit Permit)
+                </Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Typography variant="caption" color="text.secondary">{detail.permitNo}</Typography>
+                  <Chip
+                    size="small"
+                    label={permitStatusLabel(detail)}
+                    color={getVisitPermitStatusColor(detail.revoked, detail.validTo)}
+                    sx={{ fontWeight: 600 }}
+                  />
+                </Stack>
+              </Stack>
 
-              {/* QR box */}
+              {/* PPT 방문허가서 항목 (■ 형식) */}
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack spacing={1}>
+                  <Typography variant="body2">
+                    <strong>■ 승선선박 (Vessel Name) :</strong> {detail.vesselName}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>■ 회사명 (Company Name) :</strong> {detail.companyName}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>■ 업종 (Business Type) :</strong> {detail.industryName ?? '-'}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>■ 작업일정 (Working Period) :</strong>{' '}
+                    {formatDate(detail.validFrom)} ~ {formatDate(detail.validTo)}
+                  </Typography>
+                </Stack>
+              </Paper>
+
+              {/* QR 코드 */}
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   {t('visitPermit.qrTitle')}
@@ -393,8 +379,8 @@ const VisitPermitPage: React.FC = () => {
                 <Box
                   sx={{
                     mt: 1,
-                    height: 180,
-                    width: 180,
+                    height: 160,
+                    width: 160,
                     border: '1px solid',
                     borderColor: 'divider',
                     borderRadius: 1,
@@ -405,32 +391,28 @@ const VisitPermitPage: React.FC = () => {
                   }}
                 >
                   {detail.qrCodeUrl ? (
-                    <img
-                      src={detail.qrCodeUrl}
-                      alt="QR"
-                      style={{ maxWidth: '100%', maxHeight: '100%' }}
-                    />
+                    <img src={detail.qrCodeUrl} alt="QR" style={{ maxWidth: '100%', maxHeight: '100%' }} />
                   ) : (
-                    <QrCodeIcon sx={{ fontSize: 120 }} />
+                    <QrCodeIcon sx={{ fontSize: 100 }} />
                   )}
                 </Box>
               </Box>
 
-              {/* Workers: from the underlying access request. PPT slide 15 양식 */}
+              {/* 작업자 리스트 (Worker List) — PPT 슬라이드 15 */}
               {accessReqQuery.data && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('accessRequest.tabWorkers')}
+                  <Typography variant="body2" sx={{ fontWeight: 700, mb: 1 }}>
+                    ■ 작업자 리스트 (Worker List)
                   </Typography>
-                  <TableContainer component={Paper} variant="outlined" sx={{ mt: 1 }}>
+                  <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
                       <TableHead>
-                        <TableRow>
-                          <TableCell>No</TableCell>
-                          <TableCell>{t('accessRequest.worker.name')}</TableCell>
-                          <TableCell>{t('accessRequest.worker.birth')}</TableCell>
-                          <TableCell>{t('visitPermit.dateOfEducation')}</TableCell>
-                          <TableCell align="center">{t('visitPermit.checkByShip')}</TableCell>
+                        <TableRow sx={{ bgcolor: 'action.hover' }}>
+                          <TableCell width={40}>No.</TableCell>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Birth Date</TableCell>
+                          <TableCell>Date of Education</TableCell>
+                          <TableCell align="center">Check by ship</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -441,21 +423,16 @@ const VisitPermitPage: React.FC = () => {
                             <TableCell>{w.workerBirth ?? '-'}</TableCell>
                             <TableCell>
                               {w.safetyEduCompletedAt
-                                ? formatDate(w.safetyEduCompletedAt)
-                                : w.safetyEduCompleted
-                                ? '이수'
-                                : '미이수'}
+                                ? formatDateTime(w.safetyEduCompletedAt)
+                                : w.safetyEduCompleted ? '이수' : '-'}
                             </TableCell>
                             <TableCell align="center">
                               <Checkbox
                                 size="small"
                                 checked={!!w.checkByShip}
-                                disabled={
-                                  !canCheckByShip || !w.id || pendingCheckIds.has(w.id as number)
-                                }
+                                disabled={!canCheckByShip || !w.id || pendingCheckIds.has(w.id as number)}
                                 onChange={(e) =>
-                                  w.id &&
-                                  checkMut.mutate({ workerId: w.id, checked: e.target.checked })
+                                  w.id && checkMut.mutate({ workerId: w.id, checked: e.target.checked })
                                 }
                               />
                             </TableCell>
@@ -464,9 +441,7 @@ const VisitPermitPage: React.FC = () => {
                         {(accessReqQuery.data.workers?.length ?? 0) === 0 && (
                           <TableRow>
                             <TableCell colSpan={5} align="center">
-                              <Typography variant="body2" color="text.secondary">
-                                {t('common.noData')}
-                              </Typography>
+                              <Typography variant="body2" color="text.secondary">{t('common.noData')}</Typography>
                             </TableCell>
                           </TableRow>
                         )}

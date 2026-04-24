@@ -24,13 +24,17 @@ public class ApprovalService {
     private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
-    public PageResponse<ApprovalListItemResponse> list(String status, String keyword, int page, int size) {
+    public PageResponse<ApprovalListItemResponse> list(String status, String keyword,
+                                                       String companyName, String businessNumber,
+                                                       String dateFrom, String dateTo,
+                                                       int page, int size) {
         int p = Math.max(page, 0);
         int s = size <= 0 ? 20 : size;
         int offset = p * s;
 
-        List<ApprovalListItemResponse> content = approvalMapper.findPending(status, keyword, offset, s);
-        long total = approvalMapper.countPending(status, keyword);
+        List<ApprovalListItemResponse> content = approvalMapper.findPending(
+                status, keyword, companyName, businessNumber, dateFrom, dateTo, offset, s);
+        long total = approvalMapper.countPending(status, keyword, companyName, businessNumber, dateFrom, dateTo);
         return PageResponse.of(content, total, p, s);
     }
 

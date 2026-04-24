@@ -6,6 +6,7 @@ export interface VisitPermitResponse {
   permitNo: string
   accessRequestId: number
   companyName: string
+  industryName?: string | null
   vesselName: string
   validFrom: string
   validTo: string

@@ -35,6 +35,8 @@
     <result property="status" column="status"/>
     <result property="reporterAnonymous" column="reporter_anonymous"/>
     <result property="createdAt" column="created_at"/>
+    <result property="resolvedAt" column="resolved_at"/>
+    <result property="commentCount" column="comment_count"/>
   </resultMap>
 
   <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.WorkerVoiceDetailResponse">
@@ -124,7 +126,9 @@
     SELECT
         wv.id, wv.voice_no, wv.voice_type, wv.title,
         wv.company_id, c.name AS company_name,
-        wv.severity, wv.status, wv.reporter_anonymous, wv.created_at
+        wv.severity, wv.status, wv.reporter_anonymous, wv.created_at,
+        wv.resolved_at,
+        CASE WHEN wv.resolution IS NOT NULL THEN 1 ELSE 0 END AS comment_count
       FROM tb_worker_voice wv
       LEFT JOIN tb_company c ON c.id = wv.company_id AND c.deleted = 0
     <include refid="filterClause"/>

@@ -23,6 +23,7 @@
     <result property="itemCode" column="item_code"/>
     <result property="itemCategory" column="item_category"/>
     <result property="itemTitle" column="item_title"/>
+    <result property="itemDescription" column="item_description"/>
     <result property="score" column="score"/>
     <result property="maxScore" column="max_score"/>
     <result property="weight" column="weight"/>
@@ -43,9 +44,10 @@
     SELECT
       s.id,
       s.item_id,
-      i.code     AS item_code,
-      i.category AS item_category,
-      i.title    AS item_title,
+      i.code        AS item_code,
+      i.category    AS item_category,
+      i.title       AS item_title,
+      i.description AS item_description,
       s.score,
       s.max_score,
       s.weight,

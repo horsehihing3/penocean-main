@@ -52,6 +52,7 @@ public class EvaluationDetailResponse {
         private String itemCode;
         private String itemCategory;
         private String itemTitle;
+        private String itemDescription; // [2026-04-24] PPT 슬라이드 20: 평가내용 컬럼
         private BigDecimal score;
         private BigDecimal maxScore;
         private BigDecimal weight;

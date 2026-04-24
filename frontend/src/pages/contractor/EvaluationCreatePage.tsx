@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -26,7 +26,6 @@ import {
   TableRow,
   TableCell,
   TableContainer,
-  Checkbox,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import SaveIcon from '@mui/icons-material/Save'
@@ -85,9 +84,10 @@ const EvaluationCreatePage: React.FC = () => {
   const items = itemsQuery.data ?? []
 
   const [scores, setScores] = useState<Record<number, number>>({})
-  const [itemComments, setItemComments] = useState<Record<number, string>>({})
-  const [naMap, setNaMap] = useState<Record<number, boolean>>({})
   const [comment, setComment] = useState('')
+  // [2026-04-24] PPT 슬라이드 20: 평가항목별 첨부파일
+  const [itemFiles, setItemFiles] = useState<Record<number, File | null>>({})
+  const itemFileRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   const extractErrorMessage = (err: unknown): string => {
     if (axios.isAxiosError(err)) {
@@ -139,12 +139,14 @@ const EvaluationCreatePage: React.FC = () => {
         comment: comment || undefined,
         itemScores: items.map((it) => ({
           itemId: it.id,
-          score: naMap[it.id] ? 0 : scores[it.id] ?? 0,
-          notApplicable: !!naMap[it.id],
-          comment: itemComments[it.id] || undefined,
+          score: scores[it.id] ?? 0,
         })),
       }
       const { id } = await evaluationApi.create(payload)
+      // [2026-04-24] PPT 슬라이드 20: 평가항목별 첨부파일 업로드
+      for (const [itemIdStr, file] of Object.entries(itemFiles)) {
+        if (file) await evaluationApi.uploadAttachment(id, file, Number(itemIdStr))
+      }
       if (submitAfter) await evaluationApi.submit(id)
       return id
     },
@@ -159,24 +161,14 @@ const EvaluationCreatePage: React.FC = () => {
     let total = 0
     let max = 0
     for (const it of items) {
-      if (naMap[it.id]) continue // PPT slide 20: 자료없음 제외
       const score = Number(scores[it.id] ?? 0)
-      total += score * (it.weight || 1)
-      max += it.maxScore * (it.weight || 1)
+      total += score
+      max += it.maxScore
     }
     const pct = max > 0 ? (total / max) * 100 : 0
     return { total, max, pct, qualified: pct >= 70 }
-  }, [items, scores, naMap])
+  }, [items, scores])
 
-  const scoresByCategory = useMemo(() => {
-    const m = new Map<string, typeof items>()
-    for (const it of items) {
-      const arr = m.get(it.category) ?? []
-      arr.push(it)
-      m.set(it.category, arr)
-    }
-    return m
-  }, [items])
 
   const canNext = businessNumber.trim().length > 0 && companyId !== ''
 
@@ -228,6 +220,11 @@ const EvaluationCreatePage: React.FC = () => {
                   onChange={(e) =>
                     handleCompanyChange(e.target.value === '' ? '' : Number(e.target.value))
                   }
+                  renderValue={(selected) => {
+                    if (selected === '') return ''
+                    const c = companies.find((c) => c.id === selected)
+                    return c ? c.name : ''
+                  }}
                 >
                   <MenuItem value="">
                     <em>{t('common.selectPlaceholder', { defaultValue: '선택하세요' })}</em>
@@ -245,7 +242,7 @@ const EvaluationCreatePage: React.FC = () => {
                 label={t('evaluation.businessNumber')}
                 value={businessNumber}
                 fullWidth
-                disabled
+                InputProps={{ readOnly: true }}
                 placeholder="000-00-00000"
               />
             </Grid>
@@ -369,82 +366,68 @@ const EvaluationCreatePage: React.FC = () => {
             </Box>
           )}
 
-          {[...scoresByCategory.entries()].map(([category, cItems]) => (
-            <Paper key={category} variant="outlined" sx={{ p: 2 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}
-              >
-                {category}
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('evaluationItem.title')}</TableCell>
-                      <TableCell align="right" sx={{ width: 80 }}>
-                        {t('evaluationItem.maxScore')}
+          {/* [2026-04-24] PPT 슬라이드 20: 구분|평가항목|평가내용|배점|평가점수|첨부파일 */}
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: 110, fontWeight: 700 }}>구분</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>평가항목</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>평가내용</TableCell>
+                    <TableCell align="right" sx={{ width: 70, fontWeight: 700 }}>배점</TableCell>
+                    <TableCell align="right" sx={{ width: 120, fontWeight: 700 }}>평가점수</TableCell>
+                    <TableCell sx={{ width: 160, fontWeight: 700 }}>첨부파일</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {items.map((it) => (
+                    <TableRow key={it.id}>
+                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                        {it.category}
                       </TableCell>
-                      <TableCell align="right" sx={{ width: 80 }}>
-                        {t('evaluationItem.weight')}
+                      <TableCell>{it.title}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                        {it.description ?? '-'}
                       </TableCell>
-                      <TableCell align="right" sx={{ width: 120 }}>
-                        {t('evaluation.score')}
+                      <TableCell align="right">{it.maxScore}</TableCell>
+                      <TableCell align="right">
+                        <TextField
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 0, max: it.maxScore, step: 0.5 }}
+                          value={scores[it.id] ?? ''}
+                          onChange={(e) =>
+                            handleScoreChange(it.id, it.maxScore, e.target.value)
+                          }
+                          sx={{ width: 100 }}
+                        />
                       </TableCell>
-                      <TableCell align="center" sx={{ width: 96 }}>
-                        {t('evaluation.notApplicable')}
+                      <TableCell>
+                        <input
+                          type="file"
+                          hidden
+                          ref={(el) => { itemFileRefs.current[it.id] = el }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] ?? null
+                            setItemFiles((prev) => ({ ...prev, [it.id]: file }))
+                          }}
+                        />
+                        <Button
+                          size="small"
+                          variant="text"
+                          sx={{ fontSize: '0.75rem', p: '2px 6px' }}
+                          onClick={() => itemFileRefs.current[it.id]?.click()}
+                        >
+                          {itemFiles[it.id] ? itemFiles[it.id]!.name : '파일선택'}
+                        </Button>
                       </TableCell>
-                      <TableCell>{t('evaluation.itemComment')}</TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {cItems.map((it) => (
-                      <TableRow key={it.id}>
-                        <TableCell>{it.title}</TableCell>
-                        <TableCell align="right">{it.maxScore}</TableCell>
-                        <TableCell align="right">{it.weight}</TableCell>
-                        <TableCell align="right">
-                          <TextField
-                            type="number"
-                            size="small"
-                            inputProps={{ min: 0, max: it.maxScore, step: 0.5 }}
-                            value={naMap[it.id] ? '' : scores[it.id] ?? ''}
-                            disabled={!!naMap[it.id]}
-                            onChange={(e) =>
-                              handleScoreChange(it.id, it.maxScore, e.target.value)
-                            }
-                            sx={{ width: 100 }}
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <Checkbox
-                            size="small"
-                            checked={!!naMap[it.id]}
-                            onChange={(e) =>
-                              setNaMap((prev) => ({ ...prev, [it.id]: e.target.checked }))
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            value={itemComments[it.id] ?? ''}
-                            onChange={(e) =>
-                              setItemComments((prev) => ({
-                                ...prev,
-                                [it.id]: e.target.value,
-                              }))
-                            }
-                            fullWidth
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          ))}
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
 
           <Paper variant="outlined" sx={{ p: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>

@@ -65,12 +65,12 @@ const AccessRequestPage: React.FC = () => {
   const columnVisibilityModel: GridColumnVisibilityModel = useMemo(
     () =>
       isMobile
-        ? {
+        ? ({
             siteType: false,
             industryName: false,
             portName: false,
             schedule: false,
-          }
+          } as GridColumnVisibilityModel)
         : {},
     [isMobile]
   )

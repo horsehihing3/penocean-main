@@ -73,6 +73,10 @@ export interface AccessRequestDetailResponse extends AccessRequestListItem {
   vesselId: number
   portId?: number
   workDescription: string
+  // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
+  safetyManagerName?: string | null
+  safetyManagerTel?: string | null
+  safetyManagerEmail?: string | null
   workers: AccessRequestWorker[]
   attachments: AccessRequestAttachment[]
   reviewLogs: AccessRequestReviewLog[]
@@ -97,6 +101,10 @@ export interface CreateAccessRequestPayload {
   workDescription: string
   plannedStartDate: string
   plannedEndDate: string
+  // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
+  safetyManagerName?: string | null
+  safetyManagerTel?: string | null
+  safetyManagerEmail?: string | null
   workers?: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCompletedAt' | 'safetyEduCertificateUrl'>>
 }
 

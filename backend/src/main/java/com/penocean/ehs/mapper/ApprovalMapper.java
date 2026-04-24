@@ -12,11 +12,19 @@ public interface ApprovalMapper {
 
     List<ApprovalListItemResponse> findPending(@Param("status") String status,
                                                @Param("keyword") String keyword,
+                                               @Param("companyName") String companyName,
+                                               @Param("businessNumber") String businessNumber,
+                                               @Param("dateFrom") String dateFrom,
+                                               @Param("dateTo") String dateTo,
                                                @Param("offset") int offset,
                                                @Param("limit") int limit);
 
     long countPending(@Param("status") String status,
-                      @Param("keyword") String keyword);
+                      @Param("keyword") String keyword,
+                      @Param("companyName") String companyName,
+                      @Param("businessNumber") String businessNumber,
+                      @Param("dateFrom") String dateFrom,
+                      @Param("dateTo") String dateTo);
 
     ApprovalDetailResponse findDetail(@Param("userId") Long userId);
 

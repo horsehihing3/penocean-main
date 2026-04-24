@@ -250,8 +250,8 @@
     "tabAttachments": "Attachments",
     "requestNo": "Request No.",
     "company": "Company",
-    "vessel": "Vessel",
-    "port": "Port",
+    "vessel": "Visit Site",
+    "port": "Region",
     "workType": "Work Type",
     "workDescription": "Work Description",
     "plannedStart": "Start Date",
@@ -275,6 +275,12 @@
       "APPROVED": "Approved",
       "REJECTED": "Rejected"
     },
+    "safetyManager": "Safety Manager",
+    "safetyManagerName": "Name",
+    "safetyManagerTel": "Tel",
+    "safetyManagerEmail": "Email",
+    "industryName": "Industry",
+    "companyNameLabel": "Company",
     "action": {
       "startReview": "Start Review",
       "requestImprovement": "Request Improvement",
@@ -286,7 +292,11 @@
       "clone": "Clone (Reuse)",
       "cloned": "Request cloned",
       "docReview": "Review Documents",
-      "addToCalendar": "Add to Calendar"
+      "addToCalendar": "Add to Calendar",
+      "queryEdu": "Check Education",
+      "applyEdu": "Apply Education",
+      "printCertPersonal": "Print Certificate (Personal)",
+      "boardingRequest": "Submit Boarding Request"
     },
     "docReview": {
       "title": "Document Review",
@@ -297,9 +307,13 @@
       "name": "Name",
       "birth": "Birth Date",
       "phone": "Phone",
-      "role": "Role",
+      "role": "Role / Position",
       "eduCompleted": "Completed",
       "eduPending": "Pending",
+      "eduDate": "Edu. Date",
+      "eduStatus": "Status",
+      "eduStatusCompleted": "Complete",
+      "eduStatusPending": "Incomplete",
       "add": "Add Worker",
       "uploadExcel": "Upload Excel",
       "certBtn": "Print Certificate",
@@ -311,7 +325,7 @@
     "attachment": {
       "types": {
         "RISK_ASSESSMENT": "Risk Assessment",
-        "PLEDGE": "Pledge",
+        "PLEDGE": "Safety Pledge",
         "WORK_PLAN": "Work Plan",
         "OTHER": "Other"
       },
@@ -319,7 +333,8 @@
       "drag": "Drag file here or click to select",
       "fileName": "File Name",
       "size": "Size",
-      "uploadedAt": "Uploaded At"
+      "uploadedAt": "Uploaded At",
+      "noRiskAssessment": "No Risk Assessment"
     },
     "improvementReasonLabel": "Improvement Request Reason",
     "viewPermit": "View Visit Permit",

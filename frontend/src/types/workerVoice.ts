@@ -32,14 +32,19 @@ export interface WorkerVoiceListItem {
   status: WorkerVoiceStatus
   reporterAnonymous: boolean
   createdAt: string
+  resolvedAt?: string | null
+  commentCount: number
 }
 
 export interface WorkerVoiceDetail extends WorkerVoiceListItem {
   content: string
   reporterUserId?: number | null
+  reporterName?: string | null
   assignedTo?: number | null
+  assigneeName?: string | null
   resolution?: string | null
   resolvedAt?: string | null
+  updatedAt?: string | null
   emailSentTo?: string | null
   attachments: WorkerVoiceAttachment[]
 }

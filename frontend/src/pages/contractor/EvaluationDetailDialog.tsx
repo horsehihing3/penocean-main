@@ -55,7 +55,6 @@ import {
 } from '../../utils/status'
 import type {
   EvaluationImprovement,
-  EvaluationItemScore,
   EvaluationStatus,
   ImprovementStatus,
 } from '../../types/evaluation'
@@ -75,8 +74,10 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
   const qc = useQueryClient()
   const { user } = useAuth()
 
-  const [editScores, setEditScores] = useState<Record<number, { score: number; comment?: string }>>({})
+  const [editScores, setEditScores] = useState<Record<number, { score: number }>>({})
   const [editComment, setEditComment] = useState<string>('')
+  // [2026-04-24] PPT 슬라이드 20: 평가항목별 파일 업로드용 현재 itemId 추적
+  const [uploadItemId, setUploadItemId] = useState<number | null>(null)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [improvementOpen, setImprovementOpen] = useState(false)
@@ -119,9 +120,9 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
   // initialize local edits whenever detail loads
   useEffect(() => {
     if (detail) {
-      const initial: Record<number, { score: number; comment?: string }> = {}
+      const initial: Record<number, { score: number }> = {}
       for (const s of detail.itemScores) {
-        initial[s.itemId] = { score: s.score, comment: s.comment ?? '' }
+        initial[s.itemId] = { score: s.score }
       }
       setEditScores(initial)
       setEditComment(detail.comment ?? '')
@@ -159,7 +160,6 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
         itemScores: detail.itemScores.map((s) => ({
           itemId: s.itemId,
           score: editScores[s.itemId]?.score ?? s.score,
-          comment: editScores[s.itemId]?.comment ?? s.comment ?? undefined,
         })),
       })
     },
@@ -195,8 +195,8 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
   })
 
   const uploadMut = useMutation({
-    mutationFn: ({ file }: { file: File }) =>
-      evaluationApi.uploadAttachment(evaluationId as number, file),
+    mutationFn: ({ file, itemId }: { file: File; itemId?: number }) =>
+      evaluationApi.uploadAttachment(evaluationId as number, file, itemId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['evaluations', 'detail', evaluationId] })
       notifySuccess(t('accessRequest.attachment.upload'))
@@ -271,17 +271,6 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
     return { total, max, percentage, qualified: percentage >= 70 }
   }, [detail, editScores])
 
-  const scoresByCategory = useMemo(() => {
-    if (!detail) return new Map<string, EvaluationItemScore[]>()
-    const m = new Map<string, EvaluationItemScore[]>()
-    for (const s of detail.itemScores) {
-      const arr = m.get(s.itemCategory) ?? []
-      arr.push(s)
-      m.set(s.itemCategory, arr)
-    }
-    return m
-  }, [detail])
-
   const status: EvaluationStatus | undefined = detail?.status
   const isEditable =
     status === 'DRAFT' ||
@@ -316,20 +305,15 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
     const clamped = Math.max(0, Math.min(maxScore, parsed))
     setEditScores((prev) => ({
       ...prev,
-      [itemId]: { score: clamped, comment: prev[itemId]?.comment },
-    }))
-  }
-  const handleItemCommentChange = (itemId: number, value: string) => {
-    setEditScores((prev) => ({
-      ...prev,
-      [itemId]: { score: prev[itemId]?.score ?? 0, comment: value },
+      [itemId]: { score: clamped },
     }))
   }
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) uploadMut.mutate({ file })
+    if (file) uploadMut.mutate({ file, itemId: uploadItemId ?? undefined })
     if (fileInputRef.current) fileInputRef.current.value = ''
+    setUploadItemId(null)
   }
 
   return (
@@ -439,139 +423,137 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
 
               <Divider />
 
-              {/* Item scores */}
+              {/* Item scores — [2026-04-24] PPT 슬라이드 20: 구분|평가항목|평가내용|배점|평가점수|첨부파일 */}
               <Box>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
                   {t('evaluation.itemScores')}
                 </Typography>
 
-                {[...scoresByCategory.entries()].map(([category, items]) => (
-                  <Box key={category} sx={{ mb: 3 }}>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}
-                    >
-                      {category}
-                    </Typography>
-
-                    {isMobile ? (
-                      <Stack spacing={1.5}>
-                        {items.map((s) => (
-                          <Card key={s.itemId} variant="outlined">
-                            <CardContent>
-                              <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                                {s.itemTitle}
+                {isMobile ? (
+                  <Stack spacing={1.5}>
+                    {detail.itemScores.map((s) => {
+                      const itemAttachments = detail.attachments.filter((a) => a.itemId === s.itemId)
+                      return (
+                        <Card key={s.itemId} variant="outlined">
+                          <CardContent>
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              {s.itemCategory}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                              {s.itemTitle}
+                            </Typography>
+                            {s.itemDescription && (
+                              <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                                {s.itemDescription}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                display="block"
-                                sx={{ mb: 1 }}
-                              >
-                                {t('evaluationItem.maxScore')}: {s.maxScore} · {t('evaluationItem.weight')}: {s.weight}
-                              </Typography>
-                              <TextField
-                                type="number"
-                                size="small"
-                                label={t('evaluation.score')}
-                                inputProps={{ min: 0, max: s.maxScore, step: 0.5 }}
-                                value={editScores[s.itemId]?.score ?? s.score}
-                                onChange={(e) =>
-                                  handleScoreChange(s.itemId, s.maxScore, e.target.value)
-                                }
-                                disabled={!isEditable}
-                                sx={{ mb: 1 }}
-                                fullWidth
-                              />
-                              <TextField
-                                size="small"
-                                label={t('evaluation.itemComment')}
-                                value={editScores[s.itemId]?.comment ?? ''}
-                                onChange={(e) =>
-                                  handleItemCommentChange(s.itemId, e.target.value)
-                                }
-                                disabled={!isEditable}
-                                fullWidth
-                                multiline
-                                minRows={2}
-                              />
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>{t('evaluationItem.title')}</TableCell>
-                              <TableCell align="right" sx={{ width: 80 }}>
-                                {t('evaluationItem.maxScore')}
+                            )}
+                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+                              배점: {s.maxScore}
+                            </Typography>
+                            <TextField
+                              type="number"
+                              size="small"
+                              label="평가점수"
+                              inputProps={{ min: 0, max: s.maxScore, step: 0.5 }}
+                              value={editScores[s.itemId]?.score ?? s.score}
+                              onChange={(e) => handleScoreChange(s.itemId, s.maxScore, e.target.value)}
+                              disabled={!isEditable}
+                              sx={{ mb: 1 }}
+                              fullWidth
+                            />
+                            {itemAttachments.map((a) => (
+                              <Stack key={a.id} direction="row" alignItems="center" spacing={0.5}>
+                                <Link component="button" type="button" variant="caption" underline="hover"
+                                  onClick={() => setPreviewFile({ url: a.filePath, name: a.fileName, mime: a.mimeType })}>
+                                  {a.fileName}
+                                </Link>
+                                {isEditable && (
+                                  <IconButton size="small" onClick={() => deleteAttachmentMut.mutate(a.id)}>
+                                    <DeleteIcon fontSize="inherit" />
+                                  </IconButton>
+                                )}
+                              </Stack>
+                            ))}
+                            {isEditable && (
+                              <Button size="small" variant="text" sx={{ fontSize: '0.75rem' }}
+                                onClick={() => { setUploadItemId(s.itemId); fileInputRef.current?.click() }}>
+                                파일추가
+                              </Button>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </Stack>
+                ) : (
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ width: 110, fontWeight: 700 }}>구분</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>평가항목</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: 'text.secondary' }}>평가내용</TableCell>
+                          <TableCell align="right" sx={{ width: 70, fontWeight: 700 }}>배점</TableCell>
+                          <TableCell align="right" sx={{ width: 120, fontWeight: 700 }}>평가점수</TableCell>
+                          <TableCell sx={{ width: 180, fontWeight: 700 }}>첨부파일</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {detail.itemScores.map((s) => {
+                          const liveScore = editScores[s.itemId]?.score ?? s.score
+                          const itemAttachments = detail.attachments.filter((a) => a.itemId === s.itemId)
+                          return (
+                            <TableRow key={s.itemId}>
+                              <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                                {s.itemCategory}
                               </TableCell>
-                              <TableCell align="right" sx={{ width: 80 }}>
-                                {t('evaluationItem.weight')}
+                              <TableCell>{s.itemTitle}</TableCell>
+                              <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                                {s.itemDescription ?? '-'}
                               </TableCell>
-                              <TableCell align="right" sx={{ width: 120 }}>
-                                {t('evaluation.score')}
+                              <TableCell align="right">{s.maxScore}</TableCell>
+                              <TableCell align="right">
+                                <TextField
+                                  type="number"
+                                  size="small"
+                                  inputProps={{ min: 0, max: s.maxScore, step: 0.5 }}
+                                  value={liveScore}
+                                  onChange={(e) => handleScoreChange(s.itemId, s.maxScore, e.target.value)}
+                                  disabled={!isEditable}
+                                  sx={{ width: 100 }}
+                                />
                               </TableCell>
-                              <TableCell align="right" sx={{ width: 100 }}>
-                                {t('evaluation.weightedScore')}
+                              <TableCell>
+                                <Stack spacing={0.25}>
+                                  {itemAttachments.map((a) => (
+                                    <Stack key={a.id} direction="row" alignItems="center" spacing={0.5}>
+                                      <Link component="button" type="button" variant="caption" underline="hover" noWrap
+                                        sx={{ maxWidth: 110 }}
+                                        onClick={() => setPreviewFile({ url: a.filePath, name: a.fileName, mime: a.mimeType })}>
+                                        {a.fileName}
+                                      </Link>
+                                      {isEditable && (
+                                        <IconButton size="small" onClick={() => deleteAttachmentMut.mutate(a.id)}>
+                                          <DeleteIcon fontSize="inherit" />
+                                        </IconButton>
+                                      )}
+                                    </Stack>
+                                  ))}
+                                  {isEditable && (
+                                    <Button size="small" variant="text" sx={{ fontSize: '0.72rem', p: '1px 4px', alignSelf: 'flex-start' }}
+                                      onClick={() => { setUploadItemId(s.itemId); fileInputRef.current?.click() }}>
+                                      파일추가
+                                    </Button>
+                                  )}
+                                </Stack>
                               </TableCell>
-                              <TableCell>{t('evaluation.itemComment')}</TableCell>
                             </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {items.map((s) => {
-                              const liveScore = editScores[s.itemId]?.score ?? s.score
-                              return (
-                                <TableRow key={s.itemId}>
-                                  <TableCell>{s.itemTitle}</TableCell>
-                                  <TableCell align="right">{s.maxScore}</TableCell>
-                                  <TableCell align="right">{s.weight}</TableCell>
-                                  <TableCell align="right">
-                                    <TextField
-                                      type="number"
-                                      size="small"
-                                      inputProps={{
-                                        min: 0,
-                                        max: s.maxScore,
-                                        step: 0.5,
-                                      }}
-                                      value={liveScore}
-                                      onChange={(e) =>
-                                        handleScoreChange(
-                                          s.itemId,
-                                          s.maxScore,
-                                          e.target.value
-                                        )
-                                      }
-                                      disabled={!isEditable}
-                                      sx={{ width: 100 }}
-                                    />
-                                  </TableCell>
-                                  <TableCell align="right">
-                                    {((Number(liveScore) || 0) * (s.weight || 1)).toFixed(1)}
-                                  </TableCell>
-                                  <TableCell>
-                                    <TextField
-                                      size="small"
-                                      value={editScores[s.itemId]?.comment ?? ''}
-                                      onChange={(e) =>
-                                        handleItemCommentChange(s.itemId, e.target.value)
-                                      }
-                                      disabled={!isEditable}
-                                      fullWidth
-                                    />
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            })}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  </Box>
-                ))}
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
               </Box>
 
               <Divider />
@@ -599,7 +581,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                         size="small"
                         variant="outlined"
                         startIcon={<UploadIcon />}
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => { setUploadItemId(null); fileInputRef.current?.click() }}
                         disabled={uploadMut.isPending}
                       >
                         {t('accessRequest.attachment.upload')}
@@ -608,7 +590,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                   )}
                 </Stack>
 
-                {detail.attachments.length === 0 ? (
+                {detail.attachments.filter((a) => a.itemId == null).length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
                     {t('common.noData')}
                   </Typography>
@@ -628,7 +610,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {detail.attachments.map((a) => (
+                        {detail.attachments.filter((a) => a.itemId == null).map((a) => (
                           <TableRow key={a.id}>
                             <TableCell>
                               <Link
