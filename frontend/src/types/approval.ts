@@ -23,7 +23,9 @@ export interface ApprovalListItem {
   createdAt: string
   // [2026-04-24] PPT 슬라이드 22
   industryName?: string | null
+  industryOther?: string | null
   contractDeptName?: string | null
+  title?: string | null
 }
 
 export interface ContractDepartment {

@@ -55,7 +55,7 @@ const statusChipColor = (s: ApprovalStatus): 'warning' | 'success' | 'error' | '
 }
 
 const ApprovalPage: React.FC = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -128,12 +128,6 @@ const ApprovalPage: React.FC = () => {
     onError: (err) => setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' }),
   })
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString(i18n.language === 'ko' ? 'ko-KR' : 'en-US')
-    } catch { return iso }
-  }
-
   const statusLabel = (s: ApprovalStatus): string => {
     switch (s) {
       case 'PENDING': return t('approval.statusPending')
@@ -155,17 +149,17 @@ const ApprovalPage: React.FC = () => {
     const rows = listQuery.data?.content ?? []
     const data = rows.map((r) => ({
       '업종': r.industryName ?? '-',
+      '기타업종': r.industryOther ?? '-',
       '계약팀': r.contractDeptName ?? '-',
       '사업자등록번호': r.businessNumber ?? '',
+      '직책': r.title ?? '-',
       '성명': r.name ?? '',
       'Tel': r.phone ?? '',
       'E-Mail': r.email ?? '',
-      '상태': statusLabel(r.status as ApprovalStatus),
-      '신청일': r.createdAt ? formatDate(r.createdAt) : '',
     }))
     const ws = XLSX.utils.json_to_sheet(data)
     ws['!cols'] = [
-      { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 14 },
+      { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 16 }, { wch: 28 },
     ]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, '가입신청')
@@ -259,7 +253,7 @@ const ApprovalPage: React.FC = () => {
         </Stack>
       </Paper>
 
-      {/* ── 목록 — PPT 슬라이드 22 컬럼: 업종|계약팀|사업자등록번호|성명|Tel|E-Mail|승인/거절 ── */}
+      {/* ── 목록 — PPT 슬라이드 22 컬럼: 업종|기타업종|계약팀|사업자등록번호|[안전팀담당자: 직책|성명|Tel|E-Mail]|승인/거절 ── */}
       <Paper variant="outlined">
         {listQuery.isError && (
           <Alert severity="error" sx={{ m: 2 }}>{t('approval.loadError')}</Alert>
@@ -267,16 +261,21 @@ const ApprovalPage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
+              {/* 1행: 그룹 헤더 */}
+              <TableRow sx={{ bgcolor: 'grey.100' }}>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>업종</TableCell>
+                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>기타업종</TableCell>}
+                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>계약팀</TableCell>}
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>사업자 등록번호</TableCell>
+                <TableCell colSpan={4} align="center" sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>안전팀담당자</TableCell>
+                <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 140 }}>승인/거절</TableCell>
+              </TableRow>
+              {/* 2행: 안전팀담당자 세부 */}
               <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700 }}>업종</TableCell>
-                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>계약팀</TableCell>}
-                <TableCell sx={{ fontWeight: 700 }}>사업자등록번호</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>성명</TableCell>
-                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>Tel</TableCell>}
-                {!isMobile && <TableCell sx={{ fontWeight: 700 }}>E-Mail</TableCell>}
-                <TableCell sx={{ fontWeight: 700 }}>신청일</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>상태</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, width: 140 }}>승인/거절</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>직책</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>성명</TableCell>
+                {!isMobile && <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>Tel</TableCell>}
+                {!isMobile && <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', borderRight: '1px solid', borderColor: 'divider' }}>E-Mail</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -297,20 +296,13 @@ const ApprovalPage: React.FC = () => {
               {rows.map((row) => (
                 <TableRow key={row.userId} hover>
                   <TableCell>{row.industryName ?? '-'}</TableCell>
+                  {!isMobile && <TableCell>{row.industryOther ?? '-'}</TableCell>}
                   {!isMobile && <TableCell>{row.contractDeptName ?? '-'}</TableCell>}
                   <TableCell>{row.businessNumber}</TableCell>
+                  <TableCell>{row.title ?? '-'}</TableCell>
                   <TableCell>{row.name}</TableCell>
                   {!isMobile && <TableCell>{row.phone}</TableCell>}
                   {!isMobile && <TableCell>{row.email}</TableCell>}
-                  <TableCell>{formatDate(row.createdAt)}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={statusLabel(row.status as ApprovalStatus)}
-                      color={statusChipColor(row.status as ApprovalStatus)}
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </TableCell>
                   <TableCell align="center">
                     {row.status === 'PENDING' ? (
                       <Stack direction="row" spacing={0.5} justifyContent="center">
@@ -337,7 +329,12 @@ const ApprovalPage: React.FC = () => {
                         </Button>
                       </Stack>
                     ) : (
-                      <Typography variant="caption" color="text.secondary">-</Typography>
+                      <Chip
+                        size="small"
+                        label={statusLabel(row.status as ApprovalStatus)}
+                        color={statusChipColor(row.status as ApprovalStatus)}
+                        sx={{ fontWeight: 600 }}
+                      />
                     )}
                   </TableCell>
                 </TableRow>

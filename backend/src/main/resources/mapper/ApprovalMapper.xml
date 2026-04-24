@@ -15,7 +15,9 @@
     <result property="status" column="status"/>
     <result property="createdAt" column="created_at"/>
     <result property="industryName" column="industry_name"/>
+    <result property="industryOther" column="industry_other"/>
     <result property="contractDeptName" column="contract_dept_name"/>
+    <result property="title" column="title"/>
   </resultMap>
 
   <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.ApprovalDetailResponse">
@@ -80,10 +82,12 @@
         c.business_number AS business_number,
         u.status          AS status,
         u.created_at      AS created_at,
+        u.title           AS title,
         (SELECT TOP 1 cm.name
            FROM tb_user_industry ui
            JOIN tb_code cm ON cm.code = ui.industry_code AND cm.group_code = 'INDUSTRY' AND cm.active = 1
           WHERE ui.user_id = u.id) AS industry_name,
+        c.industry_other  AS industry_other,
         (SELECT TOP 1 d.name
            FROM tb_user_department ud
            JOIN tb_department d ON d.id = ud.department_id AND d.deleted = 0

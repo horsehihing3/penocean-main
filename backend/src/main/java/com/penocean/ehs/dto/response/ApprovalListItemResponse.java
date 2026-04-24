@@ -25,5 +25,7 @@ public class ApprovalListItemResponse {
     private LocalDateTime createdAt;
     // [2026-04-24] PPT 슬라이드 22: 목록 컬럼 추가
     private String industryName;      // 업종 (tb_user_industry → tb_code 첫 번째)
+    private String industryOther;     // 기타업종 (tb_company.industry_other)
     private String contractDeptName;  // 계약팀 (tb_user_department → tb_department 첫 번째)
+    private String title;             // 직책 (tb_user.title)
 }
