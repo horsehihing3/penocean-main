@@ -41,6 +41,8 @@ import AdminEvaluationReviewPage from './pages/admin/AdminEvaluationReviewPage'
 import CodeMasterPage from './pages/admin/CodeMasterPage'
 import AuditInspectionPage from './pages/admin/AuditInspectionPage'
 import AdminAccidentReportPage from './pages/admin/AdminAccidentReportPage'
+import LandBudgetPage from './pages/admin/LandBudgetPage'
+import SeaCrewStatsPage from './pages/admin/SeaCrewStatsPage'
 
 function App() {
   return (
@@ -184,6 +186,38 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <AdminAccidentReportPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/land-budget"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <LandBudgetPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/sea-budget"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <ComingSoonPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/land-crew-stats"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <ComingSoonPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/sea-crew-stats"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <SeaCrewStatsPage />
             </RoleRoute>
           }
         />
