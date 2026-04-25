@@ -90,8 +90,7 @@ function App() {
           }
         />
         <Route path="vessel/access-request/:id" element={<AccessRequestDetailPage />} />
-        <Route path="vessel/access-permit" element={<AccessRequestPage />} />
-        <Route path="vessel/access-permit/:id" element={<AccessRequestDetailPage />} />
+
         <Route path="vessel/visit-permit" element={<VisitPermitPage />} />
         <Route path="vessel/worker-voice" element={<WorkerVoicePage />} />
 

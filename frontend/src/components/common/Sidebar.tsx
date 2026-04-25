@@ -26,7 +26,7 @@ import PolicyIcon from '@mui/icons-material/Policy'
 import ArticleIcon from '@mui/icons-material/Article'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import LoginIcon from '@mui/icons-material/Login'
-import VpnKeyIcon from '@mui/icons-material/VpnKey'
+
 import BadgeIcon from '@mui/icons-material/Badge'
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver'
 import AssessmentIcon from '@mui/icons-material/Assessment'
@@ -68,7 +68,7 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.vesselAccessProcedure', icon: <ArticleIcon />, path: '/vessel/procedure/access' },
       { textKey: 'nav.vesselRiskProcedure', icon: <ArticleIcon />, path: '/vessel/procedure/risk-assessment' },
       { textKey: 'nav.vesselAccessRequest', icon: <LoginIcon />, path: '/vessel/access-request' },
-      { textKey: 'nav.vesselAccessPermit', icon: <VpnKeyIcon />, path: '/vessel/access-permit' },
+
       { textKey: 'nav.visitPermit', icon: <BadgeIcon />, path: '/vessel/visit-permit' },
       { textKey: 'nav.workerVoice', icon: <RecordVoiceOverIcon />, path: '/vessel/worker-voice' },
     ],
