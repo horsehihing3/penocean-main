@@ -16,7 +16,7 @@ spring:
 
   datasource:
     # 실제 접속정보는 application-local.yml 또는 환경변수(DB_URL/DB_USERNAME/DB_PASSWORD)로 설정
-    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=Penocean;encrypt=true;trustServerCertificate=true}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=PANOCEAN_EHS;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:sa}
     password: ${DB_PASSWORD:CHANGE_ME}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -26,7 +26,7 @@ spring:
       connection-timeout: 30000
 
   flyway:
-    enabled: true  # [2026-04-23] V1~V17 마이그레이션 파일 확인 후 활성화
+    enabled: false  # [2026-04-25] 회사 DB 연결 시 비활성화 (기존 스키마 존재)
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: false  # [2026-04-23] 시드 파일 수정 후 체크섬 불일치 방지 (개발환경)
