@@ -11,22 +11,13 @@
 > 항목은 작업 진행에 따라 직접 업데이트하세요.
 
 ### 🔴 최우선 — 다음 세션 시작 시 진행
-- [x] **백엔드 실행 및 DB 마이그레이션 확인** — ✅ Flyway V1~V17 완료, 로그인(admin/password123) 동작 확인
-- [x] **Flyway 활성화 여부 결정** — ✅ `application.yml` `flyway.enabled: true` 로 변경
 - [ ] **파일 업로드/다운로드 실제 동작 확인** — `./uploads` 경로, `FileController` 엔드포인트, 프론트 연동 여부
 - [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
-- [ ] **`/health/trend` 사이드바 노출** — 라우트는 있으나 사이드바 메뉴 누락 (보건파트 메뉴 하위 추가 필요)
+- [ ] **`/health/trend` 사이드바 노출** — 보건파트(admin/health) 하위에 "건강추이" 메뉴 추가 필요
 
 ### 🟡 다음 작업
-- [x] **프론트엔드 실행 확인** — ✅ `http://localhost:4000` 정상 동작
-- [x] **ComingSoonPage 연결 메뉴 파악** — ✅ 실제로 어떤 라우트에도 미사용 (dead import만 존재)
-- [x] **V18 마이그레이션** — ✅ `tb_access_request`에 안전담당자 3개 컬럼 추가 (PPT 슬라이드 14)
-- [x] **V19 마이그레이션** — ✅ 평가항목 14개→21개 전체 교체 (PPT 슬라이드 20)
-- [x] **AccessRequestCreatePage 전면 재작성** — ✅ PPT 슬라이드 14 기준, 안전담당자·테이블형 작업자·첨부파일 UI
-- [x] **WorkerVoicePage / ApprovalPage / EvaluationCreatePage 재작성** — ✅ PPT 기준 업데이트
-- [x] **GoalPage** — ✅ iframe으로 교체 (`safety-goal-2025.html`)
-- [ ] **미구현 프론트 기능 구현** — 해상직원 사건사고 페이지 (백엔드 SeaCrewIncidentController만 존재)
-- [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정
+- [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
+- [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 
 
 ---
@@ -70,22 +61,16 @@
 ## ✅ 완료된 작업
 
 > 항목이 10개 이상 쌓이면 `docs/ARCHIVE.md`로 이동 후 여기서 삭제
+> 이전 완료 항목(2026-04-23 ~ 04-24)은 `docs/ARCHIVE.md` 참조
 
-- [x] gradle-wrapper.jar 다운로드 및 백엔드 빌드 성공 (2026-04-23)
-- [x] SQL Server Express TCP/IP 활성화 (포트 1433) + DB_URL 환경변수 수정 (2026-04-23)
-- [x] Flyway 활성화 (V1~V17 마이그레이션 완료) + 인증 로그인 동작 검증 (2026-04-23)
-- [x] V3 시드 bcrypt 해시 수정 (`password123` 올바른 해시로 교체) (2026-04-23)
-- [x] CLAUDE.md / PROJECT_CONTEXT.md / .claudeignore 작성 (2026-04-23)
-- [x] V18 마이그레이션 — 안전담당자 컬럼 추가 / V19 마이그레이션 — 평가항목 21개 교체 (2026-04-24)
-- [x] AccessRequestCreatePage PPT 슬라이드 14 기준 전면 재작성 (2026-04-24)
-- [x] WorkerVoicePage / ApprovalPage / EvaluationCreatePage/DetailDialog PPT 기준 재작성 (2026-04-24)
-- [x] GoalPage — safety-goal-2025.html iframe 교체 (2026-04-24)
-- [x] Git 초기화 및 본인 저장소 연결 — https://github.com/horsehihing3/penocean-main (2026-04-23)
-- [x] SQL Server 2025 Express 설치 (2026-04-23)
-- [x] PANOCEAN_EHS DB 생성 (Korean_Wansung_CI_AS collation) (2026-04-23)
-- [x] SA 계정 활성화 및 비밀번호 설정 (`Panocean!2026`) (2026-04-23)
-- [x] SQL Server 혼합 인증 모드 활성화 + 서비스 재시작 (2026-04-23)
-- [x] 환경변수 설정 — `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` (Machine 레벨) (2026-04-23)
+- [x] PPT vs 현재 구현 전면 비교 분석 완료 — 메뉴 구조·화면 구성 차이 전체 도출 (2026-04-25)
+- [x] 관리자 > 보건파트 임직원 건강검진 사후관리 페이지 추가 (AdminHealthPage) (2026-04-25)
+- [x] 사이드바 공지사항 하위 보건파트 단일 메뉴 제거 — PPT 기준 관리자 메뉴에만 있어야 함 (2026-04-25)
+- [x] vessel/access-permit 중복 메뉴·라우트 제거 — PPT에 없는 항목, visit-permit으로 통일 (2026-04-25)
+- [x] 절차서 PDF 다운로드 404 에러 → 준비중 다이얼로그로 수정 (출입절차·위험성평가절차 2개) (2026-04-25)
+- [x] .claudeignore 개선 — `**/*.jar` → `backend/build/**/*.jar` 한정, `node_modules/` 루트 추가 (2026-04-25)
+- [x] CLAUDE.md 개선 — VS Code 세션 주의사항, 병렬 세션 가이드 섹션 추가 (2026-04-25)
+- [x] PageRequest @Builder.Default 추가 / WebMvcConfig deprecated 경고 제거 (2026-04-25)
 
 ---
 
