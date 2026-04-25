@@ -16,9 +16,9 @@ spring:
 
   datasource:
     # 실제 접속정보는 application-local.yml 또는 환경변수(DB_URL/DB_USERNAME/DB_PASSWORD)로 설정
-    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=PANOCEAN_EHS;encrypt=true;trustServerCertificate=true}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:CHANGE_ME}
+    url: ${DB_URL:jdbc:sqlserver://211.171.152.242:51084;databaseName=penocean;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USERNAME:com4in}
+    password: ${DB_PASSWORD:com4in201!!}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     hikari:
       maximum-pool-size: 10
