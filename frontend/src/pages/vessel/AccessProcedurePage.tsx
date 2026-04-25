@@ -1,12 +1,11 @@
-import { Box, Paper, Typography, Stack, Button, Alert, Snackbar } from '@mui/material'
+import { Box, Paper, Typography, Stack, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import InfoIcon from '@mui/icons-material/Info'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-
-const PDF_URL = '/procedures/access-procedure.pdf'
 
 const STEPS = [
   '협력업체 등록 및 포털 가입 신청',
@@ -22,20 +21,7 @@ const STEPS = [
 const AccessProcedurePage: React.FC = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [missingOpen, setMissingOpen] = useState(false)
-
-  const handleDownload = async () => {
-    try {
-      const res = await fetch(PDF_URL, { method: 'HEAD' })
-      if (!res.ok) {
-        setMissingOpen(true)
-        return
-      }
-      window.open(PDF_URL, '_blank', 'noopener,noreferrer')
-    } catch {
-      setMissingOpen(true)
-    }
-  }
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
     <Box sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
@@ -62,7 +48,7 @@ const AccessProcedurePage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<PictureAsPdfIcon />}
-          onClick={handleDownload}
+          onClick={() => setDialogOpen(true)}
         >
           절차서 PDF 다운로드
         </Button>
@@ -82,16 +68,21 @@ const AccessProcedurePage: React.FC = () => {
         </Button>
       </Stack>
 
-      <Snackbar
-        open={missingOpen}
-        autoHideDuration={3500}
-        onClose={() => setMissingOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="warning" variant="filled">
-          절차서 PDF가 아직 등록되지 않았습니다. 관리자에게 문의하거나 양식함에서 확인해주세요.
-        </Alert>
-      </Snackbar>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <InfoIcon color="warning" />
+          준비 중
+        </DialogTitle>
+        <DialogContent>
+          <Typography>절차서 PDF가 아직 등록되지 않았습니다.</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            관리자에게 문의하거나 양식함에서 확인해 주세요.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>확인</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
