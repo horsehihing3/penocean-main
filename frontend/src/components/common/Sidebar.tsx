@@ -92,12 +92,6 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    // PPT slide 31: 보건파트 단일 메뉴로 통합 (병원자료 + 3년 추이 + 상담내역)
-    textKey: 'nav.healthPortal',
-    icon: <LocalHospitalIcon />,
-    path: '/health/checkup',
-  },
-  {
     textKey: 'nav.admin',
     icon: <AdminPanelSettingsIcon />,
     allowedRoles: ['ADMIN'],
