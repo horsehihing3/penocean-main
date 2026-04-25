@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-04-25 (관리자 UI 개선 세션)
+
+- 회사 원격 DB(211.171.152.242:51084, penocean) 연결 전환 — Flyway 비활성화
+- 가입신청 3건(ID 2,3,4) PENDING 상태로 DB 직접 수정
+- SafetyRulePage: safety_rules.html iframe 방식으로 전면 교체
+- AdminHealthPage: 행 클릭 시 health_checkup_compare.html iframe 팝업 표시
+- CompanyManagePage: 첨부파일 컬럼 추가 및 샘플 이미지 미리보기 다이얼로그
+- AdminAccessApprovalPage: Excel/인쇄/업체List다운로드/검색 버튼, 비고 컬럼, 안전보건서약서 추가, 개선요청 팝업
+- AdminEvaluationReviewPage: PPT 기준 검색조건 2줄·버튼·테이블 정렬, 개선요청 팝업
+- WebMvcConfig: /files/** 정적 파일 서빙 핸들러 추가
+- public/: health_checkup_compare.html, safety_rules.html, sample-attachment.png 추가
+- PPT vs 현재 구현 전면 비교 분석 — 메뉴 구조·화면 구성 차이 전체 도출
+- AdminHealthPage 최초 생성 (임직원 건강검진 사후관리)
+- 사이드바 공지사항 하위 보건파트 단일 메뉴 제거
+- vessel/access-permit 중복 메뉴·라우트 제거 (visit-permit으로 통일)
+- 절차서 PDF 다운로드 404 에러 → 준비중 다이얼로그로 수정
+- .claudeignore 개선 / CLAUDE.md VS Code 세션 주의사항 추가
+- PageRequest @Builder.Default 추가 / WebMvcConfig deprecated 경고 제거
+
+---
+
 ## 2026-04-23 (초기 환경 구성)
 
 - gradle-wrapper.jar 다운로드 및 백엔드 빌드 성공

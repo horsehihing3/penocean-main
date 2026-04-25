@@ -13,11 +13,12 @@
 ### 🔴 최우선 — 다음 세션 시작 시 진행
 - [ ] **파일 업로드/다운로드 실제 동작 확인** — `./uploads` 경로, `FileController` 엔드포인트, 프론트 연동 여부
 - [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
-- [ ] **`/health/trend` 사이드바 노출** — 보건파트(admin/health) 하위에 "건강추이" 메뉴 추가 필요
+- [ ] **`/admin/health` 사이드바 메뉴 확인** — 보건파트 메뉴가 사이드바에 올바르게 노출되는지 검증
 
 ### 🟡 다음 작업
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
 - [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
+- [ ] **안전수칙·보건 HTML → 실제 DB 연동** — safety_rules.html / health_checkup_compare.html 현재 정적 HTML, 추후 API 연동 필요
 
 
 ---
@@ -61,16 +62,7 @@
 ## ✅ 완료된 작업
 
 > 항목이 10개 이상 쌓이면 `docs/ARCHIVE.md`로 이동 후 여기서 삭제
-> 이전 완료 항목(2026-04-23 ~ 04-24)은 `docs/ARCHIVE.md` 참조
-
-- [x] PPT vs 현재 구현 전면 비교 분석 완료 — 메뉴 구조·화면 구성 차이 전체 도출 (2026-04-25)
-- [x] 관리자 > 보건파트 임직원 건강검진 사후관리 페이지 추가 (AdminHealthPage) (2026-04-25)
-- [x] 사이드바 공지사항 하위 보건파트 단일 메뉴 제거 — PPT 기준 관리자 메뉴에만 있어야 함 (2026-04-25)
-- [x] vessel/access-permit 중복 메뉴·라우트 제거 — PPT에 없는 항목, visit-permit으로 통일 (2026-04-25)
-- [x] 절차서 PDF 다운로드 404 에러 → 준비중 다이얼로그로 수정 (출입절차·위험성평가절차 2개) (2026-04-25)
-- [x] .claudeignore 개선 — `**/*.jar` → `backend/build/**/*.jar` 한정, `node_modules/` 루트 추가 (2026-04-25)
-- [x] CLAUDE.md 개선 — VS Code 세션 주의사항, 병렬 세션 가이드 섹션 추가 (2026-04-25)
-- [x] PageRequest @Builder.Default 추가 / WebMvcConfig deprecated 경고 제거 (2026-04-25)
+> 이전 완료 항목(2026-04-23 ~ 04-25)은 `docs/ARCHIVE.md` 참조
 
 ---
 
@@ -102,7 +94,7 @@
 | 프로젝트 경로 | `C:\claude\penocean-main` (Git Bash: `/c/claude/penocean-main`) |
 | Backend 포트 | 4001 (context-path: `/api`) |
 | Frontend 포트 | 4000 |
-| DB | SQL Server `localhost:1433` / DB: `PANOCEAN_EHS` |
+| DB | SQL Server `211.171.152.242:51084` / DB: `penocean` (회사 원격 DB) |
 | 빌드 | Gradle (`./gradlew bootRun`) |
 
 ### 환경변수 목록 (application.yml 기준)
