@@ -1,5 +1,5 @@
 // [2026-04-24] PPT 슬라이드 22(정보수집) 기준으로 전면 재작성
-// 출입신청 기록 목록 조회 — No/상태/구분/업종/방문사업장/지역항구/작업일정/작업상세/출입신청인원
+// [2026-04-25] 맨 우측 첨부파일 컬럼 추가 — 클릭 시 이미지 미리보기 다이얼로그
 import { useState } from 'react'
 import {
   Alert,
@@ -7,7 +7,11 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -23,6 +27,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
+import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import { useQuery } from '@tanstack/react-query'
 import { accessRequestApi } from '../../api/accessRequestApi'
@@ -69,6 +75,26 @@ const formatDateRange = (start: string, end: string): string => {
   return `${fmt(start)} ~ ${fmt(end)}`
 }
 
+// 첨부파일 이미지 미리보기 다이얼로그 — 클릭 시 샘플 이미지 바로 표시
+const AttachmentDialog: React.FC<{
+  open: boolean
+  onClose: () => void
+}> = ({ open, onClose }) => (
+  <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      첨부파일
+      <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
+    </DialogTitle>
+    <DialogContent sx={{ p: 1, textAlign: 'center', bgcolor: '#000' }}>
+      <img
+        src="/sample-attachment.png"
+        alt="첨부파일"
+        style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
+      />
+    </DialogContent>
+  </Dialog>
+)
+
 const CompanyManagePage: React.FC = () => {
   const [keywordInput, setKeywordInput] = useState('')
   const [statusInput, setStatusInput] = useState<StatusFilter>('')
@@ -82,6 +108,8 @@ const CompanyManagePage: React.FC = () => {
 
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
+
+  const [attachOpen, setAttachOpen] = useState(false)
 
   const listQuery = useQuery({
     queryKey: ['admin', 'info-collection', { keyword, statusFilter, dateFrom, dateTo, page, pageSize }],
@@ -165,7 +193,7 @@ const CompanyManagePage: React.FC = () => {
         </Stack>
       </Paper>
 
-      {/* 목록 — PPT 슬라이드 22 컬럼 */}
+      {/* 목록 */}
       <Paper variant="outlined">
         {listQuery.isError && (
           <Alert severity="error" sx={{ m: 2 }}>목록을 불러오지 못했습니다.</Alert>
@@ -173,29 +201,30 @@ const CompanyManagePage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 48 }}>No.</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 90 }}>상태</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 70 }}>구분</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>업종</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>방문사업장/선박</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 90 }}>지역/항구</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 190 }}>작업일정</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 120 }}>작업상세</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, width: 90 }}>출입신청인원</TableCell>
+              <TableRow>
+                <TableCell sx={{ width: 48 }}>No.</TableCell>
+                <TableCell sx={{ width: 90 }}>상태</TableCell>
+                <TableCell sx={{ width: 70 }}>구분</TableCell>
+                <TableCell sx={{ width: 100 }}>업종</TableCell>
+                <TableCell>방문사업장/선박</TableCell>
+                <TableCell sx={{ width: 90 }}>지역/항구</TableCell>
+                <TableCell sx={{ width: 190 }}>작업일정</TableCell>
+                <TableCell sx={{ width: 120 }}>작업상세</TableCell>
+                <TableCell align="right" sx={{ width: 90 }}>출입신청인원</TableCell>
+                <TableCell align="center" sx={{ width: 80 }}>첨부파일</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {listQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
               )}
               {!listQuery.isLoading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     조회된 데이터가 없습니다.
                   </TableCell>
                 </TableRow>
@@ -220,6 +249,15 @@ const CompanyManagePage: React.FC = () => {
                   </TableCell>
                   <TableCell>{row.workType ?? '-'}</TableCell>
                   <TableCell align="right">{row.workerCount ?? '-'}</TableCell>
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={() => setAttachOpen(true)}
+                      title="첨부파일 보기"
+                    >
+                      <AttachFileIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -235,6 +273,9 @@ const CompanyManagePage: React.FC = () => {
           onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
         />
       </Paper>
+
+      {/* 첨부파일 다이얼로그 */}
+      <AttachmentDialog open={attachOpen} onClose={() => setAttachOpen(false)} />
     </Box>
   )
 }

@@ -99,6 +99,7 @@ const AdminHealthPage: React.FC = () => {
   const [filter, setFilter] = useState<'전체' | '추적관리' | '정상'>('전체')
   const [keyword, setKeyword] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<HealthRecord | null>(null)
+  const [compareOpen, setCompareOpen] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'info' })
 
   const notify = (message: string, severity: 'success' | 'info' = 'info') =>
@@ -171,7 +172,7 @@ const AdminHealthPage: React.FC = () => {
         </Stack>
 
         <Alert severity="info" sx={{ mx: 2, mb: 1, py: 0 }}>
-          이름을 더블 클릭하시면 3개년 수치 팝업이 열립니다.
+          행을 클릭하면 3개년 비교/조회 화면이 팝업으로 열립니다.
         </Alert>
 
         <TableContainer sx={{ maxHeight: 420 }}>
@@ -199,15 +200,17 @@ const AdminHealthPage: React.FC = () => {
             </TableHead>
             <TableBody>
               {filtered.map((r, idx) => (
-                <TableRow key={r.id} hover sx={{ bgcolor: r.workFitness === '나' ? 'error.50' : 'inherit' }}>
+                <TableRow
+                  key={r.id}
+                  hover
+                  sx={{ bgcolor: r.workFitness === '나' ? 'error.50' : 'inherit', cursor: 'pointer' }}
+                  onClick={() => { setSelectedRecord(r); setCompareOpen(true) }}
+                >
                   <TableCell>{idx + 1}</TableCell>
                   <TableCell>{r.checkupPeriod}</TableCell>
                   <TableCell>{r.hospital}</TableCell>
                   <TableCell>{r.department}</TableCell>
-                  <TableCell
-                    sx={{ cursor: 'pointer', color: 'primary.main', fontWeight: 600, textDecoration: 'underline' }}
-                    onDoubleClick={() => setSelectedRecord(r)}
-                  >
+                  <TableCell sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {r.name}
                   </TableCell>
                   <TableCell>{r.age}</TableCell>
@@ -260,77 +263,23 @@ const AdminHealthPage: React.FC = () => {
         </Stack>
       </Paper>
 
-      {/* 3개년 비교 팝업 */}
-      <Dialog open={!!selectedRecord} onClose={() => setSelectedRecord(null)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* 3개년 비교 팝업 — health_checkup_compare.html iframe */}
+      <Dialog open={compareOpen} onClose={() => setCompareOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
           임직원 건강검진 3개년 비교/조회 — {selectedRecord?.name}
-          <IconButton size="small" onClick={() => setSelectedRecord(null)}>
+          <IconButton size="small" onClick={() => setCompareOpen(false)}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          {selectedRecord && (
-            <>
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                <Typography variant="body2"><strong>부서:</strong> {selectedRecord.department}</Typography>
-                <Typography variant="body2"><strong>연령:</strong> {selectedRecord.age}세</Typography>
-                <Typography variant="body2"><strong>병원:</strong> {selectedRecord.hospital}</Typography>
-              </Stack>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell sx={{ fontWeight: 700 }}>구분 (항목)</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700 }}>2023년</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700 }}>2024년</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, color: 'primary.main' }}>2025년</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[
-                      { label: '고혈압 건강구분', values: ['A', 'A', selectedRecord.bpCategory] },
-                      { label: 'HTN 약복용', values: ['-', '-', selectedRecord.bpMed ? '복용' : '-'] },
-                      { label: 'BP', values: ['118/76', '120/80', selectedRecord.bpValue] },
-                      { label: '이상지질 건강구분', values: ['A', 'B', selectedRecord.dlCategory] },
-                      { label: '총콜레스테롤(T.C)', values: ['180', '195', String(selectedRecord.tc ?? '-')] },
-                      { label: 'TG', values: ['90', '110', String(selectedRecord.tg ?? '-')] },
-                      { label: 'LDL', values: ['110', '120', String(selectedRecord.ldl ?? '-')] },
-                      { label: 'HDL', values: ['58', '55', String(selectedRecord.hdl ?? '-')] },
-                      { label: '당뇨 건강구분', values: ['A', 'A', selectedRecord.dmCategory] },
-                      { label: '혈당(BST)', values: ['88', '92', String(selectedRecord.bst ?? '-')] },
-                      { label: '사후관리소견', values: ['필요없음', '경과관찰', selectedRecord.followupOpinion] },
-                      { label: '업무적합', values: ['가', '가', selectedRecord.workFitness] },
-                      { label: '비고', values: ['-', '-', selectedRecord.note || '-'] },
-                    ].map(row => (
-                      <TableRow key={row.label} hover>
-                        <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>{row.label}</TableCell>
-                        {row.values.map((v, i) => (
-                          <TableCell key={i} align="center" sx={{
-                            color: i === 2 ? 'primary.main' : 'text.primary',
-                            fontWeight: i === 2 ? 600 : 400,
-                            fontSize: '0.8rem',
-                          }}>
-                            {v}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Stack direction="row" justifyContent="space-between" sx={{ mt: 2 }}>
-                <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={() => notify('통계 PDF 다운로드 기능은 준비 중입니다.')}>
-                  통계PDF 다운로드
-                </Button>
-                <Button variant="contained" size="small" onClick={() => notify('상담내역 보기 기능은 준비 중입니다.')}>
-                  상담내역 보기
-                </Button>
-              </Stack>
-            </>
-          )}
+        <DialogContent dividers sx={{ p: 0, height: '75vh' }}>
+          <iframe
+            src="/health_checkup_compare.html"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title="건강검진 3개년 비교"
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedRecord(null)}>닫기</Button>
+          <Button onClick={() => setCompareOpen(false)}>닫기</Button>
         </DialogActions>
       </Dialog>
 

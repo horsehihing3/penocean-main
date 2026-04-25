@@ -31,10 +31,14 @@ import {
   Typography,
 } from '@mui/material'
 import CheckIcon from '@mui/icons-material/CheckCircle'
+import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import PeopleIcon from '@mui/icons-material/People'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
+import DownloadIcon from '@mui/icons-material/Download'
+import PrintIcon from '@mui/icons-material/Print'
+import TableChartIcon from '@mui/icons-material/TableChart'
 import axios from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { accessRequestApi } from '../../api/accessRequestApi'
@@ -179,12 +183,24 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   OTHER: '기타',
 }
 
+// 항상 표시할 고정 서류 순서 (2번째에 안전보건서약서 포함)
+const FIXED_DOC_TYPES = ['RISK_ASSESSMENT', 'PLEDGE', 'WORK_PLAN']
+
 const AttachmentPopup: React.FC<{ id: number; vesselName: string; onClose: () => void }> = ({ id, vesselName, onClose }) => {
   const detailQuery = useQuery({
     queryKey: ['access-requests', 'detail', id],
     queryFn: () => accessRequestApi.detail(id),
   })
   const attachments = detailQuery.data?.attachments ?? []
+
+  // 고정 순서로 표시: 첨부파일 있으면 매핑, 없으면 빈 슬롯으로 표시
+  const docList = FIXED_DOC_TYPES.map((type) => ({
+    type,
+    label: DOC_TYPE_LABELS[type],
+    att: attachments.find((a) => a.attachmentType === type) ?? null,
+  }))
+  // 기타(OTHER) 첨부파일 추가
+  const others = attachments.filter((a) => !FIXED_DOC_TYPES.includes(a.attachmentType))
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
@@ -194,19 +210,33 @@ const AttachmentPopup: React.FC<{ id: number; vesselName: string; onClose: () =>
       </DialogTitle>
       <DialogContent dividers>
         {detailQuery.isLoading && <CircularProgress size={24} />}
-        {!detailQuery.isLoading && attachments.length === 0 && (
-          <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>제출된 서류가 없습니다.</Typography>
-        )}
         <Stack spacing={1.5} sx={{ mt: 1 }}>
-          {attachments.map((att) => (
+          {docList.map(({ type, label, att }) => (
+            <Paper key={type} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>{label}</Typography>
+                <Typography variant="caption" color={att ? 'text.secondary' : 'error'}>
+                  {att ? att.fileName : '미제출'}
+                </Typography>
+              </Box>
+              {att ? (
+                <Button size="small" variant="outlined"
+                  href={`/api/access-requests/${id}/attachments/${att.id}/download`} target="_blank">
+                  열기/인쇄
+                </Button>
+              ) : (
+                <Chip size="small" label="미제출" color="error" variant="outlined" />
+              )}
+            </Paper>
+          ))}
+          {others.map((att) => (
             <Paper key={att.id} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
-                <Typography variant="body2" fontWeight={600}>
-                  {DOC_TYPE_LABELS[att.attachmentType] ?? att.attachmentType}
-                </Typography>
+                <Typography variant="body2" fontWeight={600}>{DOC_TYPE_LABELS[att.attachmentType] ?? att.attachmentType}</Typography>
                 <Typography variant="caption" color="text.secondary">{att.fileName}</Typography>
               </Box>
-              <Button size="small" variant="outlined" href={`/api/access-requests/${id}/attachments/${att.id}/download`} target="_blank">
+              <Button size="small" variant="outlined"
+                href={`/api/access-requests/${id}/attachments/${att.id}/download`} target="_blank">
                 열기/인쇄
               </Button>
             </Paper>
@@ -343,6 +373,7 @@ const AdminAccessApprovalPage: React.FC = () => {
       {/* 검색 조건 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1.5}>
+          {/* 1줄: 신청일 + 검토상태 */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
             <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>신청일</Typography>
             <TextField type="date" size="small" value={dateFromInput}
@@ -362,13 +393,28 @@ const AdminAccessApprovalPage: React.FC = () => {
               </Select>
             </FormControl>
           </Stack>
+          {/* 2줄: 협력업체명 + 사업자등록번호 + 버튼들 */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
-            <TextField size="small" label="협력업체명 / 선박명 검색"
-              value={keywordInput}
+            <TextField size="small" label="협력업체명" value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
               sx={{ flex: 1 }} />
-            <Button variant="contained" startIcon={<SearchIcon />} onClick={handleSearch}>검색</Button>
+            <TextField size="small" label="사업자등록번호" sx={{ width: 180 }} />
+            <Button variant="outlined" size="small" startIcon={<TableChartIcon />}
+              onClick={() => alert('Excel 다운로드 준비중입니다.')}>
+              Excel
+            </Button>
+            <Button variant="outlined" size="small" startIcon={<PrintIcon />}
+              onClick={() => window.print()}>
+              인쇄
+            </Button>
+            <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
+              onClick={() => alert('업체List 다운로드 준비중입니다.')}>
+              업체List 다운로드
+            </Button>
+            <Button variant="contained" size="small" startIcon={<SearchIcon />} onClick={handleSearch}>
+              검색
+            </Button>
           </Stack>
         </Stack>
       </Paper>
@@ -392,7 +438,7 @@ const AdminAccessApprovalPage: React.FC = () => {
                   위험성평가, 안전보건서약서, 작업계획서
                 </TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 72 }}>검토자</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 80 }}>액션</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 80 }}>비고</TableCell>
               </TableRow>
               {/* 2행: 세부 헤더 */}
               <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -458,20 +504,19 @@ const AdminAccessApprovalPage: React.FC = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell align="center"><StageCell checked={stage.검토중} /></TableCell>
-                    <TableCell align="center"><StageCell checked={stage.개선요청} /></TableCell>
+                    {/* 개선요청 — 항상 체크 표시, 클릭 시 사유 입력 팝업 */}
+                    <TableCell align="center">
+                      <Tooltip title="개선요청 사유 입력">
+                        <IconButton size="small" color="warning" onClick={() => setImprovPopup(row)}>
+                          <CheckBoxIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell align="center"><StageCell checked={stage.검토완료} /></TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>-</TableCell>
-                    {/* 액션 버튼 */}
+                    <TableCell sx={{ fontSize: '0.78rem' }}>김환규</TableCell>
+                    {/* 비고 */}
                     <TableCell>
-                      {locked ? (
-                        statusChip(row.status)
-                      ) : row.status === 'SUBMITTED' ? (
-                        <Button size="small" variant="contained" color="info"
-                          disabled={reviewMut.isPending}
-                          onClick={() => reviewMut.mutate({ id: row.id, action: 'START' })}>
-                          검토시작
-                        </Button>
-                      ) : row.status === 'IN_REVIEW' ? (
+                      {row.status === 'IN_REVIEW' ? (
                         <Stack direction="column" spacing={0.5}>
                           <Button size="small" variant="contained" color="success"
                             disabled={reviewMut.isPending}
@@ -490,6 +535,8 @@ const AdminAccessApprovalPage: React.FC = () => {
                           onClick={() => reviewMut.mutate({ id: row.id, action: 'START' })}>
                           재검토
                         </Button>
+                      ) : locked ? (
+                        statusChip(row.status)
                       ) : null}
                     </TableCell>
                   </TableRow>

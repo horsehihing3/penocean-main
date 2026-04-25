@@ -31,11 +31,14 @@ import {
   Typography,
 } from '@mui/material'
 import CheckIcon from '@mui/icons-material/CheckCircle'
+import CheckBoxIcon from '@mui/icons-material/CheckBox'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
+import PrintIcon from '@mui/icons-material/Print'
+import DownloadIcon from '@mui/icons-material/Download'
 import axios from 'axios'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
@@ -256,13 +259,17 @@ const RejectPopup: React.FC<{
 const AdminEvaluationReviewPage: React.FC = () => {
   const qc = useQueryClient()
 
-  const [keywordInput, setKeywordInput] = useState('')
-  const [statusInput, setStatusInput] = useState<StatusFilter>('SUBMITTED')
-  const [yearInput, setYearInput] = useState(new Date().getFullYear())
+  const [dateFromInput, setDateFromInput] = useState('')
+  const [dateToInput, setDateToInput] = useState('')
+  const [statusInput, setStatusInput] = useState<StatusFilter>('')
+  const [evaluatorInput, setEvaluatorInput] = useState('')
+  const [teamInput, setTeamInput] = useState('')
+  const [companyInput, setCompanyInput] = useState('')
+  const [bizNoInput, setBizNoInput] = useState('')
 
   const [keyword, setKeyword] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('SUBMITTED')
-  const [year, setYear] = useState(new Date().getFullYear())
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
+  const [year] = useState(new Date().getFullYear())
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(20)
 
@@ -308,9 +315,8 @@ const AdminEvaluationReviewPage: React.FC = () => {
   })
 
   const handleSearch = () => {
-    setKeyword(keywordInput.trim())
+    setKeyword([companyInput, evaluatorInput, bizNoInput].filter(Boolean).join(' ').trim())
     setStatusFilter(statusInput)
-    setYear(yearInput)
     setPage(0)
   }
 
@@ -340,43 +346,67 @@ const AdminEvaluationReviewPage: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h5" sx={{ fontWeight: 700 }}>협력업체 안전보건평가 검토</Typography>
 
-      {/* 검색 조건 */}
+      {/* 검색 조건 2줄 + 버튼 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1.5}>
+          {/* 1줄: 평가일 + 구분 + 평가자 */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
-            <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>평가연도</Typography>
-            <TextField
-              type="number" size="small" value={yearInput}
-              onChange={(e) => setYearInput(Number(e.target.value))}
-              sx={{ width: 110 }}
-              inputProps={{ min: 2020, max: 2099 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>구분(상태)</InputLabel>
-              <Select label="구분(상태)" value={statusInput}
+            <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>평가일</Typography>
+            <TextField type="date" size="small" value={dateFromInput}
+              onChange={(e) => setDateFromInput(e.target.value)}
+              InputLabelProps={{ shrink: true }} sx={{ width: 160 }} />
+            <Typography variant="body2">~</Typography>
+            <TextField type="date" size="small" value={dateToInput}
+              onChange={(e) => setDateToInput(e.target.value)}
+              InputLabelProps={{ shrink: true }} sx={{ width: 160 }} />
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>구분</InputLabel>
+              <Select label="구분" value={statusInput}
                 onChange={(e) => setStatusInput(e.target.value as StatusFilter)}>
                 {STATUS_OPTIONS.map((o) => (
                   <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
+            <TextField size="small" label="평가자" value={evaluatorInput}
+              onChange={(e) => setEvaluatorInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              sx={{ width: 130 }} />
           </Stack>
+          {/* 2줄: 평가팀 + 평가회사 + 사업자등록번호 + 버튼 */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
-            <TextField size="small" label="평가업체·사업자등록번호·평가자 검색"
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
+            <TextField size="small" label="평가팀" value={teamInput}
+              onChange={(e) => setTeamInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
               sx={{ flex: 1 }} />
-            <Button variant="outlined" startIcon={<FileDownloadIcon />}
+            <TextField size="small" label="평가회사" value={companyInput}
+              onChange={(e) => setCompanyInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              sx={{ flex: 1 }} />
+            <TextField size="small" label="사업자등록번호" value={bizNoInput}
+              onChange={(e) => setBizNoInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              sx={{ width: 160 }} />
+            <Button variant="outlined" size="small" startIcon={<FileDownloadIcon />}
               onClick={handleExcel} disabled={!rows.length}>
               Excel
             </Button>
-            <Button variant="contained" startIcon={<SearchIcon />} onClick={handleSearch}>검색</Button>
+            <Button variant="outlined" size="small" startIcon={<PrintIcon />}
+              onClick={() => window.print()}>
+              인쇄
+            </Button>
+            <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
+              onClick={() => alert('업체List 다운로드 준비중입니다.')}>
+              업체List 다운로드
+            </Button>
+            <Button variant="contained" size="small" startIcon={<SearchIcon />} onClick={handleSearch}>
+              검색
+            </Button>
           </Stack>
         </Stack>
       </Paper>
 
-      {/* 목록 — PPT 슬라이드 24 */}
+      {/* 목록 */}
       <Paper variant="outlined">
         {listQuery.isError && <Alert severity="error" sx={{ m: 2 }}>목록을 불러오지 못했습니다.</Alert>}
         <TableContainer>
@@ -386,11 +416,12 @@ const AdminEvaluationReviewPage: React.FC = () => {
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 96 }}>평가일</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 130 }}>사업자등록번호</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700 }}>평가업체</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>평가자</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>평가팀</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 80 }}>평가자</TableCell>
                 <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 72 }}>평가결과</TableCell>
                 <TableCell colSpan={5} align="center" sx={{ fontWeight: 700 }}>평가결과 검토</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 72 }}>검토자</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>액션</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>비고</TableCell>
               </TableRow>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 54 }}>평가표</TableCell>
@@ -403,14 +434,14 @@ const AdminEvaluationReviewPage: React.FC = () => {
             <TableBody>
               {listQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
               )}
               {!listQuery.isLoading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell colSpan={13} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                     조회된 데이터가 없습니다.
                   </TableCell>
                 </TableRow>
@@ -422,13 +453,15 @@ const AdminEvaluationReviewPage: React.FC = () => {
                   <TableRow key={row.id} hover>
                     <TableCell sx={{ fontSize: '0.78rem' }}>{fmt(row.submittedAt)}</TableCell>
                     <TableCell sx={{ fontSize: '0.78rem' }}>{row.businessNumber}</TableCell>
-                    {/* 업체명 클릭 → 팝업 */}
                     <TableCell>
                       <Button size="small" variant="text"
                         sx={{ p: 0, minWidth: 0, fontWeight: 400, textAlign: 'left' }}
                         onClick={() => setCompanyPopup(row)}>
                         {row.companyName}
                       </Button>
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '0.78rem' }}>
+                      {row.evaluationType === 'REGULAR' ? '운항운용팀' : '해사관리팀'}
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.78rem' }}>{row.evaluatorName ?? '-'}</TableCell>
                     <TableCell align="center">
@@ -437,7 +470,6 @@ const AdminEvaluationReviewPage: React.FC = () => {
                         color={row.qualified ? 'success' : 'error'}
                         sx={{ fontWeight: 700, fontSize: '0.72rem' }} />
                     </TableCell>
-                    {/* 평가표 클릭 */}
                     <TableCell align="center">
                       <Tooltip title="평가표 보기">
                         <IconButton size="small" color={stage.평가표 ? 'primary' : 'default'}
@@ -446,7 +478,6 @@ const AdminEvaluationReviewPage: React.FC = () => {
                         </IconButton>
                       </Tooltip>
                     </TableCell>
-                    {/* 증빙서류 클릭 */}
                     <TableCell align="center">
                       <Tooltip title="증빙서류 보기">
                         <IconButton size="small" color={stage.증빙서류 ? 'primary' : 'default'}
@@ -456,10 +487,17 @@ const AdminEvaluationReviewPage: React.FC = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell align="center"><StageCell checked={stage.검토중} /></TableCell>
-                    <TableCell align="center"><StageCell checked={stage.개선요청} /></TableCell>
+                    {/* 개선요청 — 항상 체크 표시, 클릭 시 사유 입력 팝업 */}
+                    <TableCell align="center">
+                      <Tooltip title="개선요청 사유 입력">
+                        <IconButton size="small" color="warning" onClick={() => setRejectPopup(row)}>
+                          <CheckBoxIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell align="center"><StageCell checked={stage.검토완료} /></TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>{'-'}</TableCell>
-                    {/* 액션 */}
+                    <TableCell sx={{ fontSize: '0.78rem' }}>김환규</TableCell>
+                    {/* 비고 */}
                     <TableCell>
                       {locked ? (
                         <Chip size="small" label="검토완료" color="success" sx={{ fontWeight: 600 }} />
