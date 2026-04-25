@@ -43,6 +43,7 @@ import AuditInspectionPage from './pages/admin/AuditInspectionPage'
 import AdminAccidentReportPage from './pages/admin/AdminAccidentReportPage'
 import LandBudgetPage from './pages/admin/LandBudgetPage'
 import SeaCrewStatsPage from './pages/admin/SeaCrewStatsPage'
+import AdminHealthPage from './pages/admin/AdminHealthPage'
 
 function App() {
   return (
@@ -226,6 +227,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <AuditInspectionPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/health"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <AdminHealthPage />
             </RoleRoute>
           }
         />

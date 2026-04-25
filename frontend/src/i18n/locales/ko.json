@@ -161,6 +161,7 @@
     "seaBudget": "해상안전보건 예산 및 실적",
     "landCrewStats": "육상직원 질병/부상 누적건수 및 재해율",
     "seaCrewStats": "해상직원 질병/부상 누적건수 및 재해율",
+    "adminHealth": "보건파트 — 임직원 건강검진 사후관리",
     "health": "보건",
     "healthPortal": "보건파트",
     "healthCheckup": "건강검진",

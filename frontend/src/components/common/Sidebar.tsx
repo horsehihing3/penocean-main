@@ -119,6 +119,7 @@ const menuItems: MenuItem[] = [
           { textKey: 'nav.seaCrewStats', icon: <ReportIcon />, path: '/admin/sea-crew-stats' },
         ],
       },
+      { textKey: 'nav.adminHealth', icon: <MedicalServicesIcon />, path: '/admin/health' },
     ],
   },
 ]
