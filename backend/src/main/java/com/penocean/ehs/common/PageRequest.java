@@ -11,9 +11,12 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PageRequest {
 
+    @Builder.Default
     private Integer page = 1;
+    @Builder.Default
     private Integer size = 20;
     private String sortBy;
+    @Builder.Default
     private String sortDir = "DESC";
 
     public int getOffset() {
