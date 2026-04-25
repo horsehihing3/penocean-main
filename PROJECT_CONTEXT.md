@@ -13,6 +13,9 @@
 ### 🔴 최우선 — 다음 세션 시작 시 진행
 - [x] **백엔드 실행 및 DB 마이그레이션 확인** — ✅ Flyway V1~V17 완료, 로그인(admin/password123) 동작 확인
 - [x] **Flyway 활성화 여부 결정** — ✅ `application.yml` `flyway.enabled: true` 로 변경
+- [ ] **파일 업로드/다운로드 실제 동작 확인** — `./uploads` 경로, `FileController` 엔드포인트, 프론트 연동 여부
+- [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
+- [ ] **`/health/trend` 사이드바 노출** — 라우트는 있으나 사이드바 메뉴 누락 (보건파트 메뉴 하위 추가 필요)
 
 ### 🟡 다음 작업
 - [x] **프론트엔드 실행 확인** — ✅ `http://localhost:4000` 정상 동작
@@ -23,9 +26,7 @@
 - [x] **WorkerVoicePage / ApprovalPage / EvaluationCreatePage 재작성** — ✅ PPT 기준 업데이트
 - [x] **GoalPage** — ✅ iframe으로 교체 (`safety-goal-2025.html`)
 - [ ] **미구현 프론트 기능 구현** — 해상직원 사건사고 페이지 (백엔드 SeaCrewIncidentController만 존재)
-- [ ] **`/health/trend` 사이드바 노출** — 라우트는 있으나 사이드바 메뉴 누락
-- [ ] 파일 업로드/다운로드 (`./uploads`) 실제 동작 여부 확인
-- [ ] 이메일 발송 (Office365 SMTP / Microsoft Graph) 연결 여부 확인
+- [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정
 
 
 ---

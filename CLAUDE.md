@@ -97,7 +97,25 @@ frontend/src/api/axiosInstance.ts        # axios 공통 인스턴스
 1. `PROJECT_CONTEXT.md` 업데이트 — 완료 `[x]`, 신규 이슈 추가
 2. 완료 항목 10개 이상 누적 시 → `docs/ARCHIVE.md` 로 이동 후 삭제
 3. `git add . && git commit -m "{feat|fix|refactor|docs|chore}: {요약}"`
-4. `/clear`
+
+> **VS Code 환경 주의:** VS Code 터미널/창을 닫으면 세션이 자동 소멸됩니다.
+> `/clear`는 현재 세션 컨텍스트만 초기화할 뿐 — **실질적 세션 저장은 PROJECT_CONTEXT.md 업데이트 + git commit** 입니다.
+> 새 세션에서 "다음 작업 확인해줘"로 바로 이어받을 수 있습니다.
+
+---
+
+## 병렬 세션 가이드
+
+토큰 소진 시 계정 전환 또는 탭 분리로 작업을 이어갈 수 있습니다.
+
+| 탭 | 역할 | 작업 예시 |
+|----|------|----------|
+| 탭 A | 백엔드 전담 | Controller·Service·Mapper XML 수정, DB 마이그레이션 |
+| 탭 B | 프론트엔드 전담 | 페이지·컴포넌트·i18n 수정 |
+
+- 계정 전환: `claude logout → claude login` (로컬 파일·git 이력 영향 없음)
+- 탭 간 컨텍스트 공유는 `PROJECT_CONTEXT.md` + `git status`로 동기화
+- 동일 파일을 두 탭에서 동시 수정하면 충돌 위험 — 역할 분리 권장
 
 ---
 

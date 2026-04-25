@@ -5,6 +5,7 @@
 
 # --- Frontend 빌드 산출물 ---
 frontend/dist/
+node_modules/
 frontend/node_modules/
 frontend/.vite/
 frontend/coverage/
@@ -15,8 +16,9 @@ backend/build/
 backend/.gradle/
 backend/out/
 **/*.class
-**/*.jar
+backend/build/**/*.jar
 **/*.war
+# gradle-wrapper.jar는 제외 대상 아님 (빌드 실행에 필요, Claude가 존재 여부 확인 가능해야 함)
 
 # --- 파일 업로드 (런타임 생성) ---
 backend/uploads/
