@@ -21,7 +21,6 @@ public class Notice {
     private LocalDateTime publishedAt;
     private Boolean pinned;
     private Long viewCount;
-    private String targetRoles;         // CSV: ADMIN,CONTRACTOR,CONTRACT_DEPT (null = all)
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

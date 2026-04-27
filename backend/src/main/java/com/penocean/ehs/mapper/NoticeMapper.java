@@ -17,19 +17,21 @@ public interface NoticeMapper {
 
     List<NoticeListItem> findPage(@Param("category") String category,
                                   @Param("keyword") String keyword,
-                                  @Param("role") String role,
                                   @Param("offset") int offset,
                                   @Param("limit") int limit);
 
     long count(@Param("category") String category,
-               @Param("keyword") String keyword,
-               @Param("role") String role);
+               @Param("keyword") String keyword);
 
     void insert(Notice notice);
 
     void update(Notice notice);
 
     void incrementViewCount(@Param("id") Long id);
+
+    boolean hasViewed(@Param("noticeId") Long noticeId, @Param("userId") Long userId);
+
+    void insertView(@Param("noticeId") Long noticeId, @Param("userId") Long userId);
 
     void updatePinned(@Param("id") Long id, @Param("pinned") boolean pinned);
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Paper,
@@ -52,7 +52,6 @@ import type {
 type SnackbarState = { open: boolean; message: string; severity: 'success' | 'error' }
 
 const CATEGORIES: NoticeCategory[] = ['NOTICE', 'ANNOUNCEMENT', 'URGENT']
-const TARGET_ROLES = ['ADMIN', 'CONTRACTOR', 'CONTRACT_DEPT']
 
 const categoryColor = (c: NoticeCategory): 'default' | 'info' | 'error' => {
   switch (c) {
@@ -89,7 +88,6 @@ const NoticeBoardPage: React.FC = () => {
     title: '',
     content: '',
     pinned: false,
-    targetRoles: [],
     expiresAt: null,
   }
   const [form, setForm] = useState<NoticePayload>(emptyPayload)
@@ -117,6 +115,27 @@ const NoticeBoardPage: React.FC = () => {
     queryFn: () => noticeApi.detail(selectedId as number),
     enabled: selectedId != null,
   })
+
+  const viewedIds = useRef<Set<number>>(new Set())
+  useEffect(() => {
+    if (detailQuery.isSuccess && selectedId != null && !viewedIds.current.has(selectedId)) {
+      viewedIds.current.add(selectedId)
+      qc.setQueriesData(
+        { queryKey: ['notices', { category, keyword, page, pageSize }] },
+        (old: any) => {
+          if (!old?.content) return old
+          return {
+            ...old,
+            content: old.content.map((item: any) =>
+              item.id === selectedId
+                ? { ...item, viewCount: (item.viewCount ?? 0) + 1 }
+                : item
+            ),
+          }
+        }
+      )
+    }
+  }, [detailQuery.isSuccess, selectedId])
 
   const extractErrorMessage = (err: unknown): string => {
     if (axios.isAxiosError(err)) {
@@ -491,7 +510,6 @@ const NoticeBoardPage: React.FC = () => {
                     title: detail.title,
                     content: detail.content,
                     pinned: detail.pinned,
-                    targetRoles: detail.targetRoles ?? [],
                     expiresAt: detail.expiresAt ?? null,
                   })
                   setEditOpen(true)
@@ -599,31 +617,6 @@ const NoticeBoardPage: React.FC = () => {
                 }
               />
             </Stack>
-            <FormControl size="small" fullWidth>
-              <InputLabel>{t('notice.targetRoles')}</InputLabel>
-              <Select
-                multiple
-                label={t('notice.targetRoles')}
-                value={form.targetRoles ?? []}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    targetRoles:
-                      typeof e.target.value === 'string'
-                        ? e.target.value.split(',')
-                        : e.target.value,
-                  }))
-                }
-                input={<OutlinedInput label={t('notice.targetRoles')} />}
-                renderValue={(selected) => (selected as string[]).join(', ')}
-              >
-                {TARGET_ROLES.map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>

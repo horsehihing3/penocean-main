@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -17,6 +17,5 @@ public class NoticeCreateRequest {
     private String title;
     private String content;
     private Boolean pinned;
-    private String targetRoles;         // CSV
-    private LocalDateTime expiresAt;
+    private LocalDate expiresAt;
 }

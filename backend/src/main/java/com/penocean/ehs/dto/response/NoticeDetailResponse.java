@@ -21,7 +21,6 @@ public class NoticeDetailResponse {
     private String authorName;
     private Boolean pinned;
     private Long viewCount;
-    private String targetRoles;
     private LocalDateTime publishedAt;
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;

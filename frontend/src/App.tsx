@@ -30,8 +30,6 @@ import IndustrialAccidentPage from './pages/contractor/IndustrialAccidentPage'
 import WorkerVoicePage from './pages/vessel/WorkerVoicePage'
 import SafetyPerformanceLandPage from './pages/admin/SafetyPerformanceLandPage'
 import SafetyPerformanceSeaPage from './pages/admin/SafetyPerformanceSeaPage'
-import HealthCheckupPage from './pages/health/HealthCheckupPage'
-import HealthTrendPage from './pages/health/HealthTrendPage'
 import NoticeBoardPage from './pages/notice/NoticeBoardPage'
 import FormLibraryPage from './pages/notice/FormLibraryPage'
 import SafetyRulePage from './pages/admin/SafetyRulePage'
@@ -95,8 +93,22 @@ function App() {
         <Route path="vessel/worker-voice" element={<WorkerVoicePage />} />
 
         {/* Contractor */}
-        <Route path="contractor/procedure" element={<ContractDeptProcedurePage />} />
-        <Route path="contractor/evaluation" element={<EvaluationPage />} />
+        <Route
+          path="contractor/procedure"
+          element={
+            <RoleRoute allowedRoles={['ADMIN', 'CONTRACT_DEPT']}>
+              <ContractDeptProcedurePage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="contractor/evaluation"
+          element={
+            <RoleRoute allowedRoles={['ADMIN', 'CONTRACT_DEPT']}>
+              <EvaluationPage />
+            </RoleRoute>
+          }
+        />
         <Route
           path="contractor/evaluation/new"
           element={
@@ -105,16 +117,26 @@ function App() {
             </RoleRoute>
           }
         />
-        <Route path="contractor/improvements" element={<ImprovementHistoryPage />} />
-        <Route path="contractor/accident" element={<IndustrialAccidentPage />} />
+        <Route
+          path="contractor/improvements"
+          element={
+            <RoleRoute allowedRoles={['ADMIN', 'CONTRACT_DEPT']}>
+              <ImprovementHistoryPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="contractor/accident"
+          element={
+            <RoleRoute allowedRoles={['ADMIN', 'CONTRACT_DEPT']}>
+              <IndustrialAccidentPage />
+            </RoleRoute>
+          }
+        />
 
         {/* Notice */}
         <Route path="notice/board" element={<NoticeBoardPage />} />
         <Route path="notice/forms" element={<FormLibraryPage />} />
-
-        {/* Health */}
-        <Route path="health/checkup" element={<HealthCheckupPage />} />
-        <Route path="health/trend" element={<HealthTrendPage />} />
 
         {/* Admin (role-gated) */}
         <Route

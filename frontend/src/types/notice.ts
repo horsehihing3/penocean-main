@@ -11,7 +11,6 @@ export interface NoticeListItem {
   publishedAt: string
   pinned: boolean
   viewCount: number
-  targetRoles?: string[] | null
   expiresAt?: string | null
 }
 
@@ -26,7 +25,6 @@ export interface NoticePayload {
   title: string
   content: string
   pinned?: boolean
-  targetRoles?: string[]
   expiresAt?: string | null
 }
 

@@ -26,10 +26,11 @@ spring:
       connection-timeout: 30000
 
   flyway:
-    enabled: false  # [2026-04-25] 회사 DB 연결 시 비활성화 (기존 스키마 존재)
+    enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    validate-on-migrate: false  # [2026-04-23] 시드 파일 수정 후 체크섬 불일치 방지 (개발환경)
+    baseline-version: 20        # [2026-04-27] 회사 DB 기존 스키마(V1~V20) 건너뛰고 V21부터 적용
+    validate-on-migrate: false
 
   servlet:
     multipart:
