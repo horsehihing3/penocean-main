@@ -5,6 +5,7 @@ backend/src/main/resources/application-local.yaml
 # Build outputs
 backend/build/
 backend/.gradle/
+backend/bin/
 
 # IDE
 .idea/
