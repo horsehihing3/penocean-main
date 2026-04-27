@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -31,17 +33,21 @@ public class NoticeService {
         int p = Math.max(page, 0);
         int s = size <= 0 ? 20 : size;
         int offset = p * s;
-        String role = caller != null && caller.getRoleCode() != null ? caller.getRoleCode().toUpperCase() : null;
-        List<NoticeListItem> content = noticeMapper.findPage(category, keyword, role, offset, s);
-        long total = noticeMapper.count(category, keyword, role);
+        List<NoticeListItem> content = noticeMapper.findPage(category, keyword, offset, s);
+        long total = noticeMapper.count(category, keyword);
         return PageResponse.of(content, total, p, s);
     }
 
     @Transactional
-    public NoticeDetailResponse detail(Long id) {
+    public NoticeDetailResponse detail(Long id, User caller) {
         NoticeDetailResponse d = noticeMapper.findByIdWithDetail(id);
         if (d == null) throw new ResourceNotFoundException("Notice", "id", id);
-        noticeMapper.incrementViewCount(id);
+        if (caller != null && caller.getId() != null
+                && !noticeMapper.hasViewed(id, caller.getId())) {
+            noticeMapper.insertView(id, caller.getId());
+            noticeMapper.incrementViewCount(id);
+            d.setViewCount(d.getViewCount() + 1);
+        }
         return d;
     }
 
@@ -57,8 +63,7 @@ public class NoticeService {
                 .content(request.getContent())
                 .authorUserId(caller.getId())
                 .pinned(Boolean.TRUE.equals(request.getPinned()))
-                .targetRoles(request.getTargetRoles())
-                .expiresAt(request.getExpiresAt())
+                .expiresAt(toDateTime(request.getExpiresAt()))
                 .build();
         noticeMapper.insert(n);
         log.info("Notice created: id={}, authorId={}", n.getId(), caller.getId());
@@ -73,8 +78,7 @@ public class NoticeService {
         entity.setTitle(request.getTitle() != null ? request.getTitle() : entity.getTitle());
         entity.setContent(request.getContent() != null ? request.getContent() : entity.getContent());
         entity.setPinned(request.getPinned() != null ? request.getPinned() : entity.getPinned());
-        entity.setTargetRoles(request.getTargetRoles() != null ? request.getTargetRoles() : entity.getTargetRoles());
-        entity.setExpiresAt(request.getExpiresAt() != null ? request.getExpiresAt() : entity.getExpiresAt());
+        entity.setExpiresAt(request.getExpiresAt() != null ? toDateTime(request.getExpiresAt()) : entity.getExpiresAt());
         noticeMapper.update(entity);
     }
 
@@ -107,10 +111,14 @@ public class NoticeService {
         return up;
     }
 
+    private LocalDateTime toDateTime(LocalDate date) {
+        return date != null ? date.atStartOfDay() : null;
+    }
+
     private void assertAdmin(User u) {
         if (u == null || u.getRoleCode() == null) throw new UnauthorizedException("Not authenticated");
         String r = u.getRoleCode().toUpperCase();
-        if (!"ADMIN".equals(r) && !"CONTRACT_DEPT".equals(r)) {
+        if (!"ADMIN".equals(r)) {
             throw new UnauthorizedException("공지 관리 권한이 없습니다.");
         }
     }

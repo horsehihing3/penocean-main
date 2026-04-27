@@ -12,7 +12,6 @@
     <result property="publishedAt" column="published_at"/>
     <result property="pinned" column="pinned"/>
     <result property="viewCount" column="view_count"/>
-    <result property="targetRoles" column="target_roles"/>
     <result property="expiresAt" column="expires_at"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
@@ -41,7 +40,6 @@
     <result property="authorName" column="author_name"/>
     <result property="pinned" column="pinned"/>
     <result property="viewCount" column="view_count"/>
-    <result property="targetRoles" column="target_roles"/>
     <result property="publishedAt" column="published_at"/>
     <result property="expiresAt" column="expires_at"/>
     <result property="createdAt" column="created_at"/>
@@ -56,15 +54,12 @@
       <if test="keyword != null and keyword != ''">
         AND (n.title LIKE '%' + #{keyword} + '%' OR n.content LIKE '%' + #{keyword} + '%')
       </if>
-      <if test="role != null and role != ''">
-        AND (n.target_roles IS NULL OR n.target_roles = '' OR n.target_roles LIKE '%' + #{role} + '%')
-      </if>
     </where>
   </sql>
 
   <select id="findById" resultMap="NoticeResultMap">
     SELECT id, category, title, content, author_user_id, published_at, pinned, view_count,
-           target_roles, expires_at, created_at, updated_at, deleted
+           expires_at, created_at, updated_at, deleted
       FROM tb_notice
      WHERE id = #{id} AND deleted = 0
   </select>
@@ -72,7 +67,7 @@
   <select id="findByIdWithDetail" resultMap="DetailMap">
     SELECT n.id, n.category, n.title, n.content,
            n.author_user_id, u.name AS author_name,
-           n.pinned, n.view_count, n.target_roles,
+           n.pinned, n.view_count,
            n.published_at, n.expires_at, n.created_at, n.updated_at
       FROM tb_notice n
       LEFT JOIN tb_user u ON u.id = n.author_user_id AND u.deleted = 0
@@ -98,13 +93,13 @@
   <insert id="insert" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO tb_notice (
       category, title, content, author_user_id, published_at, pinned, view_count,
-      target_roles, expires_at, created_at, deleted
+      expires_at, created_at, deleted
     ) VALUES (
       #{category}, #{title}, #{content}, #{authorUserId},
       <choose><when test="publishedAt != null">#{publishedAt}</when><otherwise>SYSUTCDATETIME()</otherwise></choose>,
       <choose><when test="pinned != null">#{pinned}</when><otherwise>0</otherwise></choose>,
       0,
-      #{targetRoles}, #{expiresAt}, SYSUTCDATETIME(), 0
+      #{expiresAt}, SYSUTCDATETIME(), 0
     )
   </insert>
 
@@ -114,7 +109,6 @@
            title = #{title},
            content = #{content},
            pinned = #{pinned},
-           target_roles = #{targetRoles},
            expires_at = #{expiresAt},
            updated_at = SYSUTCDATETIME()
      WHERE id = #{id} AND deleted = 0
@@ -123,6 +117,17 @@
   <update id="incrementViewCount">
     UPDATE tb_notice SET view_count = ISNULL(view_count, 0) + 1 WHERE id = #{id} AND deleted = 0
   </update>
+
+  <select id="hasViewed" resultType="boolean">
+    SELECT CASE WHEN COUNT(1) > 0 THEN 1 ELSE 0 END
+      FROM tb_notice_view
+     WHERE notice_id = #{noticeId} AND user_id = #{userId}
+  </select>
+
+  <insert id="insertView">
+    INSERT INTO tb_notice_view (notice_id, user_id, viewed_at)
+    VALUES (#{noticeId}, #{userId}, SYSUTCDATETIME())
+  </insert>
 
   <update id="updatePinned">
     UPDATE tb_notice SET pinned = #{pinned}, updated_at = SYSUTCDATETIME() WHERE id = #{id} AND deleted = 0

@@ -13,12 +13,13 @@
 ### 🔴 최우선 — 다음 세션 시작 시 진행
 - [ ] **파일 업로드/다운로드 실제 동작 확인** — `./uploads` 경로, `FileController` 엔드포인트, 프론트 연동 여부
 - [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
-- [ ] **`/admin/health` 사이드바 메뉴 확인** — 보건파트 메뉴가 사이드바에 올바르게 노출되는지 검증
 
 ### 🟡 다음 작업
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
 - [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 - [ ] **안전수칙·보건 HTML → 실제 DB 연동** — safety_rules.html / health_checkup_compare.html 현재 정적 HTML, 추후 API 연동 필요
+- [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
+- [ ] **사업장 메뉴 CONTRACT_DEPT 접근 범위 결정** — 출입신청 목록 조회 허용 여부 기획 확인 필요
 
 
 ---
@@ -64,6 +65,16 @@
 > 항목이 10개 이상 쌓이면 `docs/ARCHIVE.md`로 이동 후 여기서 삭제
 > 이전 완료 항목(2026-04-23 ~ 04-25)은 `docs/ARCHIVE.md` 참조
 
+### 2026-04-27
+- [x] **관리자 사이드바 보건파트 메뉴명 수정** — "보건파트 — 임직원 건강검진 사후관리" → "보건파트" (`ko.json`)
+- [x] **CONTRACTOR 역할 메뉴 격리** — 사이드바에서 "협력업체 안전보건(계약부서용)" 숨김 + `contractor/*` 라우트 전체 RoleRoute 가드 추가 (URL 직접 접근 차단)
+- [x] **미사용 health 페이지 제거** — `/health/checkup`, `/health/trend` 라우트·페이지·API·타입 파일 삭제 (다른 기능 영향 없음 확인)
+- [x] **공지사항 대상역할 기능 제거** — `targetRoles` 필드 프론트/백엔드 전체 제거, 모든 역할에 공통 노출, 작성 권한 ADMIN 전용으로 변경
+- [x] **공지사항 저장 오류 수정** — `expiresAt` 타입 불일치(`LocalDateTime` → `LocalDate`) 수정, 서비스에서 `LocalDateTime` 변환
+- [x] **공지 조회수 사용자당 1회 제한** — `tb_notice_view` 테이블 생성(V21 Flyway), 사용자·공지 조합 중복 방지
+- [x] **공지 조회수 실시간 반영** — 상세 조회 시 목록 캐시 즉시 업데이트 (새로고침 불필요), 백엔드 응답에도 증가된 값 반영
+- [x] **Flyway 활성화** — `baseline-version: 20` 설정으로 기존 스키마 건너뛰고 V21부터 자동 적용
+
 ---
 
 ## 🐛 알려진 에러 & 해결책
@@ -79,7 +90,7 @@
 
 ## ⚠️ 결정 보류 / 미확인 사항
 
-- **Flyway 활성화** — ✅ `flyway.enabled: true` 로 결정, V1~V17 마이그레이션 완료
+- **Flyway 활성화** — ✅ `enabled: true`, `baseline-version: 20` 적용 완료 (V21 자동 마이그레이션 확인)
 - **Microsoft Graph vs SMTP** — 이메일 발송 방식 중 실제 사용할 것 결정 필요 (Azure 앱 등록 여부 확인)
 - **SOM 연동 범위** — `SomLookupController` 존재하나 외부 SOM 시스템 접근 방식 미확인
 - **파일 저장소** — 현재 로컬 디스크(`./uploads`), 향후 Azure Blob / S3 전환 여부 미결

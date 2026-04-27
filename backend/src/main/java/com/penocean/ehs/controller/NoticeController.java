@@ -44,9 +44,12 @@ public class NoticeController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "공지 상세 (viewCount++)")
-    public ResponseEntity<ApiResponse<NoticeDetailResponse>> detail(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(service.detail(id)));
+    @Operation(summary = "공지 상세 (viewCount++, 사용자당 1회)")
+    public ResponseEntity<ApiResponse<NoticeDetailResponse>> detail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User caller = resolveUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.success(service.detail(id, caller)));
     }
 
     @PostMapping

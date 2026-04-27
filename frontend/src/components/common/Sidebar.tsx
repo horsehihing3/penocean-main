@@ -18,7 +18,6 @@ import InfoIcon from '@mui/icons-material/Info'
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat'
 import BusinessIcon from '@mui/icons-material/Business'
 import CampaignIcon from '@mui/icons-material/Campaign'
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
@@ -34,7 +33,6 @@ import ReportIcon from '@mui/icons-material/Report'
 import DescriptionIcon from '@mui/icons-material/Description'
 import FolderCopyIcon from '@mui/icons-material/FolderCopy'
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices'
-import MonitorHeartIcon from '@mui/icons-material/MonitorHeart'
 import HowToRegIcon from '@mui/icons-material/HowToReg'
 import FactCheckIcon from '@mui/icons-material/FactCheck'
 import RuleIcon from '@mui/icons-material/Rule'
@@ -76,6 +74,7 @@ const menuItems: MenuItem[] = [
   {
     textKey: 'nav.contractor',
     icon: <BusinessIcon />,
+    allowedRoles: ['ADMIN', 'CONTRACT_DEPT'],
     children: [
       { textKey: 'nav.contractorProcedure', icon: <ArticleIcon />, path: '/contractor/procedure' },
       { textKey: 'nav.contractorEval', icon: <AssessmentIcon />, path: '/contractor/evaluation' },
