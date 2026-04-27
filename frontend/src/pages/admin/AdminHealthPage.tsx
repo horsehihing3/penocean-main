@@ -118,7 +118,7 @@ const AdminHealthPage: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h5" sx={{ fontWeight: 700 }}>
-        보건파트 — 임직원 건강검진 사후관리
+        보건파트
       </Typography>
 
       {/* PDF 업로드 */}

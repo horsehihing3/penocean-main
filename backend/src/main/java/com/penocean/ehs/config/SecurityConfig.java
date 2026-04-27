@@ -66,7 +66,9 @@ public class SecurityConfig {
                 "http://localhost:4000",
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "http://211.171.152.242:4000"
+                "http://211.171.152.242:4000",
+                "http://192.168.123.100:4000",
+                "https://showbiz-colt-endorphin.ngrok-free.dev"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
