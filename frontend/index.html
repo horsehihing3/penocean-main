@@ -9,6 +9,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- QR 파라미터 감지 → /qr/:token 으로 리다이렉트 (ngrok 인터스티셜 우회용) -->
+    <script>
+      (function() {
+        var qr = new URLSearchParams(window.location.search).get('qr');
+        if (qr && /^[a-f0-9]{32}$/.test(qr)) {
+          window.location.replace('/qr/' + qr);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

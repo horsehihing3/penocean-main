@@ -37,7 +37,9 @@ export default function QrEducationPage() {
 
   useEffect(() => {
     if (!token) return
-    axios.get(`${API_BASE}/public/safety-qr/${token}`)
+    axios.get(`${API_BASE}/public/safety-qr/${token}`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' },
+    })
       .then(res => {
         setQrInfo(res.data.data)
         setStep(1)
@@ -76,8 +78,9 @@ export default function QrEducationPage() {
 
   if (step === 0) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
         <CircularProgress />
+        <Typography variant="body2" color="text.secondary">QR 정보를 불러오는 중...</Typography>
       </Box>
     )
   }

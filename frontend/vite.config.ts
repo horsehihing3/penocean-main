@@ -13,6 +13,9 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 4000,
     allowedHosts: true,
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:4001',

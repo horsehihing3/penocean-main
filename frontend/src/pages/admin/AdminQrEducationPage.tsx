@@ -37,7 +37,10 @@ interface QrRecord {
   completedAt: string
 }
 
-const QR_BASE_URL = `${window.location.origin}/qr`
+// [2026-04-27] VITE_APP_URL 설정 시 ngrok/외부 URL 사용, 없으면 현재 origin
+const APP_ORIGIN = import.meta.env.VITE_APP_URL ?? window.location.origin
+// [2026-04-27] ngrok 인터스티셜 우회: 루트(/?qr=TOKEN) → index.html 스크립트 → /qr/TOKEN 리다이렉트
+const qrUrl = (token: string) => `${APP_ORIGIN}/?qr=${token}`
 
 export default function AdminQrEducationPage() {
   const queryClient = useQueryClient()
@@ -78,7 +81,7 @@ export default function AdminQrEducationPage() {
   })
 
   const handleCopy = (token: string) => {
-    navigator.clipboard.writeText(`${QR_BASE_URL}/${token}`)
+    navigator.clipboard.writeText(qrUrl(token))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -226,9 +229,9 @@ export default function AdminQrEducationPage() {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, p: 3 }}>
           {qrDialogToken && (
             <>
-              <QRCodeSVG value={`${QR_BASE_URL}/${qrDialogToken}`} size={220} />
+              <QRCodeSVG value={qrUrl(qrDialogToken)} size={220} />
               <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all', textAlign: 'center' }}>
-                {QR_BASE_URL}/{qrDialogToken}
+                {qrUrl(qrDialogToken)}
               </Typography>
               <Button variant="outlined" startIcon={<ContentCopyIcon />} onClick={() => handleCopy(qrDialogToken)}>
                 URL 복사
