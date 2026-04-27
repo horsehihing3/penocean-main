@@ -42,6 +42,8 @@ import AdminAccidentReportPage from './pages/admin/AdminAccidentReportPage'
 import LandBudgetPage from './pages/admin/LandBudgetPage'
 import SeaCrewStatsPage from './pages/admin/SeaCrewStatsPage'
 import AdminHealthPage from './pages/admin/AdminHealthPage'
+import AdminQrEducationPage from './pages/admin/AdminQrEducationPage'
+import QrEducationPage from './pages/qr/QrEducationPage'
 
 function App() {
   return (
@@ -49,6 +51,7 @@ function App() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/qr/:token" element={<QrEducationPage />} />
 
       {/* Protected */}
       <Route
@@ -272,6 +275,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <SafetyPerformanceSeaPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/qr-education"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <AdminQrEducationPage />
             </RoleRoute>
           }
         />

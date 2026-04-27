@@ -162,6 +162,7 @@
     "landCrewStats": "육상직원 질병/부상 누적건수 및 재해율",
     "seaCrewStats": "해상직원 질병/부상 누적건수 및 재해율",
     "adminHealth": "보건파트",
+    "adminQrEducation": "QR 안전교육 이수 관리",
     "health": "보건",
     "healthPortal": "보건파트",
     "healthCheckup": "건강검진",

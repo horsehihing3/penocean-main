@@ -37,6 +37,7 @@ import HowToRegIcon from '@mui/icons-material/HowToReg'
 import FactCheckIcon from '@mui/icons-material/FactCheck'
 import RuleIcon from '@mui/icons-material/Rule'
 import WorkIcon from '@mui/icons-material/Work'
+import QrCode2Icon from '@mui/icons-material/QrCode2'
 import { useThemeMode } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import type { Role } from '../../types/auth'
@@ -113,6 +114,7 @@ const menuItems: MenuItem[] = [
         ],
       },
       { textKey: 'nav.adminHealth', icon: <MedicalServicesIcon />, path: '/admin/health' },
+      { textKey: 'nav.adminQrEducation', icon: <QrCode2Icon />, path: '/admin/qr-education' },
     ],
   },
 ]
