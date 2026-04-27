@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.SafetyPerformanceLandMapper">
+
+  <resultMap id="LandResultMap" type="com.penocean.ehs.model.SafetyPerformanceLand">
+    <id property="id" column="id"/>
+    <result property="departmentId" column="department_id"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="manhours" column="manhours"/>
+    <result property="accidentCount" column="accident_count"/>
+    <result property="lostTimeCount" column="lost_time_count"/>
+    <result property="fatalityCount" column="fatality_count"/>
+    <result property="trir" column="trir"/>
+    <result property="ltir" column="ltir"/>
+    <result property="budgetPlanned" column="budget_planned"/>
+    <result property="budgetUsed" column="budget_used"/>
+    <result property="fcmProjectCode" column="fcm_project_code"/>
+    <result property="vbpProjectCode" column="vbp_project_code"/>
+    <result property="reportedBy" column="reported_by"/>
+    <result property="comment" column="comment"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="LandResponseResultMap" type="com.penocean.ehs.dto.response.SafetyPerformanceLandResponse">
+    <id property="id" column="id"/>
+    <result property="departmentId" column="department_id"/>
+    <result property="departmentName" column="department_name"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="manhours" column="manhours"/>
+    <result property="accidentCount" column="accident_count"/>
+    <result property="lostTimeCount" column="lost_time_count"/>
+    <result property="fatalityCount" column="fatality_count"/>
+    <result property="trir" column="trir"/>
+    <result property="ltir" column="ltir"/>
+    <result property="budgetPlanned" column="budget_planned"/>
+    <result property="budgetUsed" column="budget_used"/>
+    <result property="fcmProjectCode" column="fcm_project_code"/>
+    <result property="vbpProjectCode" column="vbp_project_code"/>
+    <result property="reportedBy" column="reported_by"/>
+    <result property="reporterName" column="reporter_name"/>
+    <result property="comment" column="comment"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      sp.deleted = 0
+      <if test="departmentId != null">
+        AND sp.department_id = #{departmentId}
+      </if>
+      <if test="year != null">
+        AND sp.period_year = #{year}
+      </if>
+      <if test="month != null">
+        AND sp.period_month = #{month}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="LandResultMap">
+    SELECT id, department_id, period_year, period_month, manhours, accident_count,
+           lost_time_count, fatality_count, trir, ltir, budget_planned, budget_used,
+           fcm_project_code, vbp_project_code, reported_by, comment,
+           created_at, updated_at, deleted
+      FROM tb_safety_performance_land
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByKey" resultMap="LandResultMap">
+    SELECT id, department_id, period_year, period_month, manhours, accident_count,
+           lost_time_count, fatality_count, trir, ltir, budget_planned, budget_used,
+           fcm_project_code, vbp_project_code, reported_by, comment,
+           created_at, updated_at, deleted
+      FROM tb_safety_performance_land
+     WHERE department_id = #{departmentId}
+       AND period_year = #{periodYear}
+       AND period_month = #{periodMonth}
+       AND deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="LandResponseResultMap">
+    SELECT
+        sp.id, sp.department_id, d.name AS department_name,
+        sp.period_year, sp.period_month, sp.manhours,
+        sp.accident_count, sp.lost_time_count, sp.fatality_count,
+        sp.trir, sp.ltir, sp.budget_planned, sp.budget_used,
+        sp.fcm_project_code, sp.vbp_project_code,
+        sp.reported_by, ru.name AS reporter_name, sp.comment,
+        sp.created_at, sp.updated_at
+      FROM tb_safety_performance_land sp
+      LEFT JOIN tb_department d ON d.id = sp.department_id
+      LEFT JOIN tb_user ru ON ru.id = sp.reported_by AND ru.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY sp.period_year DESC, sp.period_month DESC, sp.department_id
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_safety_performance_land sp
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_safety_performance_land (
+      department_id, period_year, period_month, manhours, accident_count,
+      lost_time_count, fatality_count, trir, ltir, budget_planned, budget_used,
+      fcm_project_code, vbp_project_code, reported_by, comment,
+      created_at, deleted
+    ) VALUES (
+      #{departmentId}, #{periodYear}, #{periodMonth}, #{manhours}, #{accidentCount},
+      #{lostTimeCount}, #{fatalityCount}, #{trir}, #{ltir}, #{budgetPlanned}, #{budgetUsed},
+      #{fcmProjectCode}, #{vbpProjectCode}, #{reportedBy}, #{comment},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_safety_performance_land
+       SET manhours = #{manhours},
+           accident_count = #{accidentCount},
+           lost_time_count = #{lostTimeCount},
+           fatality_count = #{fatalityCount},
+           trir = #{trir},
+           ltir = #{ltir},
+           budget_planned = #{budgetPlanned},
+           budget_used = #{budgetUsed},
+           fcm_project_code = #{fcmProjectCode},
+           vbp_project_code = #{vbpProjectCode},
+           reported_by = #{reportedBy},
+           comment = #{comment},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_safety_performance_land SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

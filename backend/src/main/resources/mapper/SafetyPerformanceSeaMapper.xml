@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.SafetyPerformanceSeaMapper">
+
+  <resultMap id="SeaResultMap" type="com.penocean.ehs.model.SafetyPerformanceSea">
+    <id property="id" column="id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="crewCount" column="crew_count"/>
+    <result property="illnessCount" column="illness_count"/>
+    <result property="injuryCount" column="injury_count"/>
+    <result property="evacuationCount" column="evacuation_count"/>
+    <result property="sickLeaveDays" column="sick_leave_days"/>
+    <result property="posSmSyncedAt" column="pos_sm_synced_at"/>
+    <result property="excelUploadId" column="excel_upload_id"/>
+    <result property="uploadedBy" column="uploaded_by"/>
+    <result property="comment" column="comment"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="SeaResponseResultMap" type="com.penocean.ehs.dto.response.SafetyPerformanceSeaResponse">
+    <id property="id" column="id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="periodYear" column="period_year"/>
+    <result property="periodMonth" column="period_month"/>
+    <result property="crewCount" column="crew_count"/>
+    <result property="illnessCount" column="illness_count"/>
+    <result property="injuryCount" column="injury_count"/>
+    <result property="evacuationCount" column="evacuation_count"/>
+    <result property="sickLeaveDays" column="sick_leave_days"/>
+    <result property="posSmSyncedAt" column="pos_sm_synced_at"/>
+    <result property="excelUploadId" column="excel_upload_id"/>
+    <result property="uploadedBy" column="uploaded_by"/>
+    <result property="uploaderName" column="uploader_name"/>
+    <result property="comment" column="comment"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      sp.deleted = 0
+      <if test="vesselId != null">
+        AND sp.vessel_id = #{vesselId}
+      </if>
+      <if test="year != null">
+        AND sp.period_year = #{year}
+      </if>
+      <if test="month != null">
+        AND sp.period_month = #{month}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="SeaResultMap">
+    SELECT id, vessel_id, period_year, period_month, crew_count, illness_count,
+           injury_count, evacuation_count, sick_leave_days, pos_sm_synced_at,
+           excel_upload_id, uploaded_by, comment, created_at, updated_at, deleted
+      FROM tb_safety_performance_sea
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByKey" resultMap="SeaResultMap">
+    SELECT id, vessel_id, period_year, period_month, crew_count, illness_count,
+           injury_count, evacuation_count, sick_leave_days, pos_sm_synced_at,
+           excel_upload_id, uploaded_by, comment, created_at, updated_at, deleted
+      FROM tb_safety_performance_sea
+     WHERE vessel_id = #{vesselId}
+       AND period_year = #{periodYear}
+       AND period_month = #{periodMonth}
+       AND deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="SeaResponseResultMap">
+    SELECT
+        sp.id, sp.vessel_id, v.name AS vessel_name,
+        sp.period_year, sp.period_month, sp.crew_count, sp.illness_count,
+        sp.injury_count, sp.evacuation_count, sp.sick_leave_days,
+        sp.pos_sm_synced_at, sp.excel_upload_id,
+        sp.uploaded_by, ru.name AS uploader_name,
+        sp.comment, sp.created_at, sp.updated_at
+      FROM tb_safety_performance_sea sp
+      LEFT JOIN tb_vessel v ON v.id = sp.vessel_id
+      LEFT JOIN tb_user   ru ON ru.id = sp.uploaded_by AND ru.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY sp.period_year DESC, sp.period_month DESC, sp.vessel_id
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_safety_performance_sea sp
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_safety_performance_sea (
+      vessel_id, period_year, period_month, crew_count, illness_count,
+      injury_count, evacuation_count, sick_leave_days, pos_sm_synced_at,
+      excel_upload_id, uploaded_by, comment, created_at, deleted
+    ) VALUES (
+      #{vesselId}, #{periodYear}, #{periodMonth}, #{crewCount}, #{illnessCount},
+      #{injuryCount}, #{evacuationCount}, #{sickLeaveDays}, #{posSmSyncedAt},
+      #{excelUploadId}, #{uploadedBy}, #{comment}, SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_safety_performance_sea
+       SET crew_count = #{crewCount},
+           illness_count = #{illnessCount},
+           injury_count = #{injuryCount},
+           evacuation_count = #{evacuationCount},
+           sick_leave_days = #{sickLeaveDays},
+           pos_sm_synced_at = COALESCE(#{posSmSyncedAt}, pos_sm_synced_at),
+           excel_upload_id = COALESCE(#{excelUploadId}, excel_upload_id),
+           uploaded_by = #{uploadedBy},
+           comment = #{comment},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <insert id="bulkInsertFromExcel">
+    INSERT INTO tb_safety_performance_sea (
+      vessel_id, period_year, period_month, crew_count, illness_count,
+      injury_count, evacuation_count, sick_leave_days,
+      excel_upload_id, uploaded_by, comment, created_at, deleted
+    ) VALUES
+    <foreach collection="list" item="it" separator=",">
+      (
+        #{it.vesselId}, #{it.periodYear}, #{it.periodMonth}, #{it.crewCount}, #{it.illnessCount},
+        #{it.injuryCount}, #{it.evacuationCount}, #{it.sickLeaveDays},
+        #{it.excelUploadId}, #{it.uploadedBy}, #{it.comment}, SYSUTCDATETIME(), 0
+      )
+    </foreach>
+  </insert>
+
+  <update id="softDelete">
+    UPDATE tb_safety_performance_sea SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

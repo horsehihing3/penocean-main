@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.EvaluationItemScoreMapper">
+
+  <resultMap id="EvaluationItemScoreResultMap" type="com.penocean.ehs.model.EvaluationItemScore">
+    <id property="id" column="id"/>
+    <result property="evaluationId" column="evaluation_id"/>
+    <result property="itemId" column="item_id"/>
+    <result property="score" column="score"/>
+    <result property="maxScore" column="max_score"/>
+    <result property="weight" column="weight"/>
+    <result property="weightedScore" column="weighted_score"/>
+    <result property="notApplicable" column="not_applicable"/>
+    <result property="comment" column="comment"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <resultMap id="ItemScoreDetailMap" type="com.penocean.ehs.dto.response.EvaluationDetailResponse$ItemScoreItem">
+    <id property="id" column="id"/>
+    <result property="itemId" column="item_id"/>
+    <result property="itemCode" column="item_code"/>
+    <result property="itemCategory" column="item_category"/>
+    <result property="itemTitle" column="item_title"/>
+    <result property="itemDescription" column="item_description"/>
+    <result property="score" column="score"/>
+    <result property="maxScore" column="max_score"/>
+    <result property="weight" column="weight"/>
+    <result property="weightedScore" column="weighted_score"/>
+    <result property="notApplicable" column="not_applicable"/>
+    <result property="comment" column="comment"/>
+  </resultMap>
+
+  <select id="findByEvaluation" resultMap="EvaluationItemScoreResultMap">
+    SELECT id, evaluation_id, item_id, score, max_score, weight, weighted_score,
+           not_applicable, comment, created_at, updated_at
+      FROM tb_evaluation_item_score
+     WHERE evaluation_id = #{evaluationId}
+     ORDER BY id ASC
+  </select>
+
+  <select id="findByEvaluationWithItem" resultMap="ItemScoreDetailMap">
+    SELECT
+      s.id,
+      s.item_id,
+      i.code        AS item_code,
+      i.category    AS item_category,
+      i.title       AS item_title,
+      i.description AS item_description,
+      s.score,
+      s.max_score,
+      s.weight,
+      s.weighted_score,
+      s.not_applicable,
+      s.comment
+      FROM tb_evaluation_item_score s
+      LEFT JOIN tb_evaluation_item i ON i.id = s.item_id
+     WHERE s.evaluation_id = #{evaluationId}
+     ORDER BY i.sort_order ASC, s.id ASC
+  </select>
+
+  <insert id="bulkInsert">
+    INSERT INTO tb_evaluation_item_score (
+      evaluation_id, item_id, score, max_score, weight, weighted_score, not_applicable, comment,
+      created_at
+    ) VALUES
+    <foreach collection="items" item="r" separator=",">
+      (
+        #{r.evaluationId}, #{r.itemId}, #{r.score}, #{r.maxScore}, #{r.weight},
+        #{r.weightedScore},
+        <choose><when test="r.notApplicable != null">#{r.notApplicable}</when><otherwise>0</otherwise></choose>,
+        #{r.comment}, SYSUTCDATETIME()
+      )
+    </foreach>
+  </insert>
+
+  <delete id="deleteByEvaluation">
+    DELETE FROM tb_evaluation_item_score WHERE evaluation_id = #{evaluationId}
+  </delete>
+
+</mapper>

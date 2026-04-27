@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.VisitPermitMapper">
+
+  <resultMap id="VisitPermitResultMap" type="com.penocean.ehs.model.VisitPermit">
+    <id property="id" column="id"/>
+    <result property="permitNo" column="permit_no"/>
+    <result property="accessRequestId" column="access_request_id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="companyId" column="company_id"/>
+    <result property="validFrom" column="valid_from"/>
+    <result property="validTo" column="valid_to"/>
+    <result property="qrCodeUrl" column="qr_code_url"/>
+    <result property="issuedBy" column="issued_by"/>
+    <result property="issuedAt" column="issued_at"/>
+    <result property="revoked" column="revoked"/>
+    <result property="revokedReason" column="revoked_reason"/>
+    <result property="revokedAt" column="revoked_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="VisitPermitDetailMap" type="com.penocean.ehs.dto.response.VisitPermitResponse">
+    <id property="id" column="id"/>
+    <result property="permitNo" column="permit_no"/>
+    <result property="accessRequestId" column="access_request_id"/>
+    <result property="accessRequestNo" column="access_request_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="industryName" column="industry_name"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="validFrom" column="valid_from"/>
+    <result property="validTo" column="valid_to"/>
+    <result property="qrCodeUrl" column="qr_code_url"/>
+    <result property="issuedBy" column="issued_by"/>
+    <result property="issuedAt" column="issued_at"/>
+    <result property="revoked" column="revoked"/>
+    <result property="revokedReason" column="revoked_reason"/>
+    <result property="revokedAt" column="revoked_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      vp.deleted = 0
+      <if test="companyId != null">
+        AND vp.company_id = #{companyId}
+      </if>
+      <if test="vesselId != null">
+        AND vp.vessel_id = #{vesselId}
+      </if>
+      <if test="validDateFrom != null">
+        AND vp.valid_to &gt;= #{validDateFrom}
+      </if>
+      <if test="validDateTo != null">
+        AND vp.valid_from &lt;= #{validDateTo}
+      </if>
+      <if test="revoked != null">
+        AND vp.revoked = <choose><when test="revoked">1</when><otherwise>0</otherwise></choose>
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="VisitPermitResultMap">
+    SELECT id, permit_no, access_request_id, vessel_id, company_id, valid_from, valid_to,
+           qr_code_url, issued_by, issued_at, revoked, revoked_reason, revoked_at,
+           created_at, updated_at, deleted
+      FROM tb_visit_permit
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findDetailById" resultMap="VisitPermitDetailMap">
+    SELECT
+        vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.vessel_id, v.name AS vessel_name,
+        vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
+        vp.revoked, vp.revoked_reason, vp.revoked_at
+      FROM tb_visit_permit vp
+      LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
+      LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+     WHERE vp.id = #{id} AND vp.deleted = 0
+  </select>
+
+  <select id="findByPermitNo" resultMap="VisitPermitDetailMap">
+    SELECT
+        vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.vessel_id, v.name AS vessel_name,
+        vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
+        vp.revoked, vp.revoked_reason, vp.revoked_at
+      FROM tb_visit_permit vp
+      LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
+      LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+     WHERE vp.permit_no = #{permitNo} AND vp.deleted = 0
+  </select>
+
+  <select id="findByAccessRequestId" resultMap="VisitPermitDetailMap">
+    SELECT
+        vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.vessel_id, v.name AS vessel_name,
+        vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
+        vp.revoked, vp.revoked_reason, vp.revoked_at
+      FROM tb_visit_permit vp
+      LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
+      LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+     WHERE vp.access_request_id = #{accessRequestId} AND vp.deleted = 0
+     ORDER BY vp.issued_at DESC
+  </select>
+
+  <select id="findPage" resultMap="VisitPermitDetailMap">
+    SELECT
+        vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
+        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.vessel_id, v.name AS vessel_name,
+        vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
+        vp.revoked, vp.revoked_reason, vp.revoked_at
+      FROM tb_visit_permit vp
+      LEFT JOIN tb_access_request ar ON ar.id = vp.access_request_id
+      LEFT JOIN tb_company c ON c.id = vp.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = vp.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+    <include refid="filterClause"/>
+    ORDER BY vp.issued_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_visit_permit vp
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_visit_permit (
+      permit_no, access_request_id, vessel_id, company_id, valid_from, valid_to,
+      qr_code_url, issued_by, issued_at, revoked, created_at, deleted
+    ) VALUES (
+      #{permitNo}, #{accessRequestId}, #{vesselId}, #{companyId}, #{validFrom}, #{validTo},
+      #{qrCodeUrl}, #{issuedBy}, SYSUTCDATETIME(), 0, SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="revoke">
+    UPDATE tb_visit_permit
+       SET revoked = 1,
+           revoked_reason = #{reason},
+           revoked_at = SYSUTCDATETIME(),
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <select id="findMaxPermitNoSeq" resultType="java.lang.Integer">
+    SELECT ISNULL(MAX(CAST(RIGHT(permit_no, 4) AS INT)), 0)
+      FROM tb_visit_permit
+     WHERE permit_no LIKE CONCAT('VP-', #{dateYmd}, '-%')
+  </select>
+
+</mapper>

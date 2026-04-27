@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전수칙 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    padding: 32px 36px 36px;
+    width: 100%;
+    max-width: 860px;
+  }
+
+  .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2d3a4a;
+    margin-bottom: 20px;
+    letter-spacing: -0.3px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead tr {
+    background: #3b4f6b;
+    color: #fff;
+  }
+
+  thead th {
+    padding: 11px 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-align: center;
+    border: 1px solid #2e3f58;
+  }
+
+  thead th.col-no   { width: 60px; }
+  thead th.col-rule { }
+  thead th.col-del  { width: 90px; }
+
+  tbody tr {
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: #f5f8fc; }
+
+  tbody td {
+    border: 1px solid #d4dce8;
+    padding: 6px 10px;
+    vertical-align: middle;
+    text-align: center;
+    color: #444;
+  }
+
+  tbody td.col-no { color: #6b7a8d; font-size: 13px; }
+
+  tbody td.col-rule {
+    text-align: left;
+    padding: 6px 10px;
+  }
+
+  .rule-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+    color: #2d3a4a;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .rule-input:focus {
+    background: #eef3fb;
+    box-shadow: 0 0 0 2px #3b83f6aa;
+  }
+
+  .btn-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #a0aab8;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    transition: color 0.15s;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .btn-del:hover { color: #e05252; background: #fff0f0; }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 9px 28px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-add {
+    background: #4b6490;
+    color: #fff;
+  }
+  .btn-add:hover { background: #3b4f6b; }
+
+  .btn-apply {
+    background: #2a6bbf;
+    color: #fff;
+  }
+  .btn-apply:hover { background: #1d5099; }
+
+  /* 반영 완료 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #2d3a4a;
+    color: #fff;
+    font-size: 14px;
+    padding: 10px 26px;
+    border-radius: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 999;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="page-title">📋 안전수칙 관리</div>
+  <table id="safetyTable">
+    <thead>
+      <tr>
+        <th class="col-no">No.</th>
+        <th class="col-rule">안전수칙</th>
+        <th class="col-del">Line 삭제</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+    </tbody>
+  </table>
+
+  <div class="actions">
+    <button class="btn btn-add" onclick="addLine()">Line 추가</button>
+    <button class="btn btn-apply" onclick="applyRules()">반영</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ 안전수칙이 반영되었습니다.</div>
+
+<script>
+  // 초기 5개 데이터
+  const initialData = [
+    "작업 전 반드시 보호구(안전모, 안전화, 보안경)를 착용한다.",
+    "전기 설비 작업 시 반드시 전원을 차단하고 잠금·태그아웃(LOTO)을 실시한다.",
+    "중량물(20kg 이상) 취급 시 보조 장비를 사용하고 2인 1조로 작업한다.",
+    "화학물질 취급 시 MSDS(물질안전보건자료)를 사전 확인하고 적합한 보호구를 착용한다.",
+    "고소 작업(2m 이상) 시 안전벨트를 착용하고 안전망·안전난간을 설치한 후 작업한다."
+  ];
+
+  let counter = 0;
+
+  function addLine(value = "") {
+    counter++;
+    const tbody = document.getElementById("tbody");
+    const tr = document.createElement("tr");
+    tr.dataset.id = counter;
+
+    const tdNo = document.createElement("td");
+    tdNo.className = "col-no";
+    tdNo.textContent = tbody.rows.length + 1;
+
+    const tdRule = document.createElement("td");
+    tdRule.className = "col-rule";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "rule-input";
+    input.placeholder = "안전수칙 내용을 입력하세요...";
+    input.value = value;
+    tdRule.appendChild(input);
+
+    const tdDel = document.createElement("td");
+    const btnDel = document.createElement("button");
+    btnDel.className = "btn-del";
+    btnDel.textContent = "−";
+    btnDel.title = "이 줄 삭제";
+    btnDel.onclick = function () {
+      tr.remove();
+      reNumber();
+    };
+    tdDel.appendChild(btnDel);
+
+    tr.appendChild(tdNo);
+    tr.appendChild(tdRule);
+    tr.appendChild(tdDel);
+    tbody.appendChild(tr);
+  }
+
+  function reNumber() {
+    const rows = document.querySelectorAll("#tbody tr");
+    rows.forEach((row, i) => {
+      row.querySelector(".col-no").textContent = i + 1;
+    });
+  }
+
+  function applyRules() {
+    const inputs = document.querySelectorAll(".rule-input");
+    const rules = [];
+    inputs.forEach(inp => {
+      if (inp.value.trim()) rules.push(inp.value.trim());
+    });
+    console.log("반영된 안전수칙:", rules);
+
+    const toast = document.getElementById("toast");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2500);
+  }
+
+  // 초기 데이터 렌더링
+  initialData.forEach(text => addLine(text));
+</script>
+</body>
+</html>

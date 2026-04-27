@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.HealthVitalMapper">
+
+  <resultMap id="VitalResultMap" type="com.penocean.ehs.model.HealthVital">
+    <id property="id" column="id"/>
+    <result property="checkupId" column="checkup_id"/>
+    <result property="userId" column="user_id"/>
+    <result property="measuredDate" column="measured_date"/>
+    <result property="systolicBp" column="systolic_bp"/>
+    <result property="diastolicBp" column="diastolic_bp"/>
+    <result property="fastingGlucose" column="fasting_glucose"/>
+    <result property="hba1c" column="hba1c"/>
+    <result property="totalCholesterol" column="total_cholesterol"/>
+    <result property="ldl" column="ldl"/>
+    <result property="hdl" column="hdl"/>
+    <result property="triglyceride" column="triglyceride"/>
+    <result property="bmi" column="bmi"/>
+    <result property="waistCm" column="waist_cm"/>
+    <result property="smoking" column="smoking"/>
+    <result property="drinkingPerWeek" column="drinking_per_week"/>
+    <result property="isHypertension" column="is_hypertension"/>
+    <result property="isDiabetes" column="is_diabetes"/>
+    <result property="isDyslipidemia" column="is_dyslipidemia"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <select id="findByCheckup" resultMap="VitalResultMap">
+    SELECT id, checkup_id, user_id, measured_date, systolic_bp, diastolic_bp,
+           fasting_glucose, hba1c, total_cholesterol, ldl, hdl, triglyceride,
+           bmi, waist_cm, smoking, drinking_per_week,
+           is_hypertension, is_diabetes, is_dyslipidemia, created_at
+      FROM tb_health_vital
+     WHERE checkup_id = #{checkupId}
+     ORDER BY measured_date DESC
+  </select>
+
+  <select id="findByUserDateRange" resultMap="VitalResultMap">
+    SELECT id, checkup_id, user_id, measured_date, systolic_bp, diastolic_bp,
+           fasting_glucose, hba1c, total_cholesterol, ldl, hdl, triglyceride,
+           bmi, waist_cm, smoking, drinking_per_week,
+           is_hypertension, is_diabetes, is_dyslipidemia, created_at
+      FROM tb_health_vital
+     <where>
+       user_id = #{userId}
+       <if test="dateFrom != null">AND measured_date &gt;= #{dateFrom}</if>
+       <if test="dateTo != null">AND measured_date &lt;= #{dateTo}</if>
+       <if test="hypertensionOnly != null and hypertensionOnly == true">AND is_hypertension = 1</if>
+       <if test="diabetesOnly != null and diabetesOnly == true">AND is_diabetes = 1</if>
+       <if test="dyslipidemiaOnly != null and dyslipidemiaOnly == true">AND is_dyslipidemia = 1</if>
+     </where>
+     ORDER BY measured_date ASC
+  </select>
+
+  <select id="countByFlag" resultType="long">
+    SELECT COUNT(1) FROM tb_health_vital
+     <where>
+       user_id = #{userId}
+       <if test="dateFrom != null">AND measured_date &gt;= #{dateFrom}</if>
+       <if test="dateTo != null">AND measured_date &lt;= #{dateTo}</if>
+       <choose>
+         <when test="flag == 'HYPERTENSION'">AND is_hypertension = 1</when>
+         <when test="flag == 'DIABETES'">AND is_diabetes = 1</when>
+         <when test="flag == 'DYSLIPIDEMIA'">AND is_dyslipidemia = 1</when>
+       </choose>
+     </where>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_health_vital (
+      checkup_id, user_id, measured_date, systolic_bp, diastolic_bp,
+      fasting_glucose, hba1c, total_cholesterol, ldl, hdl, triglyceride,
+      bmi, waist_cm, smoking, drinking_per_week,
+      is_hypertension, is_diabetes, is_dyslipidemia, created_at
+    ) VALUES (
+      #{checkupId}, #{userId}, #{measuredDate}, #{systolicBp}, #{diastolicBp},
+      #{fastingGlucose}, #{hba1c}, #{totalCholesterol}, #{ldl}, #{hdl}, #{triglyceride},
+      #{bmi}, #{waistCm}, #{smoking}, #{drinkingPerWeek},
+      <choose><when test="isHypertension != null">#{isHypertension}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="isDiabetes != null">#{isDiabetes}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="isDyslipidemia != null">#{isDyslipidemia}</when><otherwise>0</otherwise></choose>,
+      SYSUTCDATETIME()
+    )
+  </insert>
+
+</mapper>

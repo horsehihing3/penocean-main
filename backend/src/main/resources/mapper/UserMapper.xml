@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.UserMapper">
+
+  <resultMap id="UserResultMap" type="com.penocean.ehs.model.User">
+    <id property="id" column="id"/>
+    <result property="username" column="username"/>
+    <result property="password" column="password"/>
+    <result property="name" column="name"/>
+    <result property="title" column="title"/>
+    <result property="email" column="email"/>
+    <result property="phone" column="phone"/>
+    <result property="roleCode" column="role_code"/>
+    <result property="companyId" column="company_id"/>
+    <result property="departmentId" column="department_id"/>
+    <result property="status" column="status"/>
+    <result property="approvedAt" column="approved_at"/>
+    <result property="approvedBy" column="approved_by"/>
+    <result property="lastLoginAt" column="last_login_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <sql id="userColumns">
+    id, username, password, name, title, email, phone,
+    role_code, company_id, department_id, status,
+    approved_at, approved_by, last_login_at,
+    created_at, updated_at, deleted
+  </sql>
+
+  <select id="findById" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByUsername" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE username = #{username} AND deleted = 0
+  </select>
+
+  <select id="findByEmail" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE email = #{email} AND deleted = 0
+  </select>
+
+  <select id="findAll" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE deleted = 0
+    ORDER BY created_at DESC
+  </select>
+
+  <select id="existsByUsername" resultType="int">
+    SELECT CASE WHEN EXISTS (
+      SELECT 1 FROM tb_user WHERE username = #{username} AND deleted = 0
+    ) THEN 1 ELSE 0 END
+  </select>
+
+  <select id="findByRole" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE role_code = #{roleCode} AND deleted = 0
+  </select>
+
+  <select id="countByStatus" resultType="long">
+    SELECT COUNT(1)
+    FROM tb_user
+    WHERE status = #{status} AND deleted = 0
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_user (
+      username, password, name, title, email, phone,
+      role_code, company_id, department_id, status,
+      created_at, updated_at, deleted
+    ) VALUES (
+      #{username}, #{password}, #{name}, #{title}, #{email}, #{phone},
+      #{roleCode}, #{companyId}, #{departmentId}, #{status},
+      SYSUTCDATETIME(), SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_user
+    SET name = #{name},
+        email = #{email},
+        phone = #{phone},
+        role_code = #{roleCode},
+        company_id = #{companyId},
+        department_id = #{departmentId},
+        status = #{status},
+        updated_at = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateLastLoginAt">
+    UPDATE tb_user SET last_login_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+  <update id="approve">
+    UPDATE tb_user
+    SET status = 'APPROVED',
+        approved_at = SYSUTCDATETIME(),
+        approved_by = #{approverId},
+        updated_at = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
+
+  <update id="reject">
+    UPDATE tb_user
+    SET status = 'REJECTED',
+        approved_at = SYSUTCDATETIME(),
+        approved_by = #{approverId},
+        updated_at = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
+
+  <update id="delete">
+    UPDATE tb_user SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+  <!-- PPT slide 8 reminder: PENDING 이면서 가입 후 N시간 경과한 사용자 -->
+  <select id="findPendingOlderThanHours" resultMap="UserResultMap">
+    SELECT <include refid="userColumns"/>
+    FROM tb_user
+    WHERE deleted = 0
+      AND status = 'PENDING'
+      AND created_at <![CDATA[<]]> DATEADD(HOUR, -#{hours}, SYSUTCDATETIME())
+    ORDER BY created_at ASC
+  </select>
+
+  <!-- user-industry M:N -->
+  <insert id="insertUserIndustry">
+    INSERT INTO tb_user_industry (user_id, industry_code, created_at)
+    VALUES (#{userId}, #{industryCode}, SYSUTCDATETIME())
+  </insert>
+
+  <delete id="deleteUserIndustries">
+    DELETE FROM tb_user_industry WHERE user_id = #{userId}
+  </delete>
+
+  <select id="findIndustriesByUserId" resultType="string">
+    SELECT industry_code
+    FROM tb_user_industry
+    WHERE user_id = #{userId}
+  </select>
+
+  <!-- user-department M:N -->
+  <insert id="insertUserDepartment">
+    INSERT INTO tb_user_department (user_id, department_id, created_at)
+    VALUES (#{userId}, #{departmentId}, SYSUTCDATETIME())
+  </insert>
+
+  <delete id="deleteUserDepartments">
+    DELETE FROM tb_user_department WHERE user_id = #{userId}
+  </delete>
+
+  <select id="findDepartmentIdByCode" resultType="long">
+    SELECT id
+    FROM tb_department
+    WHERE code = #{code} AND deleted = 0
+  </select>
+
+</mapper>

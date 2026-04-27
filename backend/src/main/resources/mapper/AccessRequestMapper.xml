@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.AccessRequestMapper">
+
+  <resultMap id="AccessRequestResultMap" type="com.penocean.ehs.model.AccessRequest">
+    <id property="id" column="id"/>
+    <result property="requestNo" column="request_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="portId" column="port_id"/>
+    <result property="workType" column="work_type"/>
+    <result property="workDescription" column="work_description"/>
+    <result property="plannedStartDate" column="planned_start_date"/>
+    <result property="plannedEndDate" column="planned_end_date"/>
+    <result property="workerCount" column="worker_count"/>
+    <result property="status" column="status"/>
+    <result property="submittedBy" column="submitted_by"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="reviewedBy" column="reviewed_by"/>
+    <result property="reviewedAt" column="reviewed_at"/>
+    <result property="improvementRequestReason" column="improvement_request_reason"/>
+    <result property="safetyManagerName" column="safety_manager_name"/>
+    <result property="safetyManagerTel" column="safety_manager_tel"/>
+    <result property="safetyManagerEmail" column="safety_manager_email"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemResultMap" type="com.penocean.ehs.dto.response.AccessRequestListItem">
+    <id property="id" column="id"/>
+    <result property="requestNo" column="request_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="portName" column="port_name"/>
+    <result property="industryName" column="industry_name"/>
+    <result property="workType" column="work_type"/>
+    <result property="plannedStartDate" column="planned_start_date"/>
+    <result property="plannedEndDate" column="planned_end_date"/>
+    <result property="workerCount" column="worker_count"/>
+    <result property="status" column="status"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.AccessRequestDetailResponse">
+    <id property="id" column="id"/>
+    <result property="requestNo" column="request_no"/>
+    <result property="companyId" column="company_id"/>
+    <result property="companyName" column="company_name"/>
+    <result property="vesselId" column="vessel_id"/>
+    <result property="vesselName" column="vessel_name"/>
+    <result property="portId" column="port_id"/>
+    <result property="workType" column="work_type"/>
+    <result property="workDescription" column="work_description"/>
+    <result property="plannedStartDate" column="planned_start_date"/>
+    <result property="plannedEndDate" column="planned_end_date"/>
+    <result property="workerCount" column="worker_count"/>
+    <result property="status" column="status"/>
+    <result property="submittedBy" column="submitted_by"/>
+    <result property="submittedAt" column="submitted_at"/>
+    <result property="reviewedBy" column="reviewed_by"/>
+    <result property="reviewedAt" column="reviewed_at"/>
+    <result property="improvementRequestReason" column="improvement_request_reason"/>
+    <result property="safetyManagerName" column="safety_manager_name"/>
+    <result property="safetyManagerTel" column="safety_manager_tel"/>
+    <result property="safetyManagerEmail" column="safety_manager_email"/>
+    <result property="industryName" column="industry_name"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      ar.deleted = 0
+      <if test="status != null and status != ''">
+        AND ar.status = #{status}
+      </if>
+      <if test="companyId != null">
+        AND ar.company_id = #{companyId}
+      </if>
+      <if test="vesselId != null">
+        AND ar.vessel_id = #{vesselId}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+             ar.request_no LIKE '%' + #{keyword} + '%'
+          OR ar.work_type  LIKE '%' + #{keyword} + '%'
+          OR c.name        LIKE '%' + #{keyword} + '%'
+          OR v.name        LIKE '%' + #{keyword} + '%'
+        )
+      </if>
+      <if test="dateFrom != null">
+        AND ar.planned_end_date &gt;= #{dateFrom}
+      </if>
+      <if test="dateTo != null">
+        AND ar.planned_start_date &lt;= #{dateTo}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="AccessRequestResultMap">
+    SELECT id, request_no, company_id, vessel_id, port_id, work_type, work_description,
+           planned_start_date, planned_end_date, worker_count, status,
+           submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
+           safety_manager_name, safety_manager_tel, safety_manager_email,
+           created_at, updated_at, deleted
+      FROM tb_access_request
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetails" resultMap="DetailResultMap">
+    SELECT
+        ar.id,
+        ar.request_no,
+        ar.company_id,
+        c.name AS company_name,
+        ar.vessel_id,
+        v.name AS vessel_name,
+        ar.port_id,
+        ar.work_type,
+        ar.work_description,
+        ar.planned_start_date,
+        ar.planned_end_date,
+        ar.worker_count,
+        ar.status,
+        ar.submitted_by,
+        ar.submitted_at,
+        ar.reviewed_by,
+        ar.reviewed_at,
+        ar.improvement_request_reason,
+        ar.safety_manager_name,
+        ar.safety_manager_tel,
+        ar.safety_manager_email,
+        ic.name AS industry_name,
+        ar.created_at,
+        ar.updated_at
+      FROM tb_access_request ar
+      LEFT JOIN tb_company c  ON c.id  = ar.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+     WHERE ar.id = #{id} AND ar.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemResultMap">
+    SELECT
+        ar.id,
+        ar.request_no,
+        ar.company_id,
+        c.name  AS company_name,
+        ar.vessel_id,
+        v.name  AS vessel_name,
+        p.name  AS port_name,
+        ic.name AS industry_name,
+        ar.work_type,
+        ar.planned_start_date,
+        ar.planned_end_date,
+        ar.worker_count,
+        ar.status,
+        ar.submitted_at,
+        ar.created_at
+      FROM tb_access_request ar
+      LEFT JOIN tb_company c  ON c.id  = ar.company_id  AND c.deleted = 0
+      LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
+      LEFT JOIN tb_port    p  ON p.id  = ar.port_id     AND p.deleted = 0
+      LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+    <include refid="filterClause"/>
+    ORDER BY ar.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1)
+      FROM tb_access_request ar
+      LEFT JOIN tb_company c ON c.id = ar.company_id AND c.deleted = 0
+      LEFT JOIN tb_vessel  v ON v.id = ar.vessel_id
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_access_request (
+      request_no, company_id, vessel_id, port_id, work_type, work_description,
+      planned_start_date, planned_end_date, worker_count, status,
+      submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
+      safety_manager_name, safety_manager_tel, safety_manager_email,
+      created_at, deleted
+    ) VALUES (
+      #{requestNo}, #{companyId}, #{vesselId},
+      #{portId,jdbcType=BIGINT}, #{workType}, #{workDescription},
+      #{plannedStartDate}, #{plannedEndDate},
+      <choose>
+        <when test="workerCount != null">#{workerCount}</when>
+        <otherwise>0</otherwise>
+      </choose>,
+      <choose>
+        <when test="status != null and status != ''">#{status}</when>
+        <otherwise>'DRAFT'</otherwise>
+      </choose>,
+      #{submittedBy,jdbcType=BIGINT},
+      #{submittedAt,jdbcType=TIMESTAMP},
+      #{reviewedBy,jdbcType=BIGINT},
+      #{reviewedAt,jdbcType=TIMESTAMP},
+      #{improvementRequestReason,jdbcType=NVARCHAR},
+      #{safetyManagerName,jdbcType=NVARCHAR},
+      #{safetyManagerTel,jdbcType=NVARCHAR},
+      #{safetyManagerEmail,jdbcType=NVARCHAR},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="updateCore">
+    UPDATE tb_access_request
+       SET vessel_id = #{vesselId},
+           port_id   = #{portId},
+           work_type = #{workType},
+           work_description = #{workDescription},
+           planned_start_date = #{plannedStartDate},
+           planned_end_date   = #{plannedEndDate},
+           safety_manager_name  = #{safetyManagerName,jdbcType=NVARCHAR},
+           safety_manager_tel   = #{safetyManagerTel,jdbcType=NVARCHAR},
+           safety_manager_email = #{safetyManagerEmail,jdbcType=NVARCHAR},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateStatus">
+    UPDATE tb_access_request
+       SET status = #{status},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateSubmit">
+    UPDATE tb_access_request
+       SET status = 'SUBMITTED',
+           submitted_by = #{submittedBy},
+           submitted_at = SYSUTCDATETIME(),
+           updated_at   = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateReviewer">
+    UPDATE tb_access_request
+       SET status      = #{status},
+           reviewed_by = #{reviewedBy},
+           reviewed_at = SYSUTCDATETIME(),
+           updated_at  = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateImprovementReason">
+    UPDATE tb_access_request
+       SET status = 'IMPROVEMENT_REQUESTED',
+           improvement_request_reason = #{reason},
+           reviewed_by = #{reviewedBy},
+           reviewed_at = SYSUTCDATETIME(),
+           updated_at  = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updateWorkerCount">
+    UPDATE tb_access_request
+       SET worker_count = #{count},
+           updated_at   = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_access_request
+       SET deleted = 1,
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <select id="findMaxRequestNoSeq" resultType="java.lang.Integer">
+    SELECT ISNULL(MAX(CAST(RIGHT(request_no, 4) AS INT)), 0)
+      FROM tb_access_request
+     WHERE request_no LIKE CONCAT('AR-', #{dateYmd}, '-%')
+  </select>
+
+</mapper>

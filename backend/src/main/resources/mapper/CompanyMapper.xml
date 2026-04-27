@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.CompanyMapper">
+
+  <resultMap id="CompanyResultMap" type="com.penocean.ehs.model.Company">
+    <id property="id" column="id"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="name" column="name"/>
+    <result property="nameEn" column="name_en"/>
+    <result property="ceoName" column="ceo_name"/>
+    <result property="postalCode" column="postal_code"/>
+    <result property="address" column="address"/>
+    <result property="addressDetail" column="address_detail"/>
+    <result property="phone" column="phone"/>
+    <result property="email" column="email"/>
+    <result property="industryCode" column="industry_code"/>
+    <result property="industryOther" column="industry_other"/>
+    <result property="businessLicenseFilePath" column="business_license_file_path"/>
+    <result property="status" column="status"/>
+    <result property="contractStartDate" column="contract_start_date"/>
+    <result property="contractEndDate" column="contract_end_date"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <sql id="companyColumns">
+    id, business_number, name, name_en, ceo_name, postal_code, address, address_detail,
+    phone, email, industry_code, industry_other, business_license_file_path,
+    status, contract_start_date, contract_end_date,
+    created_at, updated_at, deleted
+  </sql>
+
+  <select id="findById" resultMap="CompanyResultMap">
+    SELECT <include refid="companyColumns"/>
+    FROM tb_company
+    WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByBusinessNumber" resultMap="CompanyResultMap">
+    SELECT <include refid="companyColumns"/>
+    FROM tb_company
+    WHERE business_number = #{businessNumber} AND deleted = 0
+  </select>
+
+  <select id="findAll" resultMap="CompanyResultMap">
+    SELECT <include refid="companyColumns"/>
+    FROM tb_company
+    <where>
+      deleted = 0
+      <if test="keyword != null and keyword != ''">
+        AND name LIKE '%' + #{keyword} + '%'
+      </if>
+      <if test="industryCode != null and industryCode != ''">
+        AND industry_code = #{industryCode}
+      </if>
+      <if test="status != null and status != ''">
+        AND status = #{status}
+      </if>
+    </where>
+    ORDER BY created_at DESC
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_company (
+      business_number, name, name_en, ceo_name, postal_code, address, address_detail,
+      phone, email, industry_code, industry_other, business_license_file_path,
+      status, contract_start_date, contract_end_date,
+      created_at, updated_at, deleted
+    ) VALUES (
+      #{businessNumber}, #{name}, #{nameEn}, #{ceoName}, #{postalCode}, #{address}, #{addressDetail},
+      #{phone}, #{email}, #{industryCode}, #{industryOther}, #{businessLicenseFilePath},
+      #{status}, #{contractStartDate}, #{contractEndDate},
+      SYSUTCDATETIME(), SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_company
+    SET name = #{name},
+        ceo_name = #{ceoName},
+        address = #{address},
+        phone = #{phone},
+        email = #{email},
+        industry_code = #{industryCode},
+        status = #{status},
+        contract_start_date = #{contractStartDate},
+        contract_end_date = #{contractEndDate},
+        updated_at = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
+
+  <update id="delete">
+    UPDATE tb_company SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+  <resultMap id="CompanyListItemMap" type="com.penocean.ehs.dto.response.CompanyListItem">
+    <id property="id" column="id"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="name" column="name"/>
+    <result property="ceoName" column="ceo_name"/>
+    <result property="phone" column="phone"/>
+    <result property="email" column="email"/>
+    <result property="industryCode" column="industry_code"/>
+    <result property="status" column="status"/>
+    <result property="contractStartDate" column="contract_start_date"/>
+    <result property="contractEndDate" column="contract_end_date"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <sql id="companyPageFilter">
+    <where>
+      deleted = 0
+      <if test="keyword != null and keyword != ''">
+        AND (name LIKE '%' + #{keyword} + '%' OR business_number LIKE '%' + #{keyword} + '%')
+      </if>
+      <if test="status != null and status != ''">
+        AND status = #{status}
+      </if>
+      <if test="industryCode != null and industryCode != ''">
+        AND industry_code = #{industryCode}
+      </if>
+    </where>
+  </sql>
+
+  <select id="findPage" resultMap="CompanyListItemMap">
+    SELECT id, business_number, name, ceo_name, phone, email,
+           industry_code, status, contract_start_date, contract_end_date, created_at
+      FROM tb_company
+    <include refid="companyPageFilter"/>
+    ORDER BY created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="countPage" resultType="long">
+    SELECT COUNT(1) FROM tb_company
+    <include refid="companyPageFilter"/>
+  </select>
+
+  <update id="inactivate">
+    UPDATE tb_company SET status = 'INACTIVE', updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.NoticeMapper">
+
+  <resultMap id="NoticeResultMap" type="com.penocean.ehs.model.Notice">
+    <id property="id" column="id"/>
+    <result property="category" column="category"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="authorUserId" column="author_user_id"/>
+    <result property="publishedAt" column="published_at"/>
+    <result property="pinned" column="pinned"/>
+    <result property="viewCount" column="view_count"/>
+    <result property="targetRoles" column="target_roles"/>
+    <result property="expiresAt" column="expires_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <resultMap id="ListItemMap" type="com.penocean.ehs.dto.response.NoticeListItem">
+    <id property="id" column="id"/>
+    <result property="category" column="category"/>
+    <result property="title" column="title"/>
+    <result property="authorUserId" column="author_user_id"/>
+    <result property="authorName" column="author_name"/>
+    <result property="pinned" column="pinned"/>
+    <result property="viewCount" column="view_count"/>
+    <result property="publishedAt" column="published_at"/>
+    <result property="expiresAt" column="expires_at"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <resultMap id="DetailMap" type="com.penocean.ehs.dto.response.NoticeDetailResponse">
+    <id property="id" column="id"/>
+    <result property="category" column="category"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="authorUserId" column="author_user_id"/>
+    <result property="authorName" column="author_name"/>
+    <result property="pinned" column="pinned"/>
+    <result property="viewCount" column="view_count"/>
+    <result property="targetRoles" column="target_roles"/>
+    <result property="publishedAt" column="published_at"/>
+    <result property="expiresAt" column="expires_at"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <sql id="filterClause">
+    <where>
+      n.deleted = 0
+      AND (n.expires_at IS NULL OR n.expires_at &gt;= SYSUTCDATETIME())
+      <if test="category != null and category != ''">AND n.category = #{category}</if>
+      <if test="keyword != null and keyword != ''">
+        AND (n.title LIKE '%' + #{keyword} + '%' OR n.content LIKE '%' + #{keyword} + '%')
+      </if>
+      <if test="role != null and role != ''">
+        AND (n.target_roles IS NULL OR n.target_roles = '' OR n.target_roles LIKE '%' + #{role} + '%')
+      </if>
+    </where>
+  </sql>
+
+  <select id="findById" resultMap="NoticeResultMap">
+    SELECT id, category, title, content, author_user_id, published_at, pinned, view_count,
+           target_roles, expires_at, created_at, updated_at, deleted
+      FROM tb_notice
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByIdWithDetail" resultMap="DetailMap">
+    SELECT n.id, n.category, n.title, n.content,
+           n.author_user_id, u.name AS author_name,
+           n.pinned, n.view_count, n.target_roles,
+           n.published_at, n.expires_at, n.created_at, n.updated_at
+      FROM tb_notice n
+      LEFT JOIN tb_user u ON u.id = n.author_user_id AND u.deleted = 0
+     WHERE n.id = #{id} AND n.deleted = 0
+  </select>
+
+  <select id="findPage" resultMap="ListItemMap">
+    SELECT n.id, n.category, n.title,
+           n.author_user_id, u.name AS author_name,
+           n.pinned, n.view_count, n.published_at, n.expires_at, n.created_at
+      FROM tb_notice n
+      LEFT JOIN tb_user u ON u.id = n.author_user_id AND u.deleted = 0
+    <include refid="filterClause"/>
+    ORDER BY n.pinned DESC, n.published_at DESC, n.id DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{limit} ROWS ONLY
+  </select>
+
+  <select id="count" resultType="long">
+    SELECT COUNT(1) FROM tb_notice n
+    <include refid="filterClause"/>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_notice (
+      category, title, content, author_user_id, published_at, pinned, view_count,
+      target_roles, expires_at, created_at, deleted
+    ) VALUES (
+      #{category}, #{title}, #{content}, #{authorUserId},
+      <choose><when test="publishedAt != null">#{publishedAt}</when><otherwise>SYSUTCDATETIME()</otherwise></choose>,
+      <choose><when test="pinned != null">#{pinned}</when><otherwise>0</otherwise></choose>,
+      0,
+      #{targetRoles}, #{expiresAt}, SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_notice
+       SET category = #{category},
+           title = #{title},
+           content = #{content},
+           pinned = #{pinned},
+           target_roles = #{targetRoles},
+           expires_at = #{expiresAt},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="incrementViewCount">
+    UPDATE tb_notice SET view_count = ISNULL(view_count, 0) + 1 WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="updatePinned">
+    UPDATE tb_notice SET pinned = #{pinned}, updated_at = SYSUTCDATETIME() WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_notice SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
+  </update>
+
+</mapper>

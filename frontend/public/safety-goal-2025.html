@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>팬오션 안전보건 목표 | Pan Ocean Safety & Health Goals 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:#f4f7fc;
+  color:#1a2744;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+:root{
+  --navy:#0a1f44;
+  --navy2:#112359;
+  --blue:#1a56c4;
+  --blue2:#2563eb;
+  --blue3:#3b82f6;
+  --sky:#0ea5e9;
+  --teal:#0891b2;
+  --green:#059669;
+  --amber:#d97706;
+  --red:#dc2626;
+  --gold:#b45309;
+  --gold2:#fbbf24;
+  --t1:#0f172a;
+  --t2:#334155;
+  --t3:#64748b;
+  --t4:#94a3b8;
+  --bg:#f4f7fc;
+  --bg2:#eef2f9;
+  --card:#ffffff;
+  --border:#dde6f0;
+  --shadow:0 2px 12px rgba(10,31,68,.08),0 1px 3px rgba(10,31,68,.06);
+  --shadow2:0 8px 40px rgba(10,31,68,.16);
+}
+
+/* ══ PRINT ══ */
+@media print{
+  .no-print{display:none!important}
+  body{background:#fff}
+  .section{break-inside:avoid}
+}
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#eef2f9}
+::-webkit-scrollbar-thumb{background:#b0c4de;border-radius:3px}
+
+/* ══ TOP NAV ══ */
+.topnav{
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 36px;height:56px;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+  position:sticky;top:0;z-index:100;
+}
+.nav-brand{display:flex;align-items:center;gap:14px}
+.nav-logo{
+  background:linear-gradient(135deg,var(--blue3),var(--sky));
+  width:38px;height:38px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.nav-title{color:#fff;font-size:15px;font-weight:700;letter-spacing:-.2px}
+.nav-sub{color:rgba(255,255,255,.55);font-size:11px;margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-badge{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.85);font-size:11px;font-weight:600;
+  padding:4px 12px;border-radius:20px;white-space:nowrap;
+}
+.print-btn{
+  background:var(--blue2);color:#fff;border:none;cursor:pointer;
+  padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;
+  font-family:inherit;transition:background .15s;
+}
+.print-btn:hover{background:#1d4ed8}
+
+/* ══ HERO ══ */
+.hero{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 40%,#1a3a7c 70%,#0e4a8a 100%);
+  position:relative;overflow:hidden;padding:64px 36px 56px;
+  text-align:center;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-wave{
+  position:absolute;bottom:0;left:0;right:0;
+  height:60px;background:var(--bg);
+  clip-path:ellipse(55% 100% at 50% 100%);
+}
+.hero-label{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.85);font-size:12px;font-weight:600;
+  padding:5px 16px;border-radius:20px;margin-bottom:20px;letter-spacing:.05em;
+}
+.hero-title{
+  font-family:'Noto Serif KR',serif;
+  font-size:clamp(24px,4vw,40px);font-weight:700;color:#fff;
+  letter-spacing:-.5px;line-height:1.2;margin-bottom:10px;
+}
+.hero-title em{color:var(--gold2);font-style:normal}
+.hero-sub{
+  font-size:15px;color:rgba(255,255,255,.7);margin-bottom:28px;font-weight:400;
+  max-width:600px;margin-left:auto;margin-right:auto;
+}
+.hero-meta{
+  display:inline-flex;gap:24px;flex-wrap:wrap;justify-content:center;
+  font-size:12px;color:rgba(255,255,255,.55);
+}
+.hero-meta span{display:flex;align-items:center;gap:5px}
+
+/* ══ CONTAINER ══ */
+.container{max-width:1060px;margin:0 auto;padding:0 24px}
+
+/* ══ SECTION ══ */
+.section{padding:48px 0 0}
+.section-hd{margin-bottom:28px}
+.section-label{
+  font-size:11px;font-weight:700;color:var(--blue2);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;
+  display:flex;align-items:center;gap:7px;
+}
+.section-label::before{content:'';width:24px;height:2px;background:var(--blue2)}
+.section-title{font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px}
+.section-desc{font-size:14px;color:var(--t3);margin-top:6px;line-height:1.6}
+
+/* ══ VISION STRIP ══ */
+.vision-strip{
+  background:linear-gradient(135deg,var(--navy),#1a3a7c);
+  border-radius:16px;padding:36px 40px;margin-bottom:0;
+  display:flex;align-items:center;gap:40px;
+  box-shadow:var(--shadow2);position:relative;overflow:hidden;
+}
+.vision-strip::after{
+  content:'🚢';position:absolute;right:40px;bottom:-10px;
+  font-size:100px;opacity:.07;line-height:1;
+}
+.vs-icon{
+  width:56px;height:56px;border-radius:14px;
+  background:rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+}
+.vs-body{flex:1}
+.vs-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.vs-text{
+  font-family:'Noto Serif KR',serif;
+  font-size:18px;font-weight:700;color:#fff;line-height:1.5;
+}
+.vs-text em{color:var(--gold2);font-style:normal}
+.vs-detail{font-size:13px;color:rgba(255,255,255,.6);margin-top:8px;line-height:1.6}
+
+/* ══ POLICY CARDS ══ */
+.policy-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.policy-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:24px;box-shadow:var(--shadow);
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.policy-card:hover{transform:translateY(-3px);box-shadow:var(--shadow2)}
+.policy-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  border-radius:14px 14px 0 0;
+}
+.pc-navy::before{background:linear-gradient(90deg,var(--navy),var(--blue2))}
+.pc-blue::before{background:linear-gradient(90deg,var(--blue2),var(--sky))}
+.pc-teal::before{background:linear-gradient(90deg,var(--teal),var(--green))}
+.pc-green::before{background:linear-gradient(90deg,var(--green),#34d399)}
+.pc-amber::before{background:linear-gradient(90deg,var(--amber),var(--gold2))}
+.pc-red::before{background:linear-gradient(90deg,var(--red),#f87171)}
+.policy-ico{
+  width:44px;height:44px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:14px;
+}
+.ico-navy{background:#e8eef8}.ico-blue{background:#dbeafe}.ico-teal{background:#cffafe}
+.ico-green{background:#d1fae5}.ico-amber{background:#fef3c7}.ico-red{background:#fee2e2}
+.policy-num{
+  font-size:10px;font-weight:700;color:var(--t4);
+  letter-spacing:.1em;margin-bottom:5px;
+}
+.policy-title{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;line-height:1.35}
+.policy-desc{font-size:12.5px;color:var(--t2);line-height:1.65}
+
+/* ══ GOAL TABS ══ */
+.tab-nav{
+  display:flex;gap:0;border-bottom:2px solid var(--border);
+  margin-bottom:24px;overflow-x:auto;scrollbar-width:none;
+}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{
+  padding:12px 22px;font-size:13px;font-weight:600;color:var(--t3);
+  border:none;background:none;cursor:pointer;white-space:nowrap;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  font-family:inherit;transition:all .15s;
+}
+.tab-btn:hover{color:var(--t1)}
+.tab-btn.active{color:var(--blue2);border-bottom-color:var(--blue2)}
+.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ GOAL TABLE ══ */
+.goal-table-wrap{overflow-x:auto;border-radius:12px;box-shadow:var(--shadow)}
+.goal-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--card)}
+.goal-table th{
+  background:var(--navy);color:#fff;font-size:11px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;
+  padding:11px 16px;text-align:left;white-space:nowrap;
+}
+.goal-table th:first-child{border-radius:12px 0 0 0}
+.goal-table th:last-child{border-radius:0 12px 0 0}
+.goal-table td{
+  padding:11px 16px;border-bottom:1px solid #edf2f8;
+  color:var(--t2);vertical-align:middle;
+}
+.goal-table tr:last-child td{border-bottom:none}
+.goal-table tr:hover td{background:#f8fbff}
+.goal-table td.cat{color:var(--t1);font-weight:700;font-size:13px}
+.goal-table td.val{font-family:'Noto Sans KR',sans-serif;font-weight:700;color:var(--blue2);text-align:center}
+.goal-table td.target{font-weight:700;color:var(--navy);text-align:center}
+.goal-table td.center{text-align:center}
+.goal-table tbody tr:nth-child(even) td{background:#fafcff}
+.goal-table tbody tr:nth-child(even):hover td{background:#f0f5ff}
+
+/* ══ BADGE ══ */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.b-navy{background:#e0e8f5;color:var(--navy)}.b-blue{background:#dbeafe;color:#1d4ed8}
+.b-green{background:#d1fae5;color:#065f46}.b-amber{background:#fef3c7;color:#78350f}
+.b-red{background:#fee2e2;color:#991b1b}.b-gray{background:#f1f5f9;color:var(--t3)}
+.b-teal{background:#cffafe;color:#155e75}
+.priority{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:700}
+.p-high{background:#fee2e2;color:#991b1b}.p-mid{background:#fef3c7;color:#78350f}.p-low{background:#d1fae5;color:#065f46}
+
+/* ══ KPI STRIP ══ */
+.kpi-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  margin-bottom:0;
+}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:13px;padding:20px 18px;box-shadow:var(--shadow);
+  text-align:center;position:relative;overflow:hidden;
+}
+.kpi-card::after{position:absolute;right:-8px;bottom:-8px;font-size:48px;opacity:.06;line-height:1}
+.kpi-card.kc-1::after{content:'⚓'}
+.kpi-card.kc-2::after{content:'🛡️'}
+.kpi-card.kc-3::after{content:'📊'}
+.kpi-card.kc-4::after{content:'🚢'}
+.kpi-top{font-size:10.5px;font-weight:600;color:var(--t4);letter-spacing:.05em;margin-bottom:8px}
+.kpi-val{font-size:28px;font-weight:800;line-height:1;margin-bottom:5px}
+.kpi-unit{font-size:13px;font-weight:400;color:var(--t3);margin-left:2px}
+.kpi-desc{font-size:11.5px;color:var(--t3);line-height:1.4}
+.kpi-card.kc-1 .kpi-val{color:var(--navy)}
+.kpi-card.kc-2 .kpi-val{color:var(--green)}
+.kpi-card.kc-3 .kpi-val{color:var(--blue2)}
+.kpi-card.kc-4 .kpi-val{color:var(--teal)}
+
+/* ══ PROGRESS BARS ══ */
+.prog-list{display:flex;flex-direction:column;gap:14px}
+.prog-item{}
+.prog-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.prog-label{font-size:13px;font-weight:600;color:var(--t1)}
+.prog-pct{font-size:12px;font-weight:700;color:var(--t2)}
+.prog-bar{height:10px;background:var(--bg2);border-radius:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:5px;transition:width 1s ease}
+.prog-sub{font-size:11.5px;color:var(--t3);margin-top:4px}
+
+/* ══ ISM CARDS ══ */
+.ism-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ism-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px;box-shadow:var(--shadow);
+  display:flex;gap:14px;align-items:flex-start;
+}
+.ism-ico{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.ism-body{}
+.ism-title{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px}
+.ism-desc{font-size:12px;color:var(--t2);line-height:1.6}
+.ism-items{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+.ism-item{font-size:11.5px;color:var(--t3);display:flex;align-items:flex-start;gap:5px}
+.ism-item::before{content:'•';color:var(--blue2);flex-shrink:0;margin-top:1px}
+
+/* ══ TIMELINE ══ */
+.timeline{padding-left:20px;position:relative}
+.timeline::before{content:'';position:absolute;left:5px;top:8px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--blue2),transparent)}
+.tl-item{position:relative;margin-bottom:22px}
+.tl-dot{
+  position:absolute;left:-18px;top:4px;
+  width:10px;height:10px;border-radius:50%;border:2px solid;
+}
+.tl-dot.done{background:var(--green);border-color:var(--green)}
+.tl-dot.active{background:var(--blue2);border-color:var(--blue2)}
+.tl-dot.plan{background:#fff;border-color:var(--t4)}
+.tl-q{font-size:10.5px;font-weight:700;color:var(--t4);margin-bottom:3px;font-family:monospace}
+.tl-title{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.tl-desc{font-size:12px;color:var(--t2);line-height:1.55}
+.tl-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+
+/* ══ CERT CARDS ══ */
+.cert-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cert-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px;box-shadow:var(--shadow);text-align:center;
+}
+.cert-logo{font-size:32px;margin-bottom:10px}
+.cert-name{font-size:13px;font-weight:700;color:var(--t1);margin-bottom:5px}
+.cert-org{font-size:11.5px;color:var(--t3);margin-bottom:10px}
+.cert-status{font-size:12px;font-weight:600}
+
+/* ══ DECLARATION BOX ══ */
+.decl-box{
+  background:linear-gradient(135deg,var(--navy),#1e3a6e);
+  border-radius:16px;padding:40px;text-align:center;
+  box-shadow:var(--shadow2);margin-bottom:0;position:relative;overflow:hidden;
+}
+.decl-box::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 50%,rgba(59,130,246,.15) 0%,transparent 60%);
+}
+.decl-ico{font-size:40px;margin-bottom:16px;line-height:1}
+.decl-title{font-family:'Noto Serif KR',serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:14px;line-height:1.4}
+.decl-title em{color:var(--gold2);font-style:normal}
+.decl-text{font-size:14px;color:rgba(255,255,255,.75);line-height:1.8;max-width:640px;margin:0 auto 24px}
+.decl-sign{
+  border-top:1px solid rgba(255,255,255,.15);padding-top:20px;
+  color:rgba(255,255,255,.5);font-size:12.5px;
+}
+.decl-sign strong{color:rgba(255,255,255,.8)}
+
+/* ══ FOOTER ══ */
+.footer{
+  background:var(--navy);color:rgba(255,255,255,.5);
+  text-align:center;padding:24px;font-size:12px;margin-top:60px;
+}
+.footer strong{color:rgba(255,255,255,.8)}
+
+/* ══ RESPONSIVE ══ */
+@media(max-width:800px){
+  .policy-grid{grid-template-columns:1fr 1fr}
+  .kpi-strip{grid-template-columns:1fr 1fr}
+  .ism-grid{grid-template-columns:1fr}
+  .cert-grid{grid-template-columns:1fr 1fr}
+  .hero{padding:40px 20px 50px}
+  .vision-strip{flex-direction:column;gap:16px}
+  .topnav{padding:0 16px}
+}
+@media(max-width:540px){
+  .policy-grid{grid-template-columns:1fr}
+  .cert-grid{grid-template-columns:1fr}
+  .kpi-strip{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="topnav no-print">
+  <div class="nav-brand">
+    <div class="nav-logo">⚓</div>
+    <div>
+      <div class="nav-title">PAN OCEAN · 팬오션주식회사</div>
+      <div class="nav-sub">Safety & Health Management System</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-badge">🏆 TMSA Level 3 인증</div>
+    <div class="nav-badge">ISO 45001:2018</div>
+    <button class="print-btn" onclick="window.print()">🖨️ 인쇄</button>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-label">⚓ 2025년도 안전보건 목표 &amp; 방침</div>
+  <h1 class="hero-title">
+    안전하고 건강한 바다,<br>
+    <em>Zero Harm</em> · 무재해 해운을 선도합니다
+  </h1>
+  <p class="hero-sub">
+    팬오션은 모든 선원과 임직원의 생명과 건강을 최우선으로 하며,
+    지속가능한 안전보건경영체계 구축을 통해 글로벌 리딩 해운물류기업으로 나아갑니다.
+  </p>
+  <div class="hero-meta">
+    <span>📅 2025년 1월 2일 선포</span>
+    <span>🏢 팬오션㈜ 대표이사</span>
+    <span>⚖️ 중대재해처벌법 준수</span>
+    <span>🌊 ISM Code 준수</span>
+  </div>
+  <div class="hero-wave"></div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="container">
+
+  <!-- ─── 안전보건 비전 ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">Safety Vision</div>
+      <h2 class="section-title">안전보건 비전 및 슬로건</h2>
+    </div>
+    <div class="vision-strip">
+      <div class="vs-icon">🎯</div>
+      <div class="vs-body">
+        <div class="vs-label">Safety Vision 2025</div>
+        <div class="vs-text">
+          "<em>바다 위 모든 생명을 지킨다</em> — Safety First, Life First"<br>
+          중대재해 Zero · 무사고 항해 · 건강한 선원 · 안전한 항만
+        </div>
+        <div class="vs-detail">
+          팬오션은 벌크선·컨테이너선·탱커선·LNG선 등 전 선종에 걸쳐 ISM Code 및 TMSA 기준을 준수하며,
+          선원과 임직원이 안전하고 건강하게 근무할 수 있는 환경을 만드는 것을 안전보건경영의 최고 목표로 삼습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── KPI ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">2025 Safety KPI</div>
+      <h2 class="section-title">2025년 핵심 안전보건 성과목표</h2>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card kc-1">
+        <div class="kpi-top">중대재해 발생 건수</div>
+        <div class="kpi-val">0<span class="kpi-unit">건</span></div>
+        <div class="kpi-desc">선박·육상 사망·중상 사고<br>전무 달성 (Zero Harm)</div>
+      </div>
+      <div class="kpi-card kc-2">
+        <div class="kpi-top">Lost Time Injury (LTI)</div>
+        <div class="kpi-val">0<span class="kpi-unit">건</span></div>
+        <div class="kpi-desc">휴업 산재 Zero 목표<br>LTIF ≤ 0.5 (전년 0.72)</div>
+      </div>
+      <div class="kpi-card kc-3">
+        <div class="kpi-top">안전보건 교육 이수율</div>
+        <div class="kpi-val">100<span class="kpi-unit">%</span></div>
+        <div class="kpi-desc">전 선원·임직원 법정교육<br>100% 이수 달성</div>
+      </div>
+      <div class="kpi-card kc-4">
+        <div class="kpi-top">항해 안전 감사 통과율</div>
+        <div class="kpi-val">100<span class="kpi-unit">%</span></div>
+        <div class="kpi-desc">PSC·기국·선급 외부감사<br>적발 0건 유지</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 안전보건 방침 ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">Safety & Health Policy</div>
+      <h2 class="section-title">안전보건 경영방침</h2>
+      <p class="section-desc">팬오션은 다음의 6대 안전보건 경영방침을 전 사업장 및 선박에 적용합니다.</p>
+    </div>
+    <div class="policy-grid">
+      <div class="policy-card pc-navy">
+        <div class="policy-ico ico-navy">⚓</div>
+        <div class="policy-num">방침 01</div>
+        <div class="policy-title">안전 최우선 경영원칙 확립</div>
+        <div class="policy-desc">
+          모든 경영 활동에서 안전을 최우선 가치로 삼습니다. 생산성·수익성보다 생명과 건강이 우선임을 전 임직원·선원이 공유하고,
+          경영자는 안전에 필요한 인력·예산·설비를 최우선 배정합니다.
+        </div>
+      </div>
+      <div class="policy-card pc-blue">
+        <div class="policy-ico ico-blue">🛡️</div>
+        <div class="policy-num">방침 02</div>
+        <div class="policy-title">법규 및 국제협약 완전 준수</div>
+        <div class="policy-desc">
+          중대재해처벌법·산업안전보건법·선박안전법·SOLAS·STCW·MLC 2006 등 국내외 법규와
+          IMO 결의·ISM Code·TMSA를 철저히 준수하여 무처벌·무적발을 달성합니다.
+        </div>
+      </div>
+      <div class="policy-card pc-teal">
+        <div class="policy-ico ico-teal">🔍</div>
+        <div class="policy-num">방침 03</div>
+        <div class="policy-title">위험 사전 식별 및 선제적 예방</div>
+        <div class="policy-desc">
+          모든 선박과 사업장에서 체계적인 위험성평가(Risk Assessment)를 실시하고,
+          아차사고(Near Miss) 보고 문화를 확산하여 사고 발생 전 단계에서 위험을 제거합니다.
+        </div>
+      </div>
+      <div class="policy-card pc-green">
+        <div class="policy-ico ico-green">👥</div>
+        <div class="policy-num">방침 04</div>
+        <div class="policy-title">자율적 안전문화 구축 및 참여</div>
+        <div class="policy-desc">
+          전 선원과 임직원이 안전보건 활동에 자발적으로 참여하는 문화를 구축합니다.
+          안전제안 활성화, 선박 안전위원회 운영, 비상 훈련 주기적 실시를 통해
+          현장 중심 안전 역량을 강화합니다.
+        </div>
+      </div>
+      <div class="policy-card pc-amber">
+        <div class="policy-ico ico-amber">🎓</div>
+        <div class="policy-num">방침 05</div>
+        <div class="policy-title">지속적 교육·훈련 및 역량 강화</div>
+        <div class="policy-desc">
+          STCW 및 국내 법정교육을 포함한 체계적 안전보건 교육을 실시합니다.
+          선원 건강검진·정신건강 관리·운항 시뮬레이터 훈련 등을 강화하여
+          개인 역량을 지속 향상시킵니다.
+        </div>
+      </div>
+      <div class="policy-card pc-red">
+        <div class="policy-ico ico-red">📈</div>
+        <div class="policy-num">방침 06</div>
+        <div class="policy-title">성과 모니터링 및 지속 개선</div>
+        <div class="policy-desc">
+          안전보건 KPI를 주기적으로 측정·분석하고 경영진에 보고합니다.
+          사고·아차사고를 철저히 조사하여 재발방지대책을 수립하며,
+          내외부 감사 결과를 반영한 PDCA 사이클을 운영합니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 세부 목표 (탭) ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">Detailed Goals</div>
+      <h2 class="section-title">2025년 분야별 세부 안전보건 목표</h2>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab(this,'t-ship')">🚢 선박 안전</button>
+      <button class="tab-btn" onclick="switchTab(this,'t-office')">🏢 육상·항만</button>
+      <button class="tab-btn" onclick="switchTab(this,'t-health')">❤️ 선원 건강보건</button>
+      <button class="tab-btn" onclick="switchTab(this,'t-env')">🌊 환경·비상대응</button>
+      <button class="tab-btn" onclick="switchTab(this,'t-edu')">🎓 교육·훈련</button>
+    </div>
+
+    <!-- 선박 안전 -->
+    <div id="t-ship" class="tab-panel active">
+      <div class="goal-table-wrap">
+        <table class="goal-table">
+          <thead>
+            <tr>
+              <th>분류</th><th>세부 목표 항목</th><th>2024년 실적</th><th>2025년 목표</th><th>측정지표</th><th>중요도</th><th>담당부서</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cat" rowspan="4">중대사고<br>예방</td>
+              <td>선박 중대사고 (사망·침몰·좌초·충돌) 발생 건수</td>
+              <td class="val">0건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">사고 건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박안전팀</td>
+            </tr>
+            <tr>
+              <td>Lost Time Injury Frequency (LTIF)</td>
+              <td class="val">0.72</td><td class="target">≤ 0.50</td>
+              <td class="center"><span class="badge b-blue">백만인시당</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박안전팀</td>
+            </tr>
+            <tr>
+              <td>아차사고(Near Miss) 보고 건수</td>
+              <td class="val">142건</td><td class="target">≥ 200건</td>
+              <td class="center"><span class="badge b-green">건수 (▲목표)</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">SMS팀</td>
+            </tr>
+            <tr>
+              <td>위험성평가 실시율 (전 선박)</td>
+              <td class="val">94%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">이행률</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박안전팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="3">외부 감사<br>대응</td>
+              <td>항만국통제(PSC) 억류(Detention) 건수</td>
+              <td class="val">0건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">억류 건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">운항팀</td>
+            </tr>
+            <tr>
+              <td>기국·선급 검사 적발 결함 건수</td>
+              <td class="val">8건</td><td class="target">≤ 5건</td>
+              <td class="center"><span class="badge b-amber">결함 건수</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">운항팀</td>
+            </tr>
+            <tr>
+              <td>SIRE / CDI 화물 검사 통과율</td>
+              <td class="val">96.2%</td><td class="target">≥ 98%</td>
+              <td class="center"><span class="badge b-blue">통과율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">탱커팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="3">선박<br>안전설비</td>
+              <td>비상구명설비(LSA) 정기점검 이행률</td>
+              <td class="val">98%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">점검 이행률</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박팀</td>
+            </tr>
+            <tr>
+              <td>소방설비 법정검사 완료율</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">완료율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박팀</td>
+            </tr>
+            <tr>
+              <td>선박 안전관리시스템(SMS) 감사 적합 선박 비율</td>
+              <td class="val">92%</td><td class="target">≥ 95%</td>
+              <td class="center"><span class="badge b-teal">적합율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">SMS팀</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 육상·항만 -->
+    <div id="t-office" class="tab-panel">
+      <div class="goal-table-wrap">
+        <table class="goal-table">
+          <thead>
+            <tr><th>분류</th><th>세부 목표 항목</th><th>2024년 실적</th><th>2025년 목표</th><th>측정지표</th><th>중요도</th><th>담당부서</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cat" rowspan="3">중대재해<br>예방</td>
+              <td>육상사업장 중대산업재해 발생 건수</td>
+              <td class="val">0건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">안전보건팀</td>
+            </tr>
+            <tr>
+              <td>산업재해율 (재해자수/근로자수×100)</td>
+              <td class="val">0.12%</td><td class="target">≤ 0.10%</td>
+              <td class="center"><span class="badge b-blue">재해율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">안전보건팀</td>
+            </tr>
+            <tr>
+              <td>위험성평가 실시 (사업장 전체)</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">이행율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">안전보건팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">항만<br>하역 안전</td>
+              <td>하역작업 중 사고 건수 (부두·터미널)</td>
+              <td class="val">2건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">운항팀</td>
+            </tr>
+            <tr>
+              <td>하역 전 안전점검(TBM) 실시율</td>
+              <td class="val">88%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">실시율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">운항팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">안전<br>경영체계</td>
+              <td>안전보건관리체계 구축·운영 (중대재해법)</td>
+              <td class="val">완료</td><td class="target">고도화</td>
+              <td class="center"><span class="badge b-teal">완성도</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">안전보건팀</td>
+            </tr>
+            <tr>
+              <td>협력업체 안전보건 점검 실시 (연 2회)</td>
+              <td class="val">1회</td><td class="target">연 2회</td>
+              <td class="center"><span class="badge b-amber">회/년</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">안전보건팀</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 선원 건강보건 -->
+    <div id="t-health" class="tab-panel">
+      <div class="goal-table-wrap">
+        <table class="goal-table">
+          <thead>
+            <tr><th>분류</th><th>세부 목표 항목</th><th>2024년 실적</th><th>2025년 목표</th><th>측정지표</th><th>중요도</th><th>담당부서</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cat" rowspan="3">건강검진</td>
+              <td>선원 승선 전 신체검사 이행률</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">이행율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td>임직원 일반건강검진 수검율</td>
+              <td class="val">96.3%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">수검율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td>건강검진 이상소견자 사후관리 완료율</td>
+              <td class="val">78%</td><td class="target">≥ 90%</td>
+              <td class="center"><span class="badge b-blue">완료율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="3">정신건강<br>관리</td>
+              <td>선원 정신건강 설문조사 실시 (연 1회 이상)</td>
+              <td class="val">0회</td><td class="target">연 1회</td>
+              <td class="center"><span class="badge b-amber">회/년</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td>선원 고위험군 심리상담 연계율</td>
+              <td class="val">신규</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-teal">연계율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td>직무스트레스 예방 프로그램 운영</td>
+              <td class="val">미시행</td><td class="target">도입완료</td>
+              <td class="center"><span class="badge b-blue">도입여부</span></td>
+              <td class="center"><span class="priority p-low">일반</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">MLC 2006<br>준수</td>
+              <td>해사노동협약(MLC) 근로시간 기준 준수율</td>
+              <td class="val">97.1%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">준수율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선원팀</td>
+            </tr>
+            <tr>
+              <td>MLC 선내 거주 환경 기준 적합 선박 비율</td>
+              <td class="val">90%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">적합율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">선박팀</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 환경·비상대응 -->
+    <div id="t-env" class="tab-panel">
+      <div class="goal-table-wrap">
+        <table class="goal-table">
+          <thead>
+            <tr><th>분류</th><th>세부 목표 항목</th><th>2024년 실적</th><th>2025년 목표</th><th>측정지표</th><th>중요도</th><th>담당부서</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cat" rowspan="3">해양환경<br>오염 예방</td>
+              <td>기름 유출 사고 발생 건수 (해양 방류)</td>
+              <td class="val">0건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">해무팀</td>
+            </tr>
+            <tr>
+              <td>MARPOL 위반 적발 건수</td>
+              <td class="val">0건</td><td class="target">0건</td>
+              <td class="center"><span class="badge b-navy">건수</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">해무팀</td>
+            </tr>
+            <tr>
+              <td>선박 폐기물 관리계획서 보유율</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">보유율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">해무팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">비상대응<br>훈련</td>
+              <td>비상대응 훈련 실시 (선박, 분기 1회 이상)</td>
+              <td class="val">분기1회</td><td class="target">분기1회</td>
+              <td class="center"><span class="badge b-blue">회/분기</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선박안전팀</td>
+            </tr>
+            <tr>
+              <td>비상대응 훈련 평가 합격률</td>
+              <td class="val">94%</td><td class="target">≥ 98%</td>
+              <td class="center"><span class="badge b-blue">합격율</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">선박안전팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">선박<br>보안</td>
+              <td>ISPS Code 보안 감사 통과율</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-teal">통과율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">해무팀</td>
+            </tr>
+            <tr>
+              <td>보안 위협 (해적·밀수 등) 보고 및 대응 훈련</td>
+              <td class="val">연1회</td><td class="target">연 2회</td>
+              <td class="center"><span class="badge b-amber">회/년</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">해무팀</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 교육·훈련 -->
+    <div id="t-edu" class="tab-panel">
+      <div class="goal-table-wrap">
+        <table class="goal-table">
+          <thead>
+            <tr><th>분류</th><th>세부 목표 항목</th><th>2024년 실적</th><th>2025년 목표</th><th>측정지표</th><th>중요도</th><th>담당부서</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cat" rowspan="3">법정<br>교육</td>
+              <td>선원 STCW 법정교육 이수율 100%</td>
+              <td class="val">98.5%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">이수율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선원교육팀</td>
+            </tr>
+            <tr>
+              <td>육상 안전보건 법정교육 이수율</td>
+              <td class="val">97%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-blue">이수율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">안전보건팀</td>
+            </tr>
+            <tr>
+              <td>신규 선원 안전 입문교육 100% 실시</td>
+              <td class="val">100%</td><td class="target">100%</td>
+              <td class="center"><span class="badge b-green">실시율</span></td>
+              <td class="center"><span class="priority p-high">최우선</span></td><td class="center">선원교육팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">역량<br>강화</td>
+              <td>운항 시뮬레이터 교육 시간 (1인당)</td>
+              <td class="val">16시간</td><td class="target">≥ 24시간</td>
+              <td class="center"><span class="badge b-teal">시간/인</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">선원교육팀</td>
+            </tr>
+            <tr>
+              <td>안전보건 전문인력 자격 취득 지원</td>
+              <td class="val">3명</td><td class="target">≥ 5명</td>
+              <td class="center"><span class="badge b-amber">명/년</span></td>
+              <td class="center"><span class="priority p-low">일반</span></td><td class="center">인사팀</td>
+            </tr>
+            <tr>
+              <td class="cat" rowspan="2">경영진<br>리더십</td>
+              <td>대표이사 안전 현장방문 (선박·항만)</td>
+              <td class="val">2회</td><td class="target">연 4회</td>
+              <td class="center"><span class="badge b-navy">회/년</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">경영지원</td>
+            </tr>
+            <tr>
+              <td>임원·관리자 안전보건 리더십 교육</td>
+              <td class="val">1회</td><td class="target">반기 1회</td>
+              <td class="center"><span class="badge b-blue">회/반기</span></td>
+              <td class="center"><span class="priority p-mid">중요</span></td><td class="center">안전보건팀</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ISM Code / SMS 체계 ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">ISM Code & SMS</div>
+      <h2 class="section-title">선박 안전관리시스템 (SMS) 주요 요소</h2>
+      <p class="section-desc">팬오션은 ISM Code 기반의 선박안전관리시스템을 전 관리선박에 적용하고 있습니다.</p>
+    </div>
+    <div class="ism-grid">
+      <div class="ism-card">
+        <div class="ism-ico" style="background:#e0e8f5">🔒</div>
+        <div class="ism-body">
+          <div class="ism-title">위험성평가 및 예방 (Risk Assessment)</div>
+          <div class="ism-desc">모든 작업 전 선상 위험성평가를 실시하여 잠재 위험을 사전에 제거합니다.</div>
+          <div class="ism-items">
+            <div class="ism-item">작업 허가서(PTW) 발행 100% 의무화</div>
+            <div class="ism-item">고위험 작업 별도 RA 양식 적용</div>
+            <div class="ism-item">아차사고 보고 시스템 운영 (목표: 200건)</div>
+          </div>
+        </div>
+      </div>
+      <div class="ism-card">
+        <div class="ism-ico" style="background:#dbeafe">📋</div>
+        <div class="ism-body">
+          <div class="ism-title">비상대응 절차 (Emergency Response)</div>
+          <div class="ism-desc">화재·기름유출·충돌·침수 등 시나리오별 비상대응 체계를 운영합니다.</div>
+          <div class="ism-items">
+            <div class="ism-item">월 1회 이상 비상 훈련 실시</div>
+            <div class="ism-item">육상 비상대응팀 24시간 운영</div>
+            <div class="ism-item">비상통신 체계 정기 점검</div>
+          </div>
+        </div>
+      </div>
+      <div class="ism-card">
+        <div class="ism-ico" style="background:#cffafe">🔍</div>
+        <div class="ism-body">
+          <div class="ism-title">사고 보고 및 조사 (Accident Reporting)</div>
+          <div class="ism-desc">모든 사고·아차사고를 즉시 보고하고 철저한 원인 분석을 수행합니다.</div>
+          <div class="ism-items">
+            <div class="ism-item">24시간 이내 초기 사고 보고</div>
+            <div class="ism-item">근본 원인 분석(RCA) 의무화</div>
+            <div class="ism-item">재발방지 대책 Fleet-wide 공유</div>
+          </div>
+        </div>
+      </div>
+      <div class="ism-card">
+        <div class="ism-ico" style="background:#d1fae5">📊</div>
+        <div class="ism-body">
+          <div class="ism-title">SMS 내부감사 (Internal Audit)</div>
+          <div class="ism-desc">선박 및 사무소에 대한 정기 내부감사를 통해 시스템 적합성을 확인합니다.</div>
+          <div class="ism-items">
+            <div class="ism-item">선박: 연 1회 이상 내부감사</div>
+            <div class="ism-item">사무소: 연 1회 경영검토</div>
+            <div class="ism-item">부적합 사항 30일 이내 시정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 추진 일정 ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">Action Plan</div>
+      <h2 class="section-title">2025년 안전보건 주요 추진 일정</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <div>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot done"></div>
+            <div class="tl-q">2025년 1분기 (1~3월)</div>
+            <div class="tl-title">안전보건 목표 선포 및 체계 수립</div>
+            <div class="tl-desc">대표이사 안전보건방침 선포식, 안전보건 목표 전사 공지, 선박별 SMS 검토 및 개정, 임직원 안전보건 교육계획 수립</div>
+            <div class="tl-tags">
+              <span class="badge b-green">완료</span>
+              <span class="badge b-navy">방침선포</span>
+              <span class="badge b-blue">계획수립</span>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot done"></div>
+            <div class="tl-q">2025년 2분기 (4~6월)</div>
+            <div class="tl-title">위험성평가 전면 실시 및 선박 점검</div>
+            <div class="tl-desc">전 선박 위험성평가 100% 실시, 선박안전점검단 현장점검 (3척 이상), 선원 정신건강 설문조사 최초 실시, 항만하역 안전 교육 강화</div>
+            <div class="tl-tags">
+              <span class="badge b-green">완료</span>
+              <span class="badge b-teal">위험성평가</span>
+              <span class="badge b-blue">선박점검</span>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot active"></div>
+            <div class="tl-q">2025년 3분기 (7~9월)</div>
+            <div class="tl-title">중간 점검 및 개선 조치</div>
+            <div class="tl-desc">상반기 안전보건 KPI 분석 및 보고, SMS 내부감사 실시, 선원 건강검진 실시 (승선 전), 하반기 비상훈련 계획 수립 및 실시</div>
+            <div class="tl-tags">
+              <span class="badge b-amber">진행중</span>
+              <span class="badge b-blue">중간점검</span>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot plan"></div>
+            <div class="tl-q">2025년 4분기 (10~12월)</div>
+            <div class="tl-title">연간 성과 평가 및 차년도 계획 수립</div>
+            <div class="tl-desc">연간 안전보건 KPI 달성도 평가, 경영검토 회의 개최, 사고·아차사고 연간 분석 보고, 2026년 안전보건 목표 수립 및 예산 배정</div>
+            <div class="tl-tags">
+              <span class="badge b-gray">예정</span>
+              <span class="badge b-navy">경영검토</span>
+              <span class="badge b-blue">차년도계획</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <!-- 실적 진행률 -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:16px">📊 2025년 안전보건 목표 달성 현황 (3분기 기준)</div>
+          <div class="prog-list">
+            <div class="prog-item">
+              <div class="prog-hd"><span class="prog-label">중대재해 Zero 유지</span><span class="prog-pct" style="color:var(--green)">달성중</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:100%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div>
+              <div class="prog-sub">중대사고 발생 0건 · 9개월 연속 무사고</div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-hd"><span class="prog-label">LTIF 목표 달성 (≤0.50)</span><span class="prog-pct" style="color:var(--blue2)">0.41</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:82%;background:linear-gradient(90deg,var(--blue2),var(--sky))"></div></div>
+              <div class="prog-sub">현재 0.41 · 목표 0.50 이내 달성 (양호)</div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-hd"><span class="prog-label">안전교육 이수율</span><span class="prog-pct" style="color:var(--amber)">94%</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:94%;background:linear-gradient(90deg,var(--amber),var(--gold2))"></div></div>
+              <div class="prog-sub">미이수자 124명 · 4분기 완료 추진</div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-hd"><span class="prog-label">PSC 억류 건수</span><span class="prog-pct" style="color:var(--green)">0건</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:100%;background:linear-gradient(90deg,var(--green),#34d399)"></div></div>
+              <div class="prog-sub">항만국통제 억류 0건 · 목표 달성</div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-hd"><span class="prog-label">아차사고 보고 (목표 200건)</span><span class="prog-pct" style="color:var(--teal)">156건</span></div>
+              <div class="prog-bar"><div class="prog-fill" style="width:78%;background:linear-gradient(90deg,var(--teal),var(--sky))"></div></div>
+              <div class="prog-sub">156/200건 (78%) · 4분기 적극 독려</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 인증 현황 ─── -->
+  <div class="section">
+    <div class="section-hd">
+      <div class="section-label">Certification</div>
+      <h2 class="section-title">안전보건 관련 인증 및 준수 체계</h2>
+    </div>
+    <div class="cert-grid">
+      <div class="cert-card">
+        <div class="cert-logo">⚓</div>
+        <div class="cert-name">ISM Code</div>
+        <div class="cert-org">국제해사기구 (IMO)</div>
+        <div class="cert-status" style="color:var(--green)">✅ 전 관리선박 DOC·SMC 보유</div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-logo">🛡️</div>
+        <div class="cert-name">ISO 45001:2018</div>
+        <div class="cert-org">안전보건경영시스템 국제표준</div>
+        <div class="cert-status" style="color:var(--green)">✅ 육상 사업장 인증 유지</div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-logo">🌊</div>
+        <div class="cert-name">TMSA (탱커관리)</div>
+        <div class="cert-org">OCIMF TMSA Level 3</div>
+        <div class="cert-status" style="color:var(--green)">✅ Level 3 달성 유지</div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-logo">📋</div>
+        <div class="cert-name">MLC 2006</div>
+        <div class="cert-org">해사노동협약 ILO</div>
+        <div class="cert-status" style="color:var(--green)">✅ MLC 적합 인증서 보유</div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-logo">🔐</div>
+        <div class="cert-name">ISPS Code</div>
+        <div class="cert-org">선박 및 항만 보안 코드</div>
+        <div class="cert-status" style="color:var(--green)">✅ SSP 승인 유지</div>
+      </div>
+      <div class="cert-card">
+        <div class="cert-logo">🌿</div>
+        <div class="cert-name">ISO 14001:2015</div>
+        <div class="cert-org">환경경영시스템 국제표준</div>
+        <div class="cert-status" style="color:var(--blue2)">🔄 인증 추진 중 (2025년 목표)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 대표이사 선언 ─── -->
+  <div class="section">
+    <div class="decl-box">
+      <div class="decl-ico">✍️</div>
+      <div class="decl-title">
+        팬오션은 <em>바다 위 모든 생명</em>을 책임집니다
+      </div>
+      <div class="decl-text">
+        "팬오션의 모든 사업 활동에서 인명의 안전과 건강은 어떠한 경영 목표보다 우선합니다.
+        우리는 중대재해 Zero를 넘어, 모든 사고 예방과 건강한 근무 환경 조성을 위해
+        필요한 모든 자원을 아끼지 않겠습니다. 전 선원과 임직원이 오늘도 안전하게
+        항해하고 귀환하는 것이 팬오션 안전보건경영의 완성입니다."
+      </div>
+      <div class="decl-sign">
+        <strong>팬오션주식회사 대표이사</strong> &nbsp;|&nbsp; 선포일: 2025년 1월 2일 &nbsp;|&nbsp;
+        <strong>중대재해처벌법 이행 서약</strong>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:60px"></div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer">
+  <strong>팬오션주식회사 (Pan Ocean Co., Ltd.)</strong> &nbsp;|&nbsp;
+  서울특별시 중구 통일로 92 케이지타워 &nbsp;|&nbsp;
+  안전보건팀 : safety@panocean.com &nbsp;|&nbsp;
+  2025년 안전보건 목표 · 연간 갱신
+</footer>
+
+<script>
+function switchTab(btn, targetId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(targetId).classList.add('active');
+}
+
+// 프로그레스 바 애니메이션
+(function() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.prog-fill').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0%';
+          setTimeout(() => bar.style.width = w, 100);
+        });
+      }
+    });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.prog-list').forEach(el => observer.observe(el));
+})();
+</script>
+</body>
+</html>

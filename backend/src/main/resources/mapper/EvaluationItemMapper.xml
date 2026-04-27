@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.EvaluationItemMapper">
+
+  <resultMap id="EvaluationItemResultMap" type="com.penocean.ehs.model.EvaluationItem">
+    <id property="id" column="id"/>
+    <result property="code" column="code"/>
+    <result property="category" column="category"/>
+    <result property="title" column="title"/>
+    <result property="description" column="description"/>
+    <result property="referenceDoc" column="reference_doc"/>
+    <result property="maxScore" column="max_score"/>
+    <result property="weight" column="weight"/>
+    <result property="sortOrder" column="sort_order"/>
+    <result property="active" column="active"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <sql id="columns">
+    id, code, category, title, description, reference_doc, max_score, weight,
+    sort_order, active, created_at, updated_at, deleted
+  </sql>
+
+  <select id="findAll" resultMap="EvaluationItemResultMap">
+    SELECT <include refid="columns"/>
+      FROM tb_evaluation_item
+     WHERE deleted = 0
+    <if test="activeOnly">
+      AND active = 1
+    </if>
+    ORDER BY sort_order ASC, id ASC
+  </select>
+
+  <select id="findById" resultMap="EvaluationItemResultMap">
+    SELECT <include refid="columns"/>
+      FROM tb_evaluation_item
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findByCode" resultMap="EvaluationItemResultMap">
+    SELECT <include refid="columns"/>
+      FROM tb_evaluation_item
+     WHERE code = #{code} AND deleted = 0
+  </select>
+
+  <select id="findByIds" resultMap="EvaluationItemResultMap">
+    SELECT <include refid="columns"/>
+      FROM tb_evaluation_item
+     WHERE deleted = 0
+       AND id IN
+    <foreach collection="ids" item="id" open="(" close=")" separator=",">
+      #{id}
+    </foreach>
+  </select>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_evaluation_item (
+      code, category, title, description, reference_doc, max_score, weight,
+      sort_order, active, created_at, deleted
+    ) VALUES (
+      #{code}, #{category}, #{title}, #{description}, #{referenceDoc},
+      <choose><when test="maxScore != null">#{maxScore}</when><otherwise>10</otherwise></choose>,
+      <choose><when test="weight != null">#{weight}</when><otherwise>1.00</otherwise></choose>,
+      <choose><when test="sortOrder != null">#{sortOrder}</when><otherwise>0</otherwise></choose>,
+      <choose><when test="active != null">#{active}</when><otherwise>1</otherwise></choose>,
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <update id="update">
+    UPDATE tb_evaluation_item
+       SET code = #{code},
+           category = #{category},
+           title = #{title},
+           description = #{description},
+           reference_doc = #{referenceDoc},
+           max_score = #{maxScore},
+           weight = #{weight},
+           sort_order = #{sortOrder},
+           active = #{active},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <update id="softDelete">
+    UPDATE tb_evaluation_item
+       SET deleted = 1, active = 0, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id}
+  </update>
+
+  <update id="updateSortOrder">
+    UPDATE tb_evaluation_item
+       SET sort_order = #{sortOrder}, updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+</mapper>

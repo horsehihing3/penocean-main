@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>임직원 건강검진 3개년 비교/조회</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #f2f5f9;
+  min-height: 100vh;
+  padding: 30px 16px 60px;
+  color: #333;
+  font-size: 13px;
+}
+
+.wrap {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 19px;
+  font-weight: 700;
+  color: #1a2a4a;
+  margin-bottom: 18px;
+  letter-spacing: -0.4px;
+}
+
+/* 검색 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.search-input {
+  width: 200px;
+  border: 1px solid #b8c5d6;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  transition: border 0.15s;
+}
+.search-input:focus { border-color: #3b82f6; }
+
+.btn-search {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 22px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-search:hover { background: #1d4ed8; }
+
+.search-note {
+  font-size: 11.5px;
+  color: #8a99b0;
+  margin-left: 4px;
+}
+
+.privacy-note {
+  font-size: 11px;
+  color: #9aadcc;
+  margin-bottom: 16px;
+  padding-left: 2px;
+}
+
+/* 메인 테이블 */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 14px rgba(30,50,100,0.08);
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* 인적사항 헤더 */
+.info-section td {
+  padding: 9px 14px;
+  border: 1px solid #dde5f0;
+  background: #f7f9fc;
+}
+.info-section td.label {
+  background: #e8edf5;
+  color: #4a5a78;
+  font-weight: 600;
+  width: 70px;
+  text-align: center;
+}
+.info-section td.value {
+  color: #1a2a4a;
+  font-weight: 500;
+}
+
+/* 연도 헤더 */
+.year-header th {
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid #cdd8eb;
+}
+.year-header th.col-item {
+  background: #d5dff0;
+  color: #2d3f60;
+  width: 130px;
+}
+.year-header th.col-year {
+  background: #dce8fb;
+  color: #1a3a7a;
+  letter-spacing: 1px;
+}
+
+/* 데이터 행 */
+tbody.data-body tr:nth-child(even) td { background: #f8fafd; }
+tbody.data-body tr:hover td { background: #eef3fc; }
+
+tbody.data-body td {
+  padding: 8px 10px;
+  border: 1px solid #dde5f0;
+  text-align: center;
+  color: #444;
+  transition: background 0.1s;
+}
+tbody.data-body td.row-label {
+  text-align: left;
+  padding-left: 14px;
+  color: #3a4a62;
+  font-weight: 500;
+  background: #f0f4fa !important;
+}
+
+/* 값 색상 */
+.val-normal  { color: #333; }
+.val-warn    { color: #e05252; font-weight: 600; }
+.val-caution { color: #d97706; font-weight: 600; }
+.val-ok      { color: #1d8a4a; font-weight: 600; }
+.val-dash    { color: #b0bcc8; }
+.val-info    { color: #2563eb; font-weight: 500; }
+
+/* 하단 버튼 */
+.bottom-btns {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+.btn-outline {
+  flex: 1;
+  padding: 11px 0;
+  border: 1.5px solid #3b6ecc;
+  background: #fff;
+  color: #2563eb;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-outline:hover { background: #eef3fc; }
+.btn-solid {
+  flex: 1;
+  padding: 11px 0;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-solid:hover { background: #1d4ed8; }
+
+/* 토스트 */
+.toast {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: #1a2a4a;
+  color: #fff;
+  font-size: 13px;
+  padding: 9px 24px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  z-index: 999;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>임직원 건강검진 3개년 비교/조회</h1>
+
+  <div class="search-bar">
+    <input class="search-input" type="text" id="nameInput" placeholder="이름 입력" value="홍길동">
+    <button class="btn-search" onclick="doSearch()">검색</button>
+    <span class="search-note">* 성명으로 사번으로 검색 시 재검이역이 발생합니다.</span>
+  </div>
+  <div class="privacy-note">* 개인 건강정보는 관련 법령에 따라 엄격히 보호됩니다.</div>
+
+  <div class="card" id="resultCard">
+
+    <!-- 인적사항 -->
+    <table>
+      <tbody class="info-section">
+        <tr>
+          <td class="label">이름</td>
+          <td class="value" id="info-name">홍길동</td>
+          <td class="label">연령/성별</td>
+          <td class="value">52 / M</td>
+        </tr>
+        <tr>
+          <td class="label">부서</td>
+          <td class="value">안전보건팀</td>
+          <td class="label">직급</td>
+          <td class="value">선임</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- 3개년 비교 -->
+    <table>
+      <thead>
+        <tr class="year-header">
+          <th class="col-item">검진항목</th>
+          <th class="col-year">2023</th>
+          <th class="col-year">2024</th>
+          <th class="col-year">2025</th>
+        </tr>
+      </thead>
+      <tbody class="data-body" id="dataBody">
+
+        <!-- 고혈압 -->
+        <tr>
+          <td class="row-label">고혈압</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">HTN medi</td>
+          <td class="val-dash">-</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">BP</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+
+        <!-- 이상지질 -->
+        <tr>
+          <td class="row-label">이상지질</td>
+          <td class="val-warn">D2</td>
+          <td class="val-caution">C</td>
+          <td class="val-warn">D2</td>
+        </tr>
+        <tr>
+          <td class="row-label">중성지방</td>
+          <td class="val-warn">210</td>
+          <td class="val-caution">180</td>
+          <td class="val-warn">219</td>
+        </tr>
+        <tr>
+          <td class="row-label">콜레스테롤</td>
+          <td class="val-warn">254</td>
+          <td class="val-caution">245</td>
+          <td class="val-warn">253</td>
+        </tr>
+        <tr>
+          <td class="row-label">HDL</td>
+          <td class="val-normal">61</td>
+          <td class="val-normal">61</td>
+          <td class="val-caution">49</td>
+        </tr>
+        <tr>
+          <td class="row-label">LDL</td>
+          <td class="val-dash">-</td>
+          <td class="val-warn">128</td>
+          <td class="val-warn">160</td>
+        </tr>
+        <tr>
+          <td class="row-label">DL medi</td>
+          <td class="val-dash">-</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+
+        <!-- 당뇨 -->
+        <tr>
+          <td class="row-label">당뇨</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">BS</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">DM medi</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+
+        <!-- 간장 -->
+        <tr>
+          <td class="row-label">간장질환</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">GOT/GPT/r-GPT</td>
+          <td class="val-normal">0</td>
+          <td class="val-info">//</td>
+          <td class="val-info">//</td>
+        </tr>
+        <tr>
+          <td class="row-label">간보호제 medi</td>
+          <td class="val-dash">-</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+
+        <!-- 기타 -->
+        <tr>
+          <td class="row-label">비만주의</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">기타질환</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">기타질환 약복용</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+
+        <!-- 뇌심혈관 / 판정 -->
+        <tr>
+          <td class="row-label">뇌심혈관</td>
+          <td class="val-warn">중등도위험군</td>
+          <td class="val-warn">중등도위험군</td>
+          <td class="val-warn">중등도위험군</td>
+        </tr>
+        <tr>
+          <td class="row-label">업무적합</td>
+          <td class="val-normal">0</td>
+          <td class="val-ok">나</td>
+          <td class="val-ok">나</td>
+        </tr>
+        <tr>
+          <td class="row-label">건강상담 대상</td>
+          <td class="val-dash">-</td>
+          <td class="val-info">비대상</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">메일</td>
+          <td class="val-dash">-</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">상담완료</td>
+          <td class="val-dash">-</td>
+          <td class="val-normal">0</td>
+          <td class="val-normal">0</td>
+        </tr>
+        <tr>
+          <td class="row-label">사후관리소견</td>
+          <td class="val-warn">근무중치료</td>
+          <td class="val-info">건강상담 및 추적관찰</td>
+          <td class="val-warn">근무중치료</td>
+        </tr>
+        <tr>
+          <td class="row-label">비고</td>
+          <td colspan="3" style="text-align:left; padding-left:14px; color:#5a6a82;">
+            23 비해 수치증가 확인
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 하단 버튼 -->
+  <div class="bottom-btns">
+    <button class="btn-outline" onclick="downloadPDF()">
+      📄 개인 통계 PDF 다운로드
+    </button>
+    <button class="btn-solid" onclick="viewConsult()">
+      📋 상담내역 보기
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function doSearch() {
+    const name = document.getElementById('nameInput').value.trim();
+    if (!name) { showToast('⚠️ 이름을 입력해주세요.'); return; }
+    document.getElementById('info-name').textContent = name;
+    showToast(`🔍 "${name}" 검색 완료`);
+  }
+
+  function downloadPDF() {
+    showToast('📄 PDF 다운로드 준비 중...');
+  }
+
+  function viewConsult() {
+    showToast('📋 상담내역을 불러옵니다...');
+  }
+</script>
+</body>
+</html>

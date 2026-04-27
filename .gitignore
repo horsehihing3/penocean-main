@@ -1,0 +1,16 @@
+# Local application config (contains credentials — never commit)
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-local.yaml
+
+# Build outputs
+backend/build/
+backend/.gradle/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+Thumbs.db
+.DS_Store

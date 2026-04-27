@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.EvaluationHistoryMapper">
+
+  <resultMap id="EvaluationHistoryResultMap" type="com.penocean.ehs.model.EvaluationHistory">
+    <id property="id" column="id"/>
+    <result property="evaluationId" column="evaluation_id"/>
+    <result property="improvementId" column="improvement_id"/>
+    <result property="action" column="action"/>
+    <result property="actorUserId" column="actor_user_id"/>
+    <result property="actorName" column="actor_name"/>
+    <result property="detail" column="detail"/>
+    <result property="createdAt" column="created_at"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_evaluation_history (
+      evaluation_id, improvement_id, action, actor_user_id, actor_name, detail, created_at
+    ) VALUES (
+      #{evaluationId}, #{improvementId}, #{action}, #{actorUserId}, #{actorName}, #{detail}, SYSUTCDATETIME()
+    )
+  </insert>
+
+  <select id="findByEvaluation" resultMap="EvaluationHistoryResultMap">
+    SELECT id, evaluation_id, improvement_id, action, actor_user_id, actor_name, detail, created_at
+      FROM tb_evaluation_history
+     WHERE evaluation_id = #{evaluationId}
+     ORDER BY created_at DESC, id DESC
+  </select>
+
+  <select id="findByImprovement" resultMap="EvaluationHistoryResultMap">
+    SELECT id, evaluation_id, improvement_id, action, actor_user_id, actor_name, detail, created_at
+      FROM tb_evaluation_history
+     WHERE improvement_id = #{improvementId}
+     ORDER BY created_at DESC, id DESC
+  </select>
+
+</mapper>

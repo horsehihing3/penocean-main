@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.PortMapper">
+
+  <resultMap id="PortResultMap" type="com.penocean.ehs.model.Port">
+    <id property="id" column="id"/>
+    <result property="code" column="code"/>
+    <result property="name" column="name"/>
+    <result property="country" column="country"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="deleted" column="deleted"/>
+  </resultMap>
+
+  <sql id="portColumns">
+    id, code, name, country, created_at, updated_at, deleted
+  </sql>
+
+  <select id="findById" resultMap="PortResultMap">
+    SELECT <include refid="portColumns"/>
+      FROM tb_port
+     WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <select id="findAll" resultMap="PortResultMap">
+    SELECT <include refid="portColumns"/>
+      FROM tb_port
+     WHERE deleted = 0
+     ORDER BY country, name
+  </select>
+
+</mapper>

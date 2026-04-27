@@ -1,0 +1,69 @@
+# =============================================
+# .claudeignore — 팬오션 안전보건 DX 포털
+# Claude Code 토큰 절약을 위해 불필요한 파일 제외
+# =============================================
+
+# --- Frontend 빌드 산출물 ---
+frontend/dist/
+node_modules/
+frontend/node_modules/
+frontend/.vite/
+frontend/coverage/
+frontend/stats.html
+
+# --- Backend 빌드 산출물 (Gradle / Java) ---
+backend/build/
+backend/.gradle/
+backend/out/
+**/*.class
+backend/build/**/*.jar
+**/*.war
+# gradle-wrapper.jar는 제외 대상 아님 (빌드 실행에 필요, Claude가 존재 여부 확인 가능해야 함)
+
+# --- 파일 업로드 (런타임 생성) ---
+backend/uploads/
+uploads/
+
+# --- 로그 ---
+logs/
+*.log
+backend/logs/
+
+# --- 환경변수 / 시크릿 ---
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.cert
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-prod.yml
+
+# --- 테스트 픽스처 / 목 데이터 ---
+backend/src/test/
+frontend/src/__mocks__/
+test-results/
+coverage/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Git ---
+.git/
+
+# --- DB 덤프 ---
+*.sql.bak
+*.bak
+
+# --- 기획 원본 바이너리 (용량 큼) ---
+*.pptx
+*.xlsx
+docs/raw/
+
+# --- 아카이브 (최신 컨텍스트만 필요) ---
+docs/ARCHIVE.md
