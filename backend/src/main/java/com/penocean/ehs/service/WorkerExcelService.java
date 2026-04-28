@@ -62,11 +62,16 @@ public class WorkerExcelService {
                 if (name == null || name.isBlank()) continue; // 빈 행 skip
                 String role = readString(row.getCell(1), fmt);
                 LocalDate birth = readDate(row.getCell(2), fmt);
+                // [2026-04-28] WorkerItem.workerBirth가 String(YYMMDD)으로 변경됨 — LocalDate → YYMMDD 변환
+                String birthStr = (birth != null)
+                        ? String.format("%02d%02d%02d",
+                            birth.getYear() % 100, birth.getMonthValue(), birth.getDayOfMonth())
+                        : null;
                 String phone = readString(row.getCell(3), fmt);
                 workers.add(WorkerItem.builder()
                         .workerName(name.trim())
                         .workerRole(role == null ? null : role.trim())
-                        .workerBirth(birth)
+                        .workerBirth(birthStr)
                         .workerPhone(phone == null ? null : phone.trim())
                         .build());
             }

@@ -1,3 +1,4 @@
+// [2026-04-27] QR 안전교육 이수 서비스 — Singleton QR + 출입신청 cascading + 이수완료 연계
 package com.penocean.ehs.service;
 
 import com.penocean.ehs.dto.request.SafetyQrCompleteRequest;
@@ -6,6 +7,7 @@ import com.penocean.ehs.dto.response.SafetyQrRecordResponse;
 import com.penocean.ehs.dto.response.SafetyQrResponse;
 import com.penocean.ehs.exception.BadRequestException;
 import com.penocean.ehs.exception.ResourceNotFoundException;
+import com.penocean.ehs.mapper.AccessWorkerMapper;
 import com.penocean.ehs.mapper.SafetyQrMapper;
 import com.penocean.ehs.model.SafetyQr;
 import com.penocean.ehs.model.SafetyQrRecord;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -20,6 +23,7 @@ import java.util.UUID;
 public class SafetyQrService {
 
     private final SafetyQrMapper mapper;
+    private final AccessWorkerMapper accessWorkerMapper;
 
     public List<SafetyQrResponse> listAll() {
         return mapper.findAll();
@@ -29,6 +33,11 @@ public class SafetyQrService {
         SafetyQrResponse r = mapper.findById(id);
         if (r == null) throw new ResourceNotFoundException("SafetyQr", "id", id);
         return r;
+    }
+
+    // [2026-04-27] 로그인 화면 표시용 — 현재 활성 QR (없으면 null)
+    public SafetyQrResponse getActiveOne() {
+        return mapper.findActiveOne();
     }
 
     // [2026-04-27] 공개 접근용 — 토큰으로 QR 세션 조회
@@ -42,11 +51,12 @@ public class SafetyQrService {
         return qr;
     }
 
+    // [2026-04-27] Singleton: 신규 생성 전 기존 활성 QR 자동 비활성화
     public SafetyQrResponse create(SafetyQrCreateRequest req, String createdBy) {
+        mapper.deactivateAll();
         SafetyQr qr = new SafetyQr();
         qr.setToken(UUID.randomUUID().toString().replace("-", ""));
         qr.setTitle(req.getTitle());
-        qr.setVesselName(req.getVesselName());
         qr.setContent(req.getContent());
         qr.setCreatedBy(createdBy);
         qr.setExpiresAt(req.getExpiresAt());
@@ -59,21 +69,40 @@ public class SafetyQrService {
         mapper.deactivate(id);
     }
 
-    // [2026-04-27] 작업자 이수 완료 처리 (공개 엔드포인트)
+    // [2026-04-27] 이수 완료 — workerId 있으면 tb_access_worker 교육완료 상태 업데이트
     public void complete(String token, SafetyQrCompleteRequest req) {
         SafetyQr qr = getByToken(token);
         SafetyQrRecord record = new SafetyQrRecord();
         record.setQrId(qr.getId());
+        record.setWorkerId(req.getWorkerId());
         record.setWorkerName(req.getWorkerName());
         record.setVesselName(req.getVesselName());
         record.setWorkDate(req.getWorkDate());
         record.setGender(req.getGender());
         record.setPhone(req.getPhone());
         mapper.insertRecord(record);
+
+        if (req.getWorkerId() != null) {
+            accessWorkerMapper.updateEduStatus(req.getWorkerId(), true, null);
+        }
     }
 
     public List<SafetyQrRecordResponse> getRecords(Long qrId) {
         getById(qrId);
         return mapper.findRecordsByQrId(qrId);
+    }
+
+    // ── 공개 cascading 조회 ─────────────────────────────────────────
+
+    public List<Map<String, Object>> getActiveVessels() {
+        return mapper.findActiveVessels();
+    }
+
+    public List<Map<String, Object>> getCompaniesByVessel(Long vesselId) {
+        return mapper.findCompaniesByVessel(vesselId);
+    }
+
+    public List<Map<String, Object>> getWorkersByVesselAndCompany(Long vesselId, Long companyId) {
+        return mapper.findWorkersByVesselAndCompany(vesselId, companyId);
     }
 }

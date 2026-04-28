@@ -1,31 +1,14 @@
-import { useState } from 'react'
+// [2026-04-28] 건강검진 결과 — PDF 업로드 자동 파싱 + DB 연동
+import { useState, useEffect, useRef } from 'react'
+import axiosInstance from '../../api/axiosInstance'
 import {
-  Box,
-  Paper,
-  Stack,
-  Typography,
-  Button,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  TextField,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Alert,
-  Tabs,
-  Tab,
-  FormControl,
-  Select,
-  MenuItem,
-  Snackbar,
+  Box, Paper, Stack, Typography, Button, Table, TableHead,
+  TableBody, TableRow, TableCell, TableContainer, TextField,
+  Chip, Dialog, DialogTitle, DialogContent, DialogActions,
+  IconButton, Alert, Tabs, Tab, FormControl, Select, MenuItem,
+  Snackbar, CircularProgress, InputAdornment,
 } from '@mui/material'
+import LockIcon from '@mui/icons-material/Lock'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import DownloadIcon from '@mui/icons-material/Download'
@@ -33,19 +16,23 @@ import UploadIcon from '@mui/icons-material/Upload'
 import EmailIcon from '@mui/icons-material/Email'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 import SaveIcon from '@mui/icons-material/Save'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 const HOSPITALS = ['우리원', '중앙', '하나로', '강북삼성']
+const DIRECT_IDX = HOSPITALS.length  // 직접입력 탭 인덱스 = 4
 
 interface HealthRecord {
   id: number
-  checkupPeriod: string
-  hospital: string
+  checkupYear: number
+  checkupDate: string
+  hospitalName: string
   department: string
-  name: string
-  age: number
+  empName: string
+  age: number | null
   bpCategory: string
   bpMed: boolean
-  bpValue: string
+  bpSystolic: number | null
+  bpDiastolic: number | null
   dmCategory: string
   dmMed: boolean
   bst: number | null
@@ -58,34 +45,9 @@ interface HealthRecord {
   followupOpinion: string
   workFitness: string
   note: string
+  sourceFile: string
+  _pending?: boolean  // 미저장 임시 레코드
 }
-
-const SAMPLE_DATA: HealthRecord[] = [
-  { id: 1, checkupPeriod: '10-12월', hospital: '하나로', department: '총무팀', name: '김안전', age: 35, bpCategory: 'A', bpMed: false, bpValue: '120/80', dmCategory: 'A', dmMed: false, bst: 95, dlCategory: 'B', dlMed: false, tc: 195, tg: 120, ldl: 130, hdl: 55, followupOpinion: '필요없음', workFitness: '가', note: '꾸준한 운동중' },
-  { id: 2, checkupPeriod: '10-12월', hospital: '중앙', department: '운항팀', name: '이보건', age: 42, bpCategory: 'C', bpMed: true, bpValue: '145/90', dmCategory: 'A', dmMed: false, bst: 88, dlCategory: 'C', dlMed: true, tc: 221, tg: 78, ldl: 133, hdl: 72, followupOpinion: '추적관리 필요', workFitness: '가', note: '' },
-  { id: 3, checkupPeriod: '10-12월', hospital: '우리원', department: '안전팀', name: '박건강', age: 28, bpCategory: 'A', bpMed: false, bpValue: '115/75', dmCategory: 'A', dmMed: false, bst: 85, dlCategory: 'A', dlMed: false, tc: 170, tg: 60, ldl: 100, hdl: 65, followupOpinion: '필요없음', workFitness: '가', note: '' },
-  { id: 4, checkupPeriod: '10-12월', hospital: '강북삼성', department: '기관팀', name: '최해양', age: 51, bpCategory: 'D', bpMed: true, bpValue: '155/95', dmCategory: 'C', dmMed: true, bst: 130, dlCategory: 'D', dlMed: true, tc: 240, tg: 200, ldl: 160, hdl: 38, followupOpinion: '전문의 상담 필요', workFitness: '나', note: '정밀검사 권고' },
-  { id: 5, checkupPeriod: '10-12월', hospital: '하나로', department: '갑판팀', name: '정선박', age: 39, bpCategory: 'B', bpMed: false, bpValue: '130/85', dmCategory: 'B', dmMed: false, bst: 105, dlCategory: 'B', dlMed: false, tc: 205, tg: 140, ldl: 135, hdl: 48, followupOpinion: '경과관찰', workFitness: '가', note: '' },
-]
-
-const YEAR_STATS_ROWS = [
-  { label: '고혈압%' },
-  { label: 'HTN medi' },
-  { label: 'BP' },
-  { label: '이상지질' },
-  { label: '총콜레스테롤' },
-  { label: '총콜레스테롤%' },
-  { label: 'HDL' },
-  { label: 'LDL' },
-  { label: 'DL medi' },
-  { label: '혈당(BS)' },
-  { label: 'DM medi' },
-  { label: '간정밀' },
-  { label: 'GOT/GPT' },
-  { label: '사후관리소견' },
-  { label: '업무적합' },
-  { label: '비고' },
-]
 
 const categoryColor = (cat: string) => {
   if (cat === 'A') return 'success'
@@ -94,32 +56,258 @@ const categoryColor = (cat: string) => {
   return 'default'
 }
 
+/** 검진일 포맷: YYYY-MM-DD → YYYY.MM.DD */
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-'
+  return dateStr.substring(0, 10).replace(/-/g, '.')
+}
+
+// ── 3개년 비교 팝업 ────────────────────────────────────────────
+interface CompareDialogProps { open: boolean; empName: string | null; onClose: () => void }
+
+const ROW_DEFS: { label: string; key: keyof HealthRecord; fmt?: (v: any, r: HealthRecord) => string }[] = [
+  { label: '검진일',       key: 'checkupDate',    fmt: v => v ? String(v).substring(0,10).replace(/-/g,'.') : '-' },
+  { label: '병원명',       key: 'hospitalName',   fmt: v => v ?? '-' },
+  { label: '나이',         key: 'age',            fmt: v => v != null ? `${v}세` : '-' },
+  { label: '키(cm)',       key: 'height',         fmt: v => v ?? '-' },
+  { label: '체중(kg)',     key: 'weight',         fmt: v => v ?? '-' },
+  { label: 'BMI',          key: 'bmi',            fmt: v => v ?? '-' },
+  { label: '허리둘레(cm)', key: 'waist',          fmt: v => v ?? '-' },
+  { label: '혈압(mmHg)',   key: 'bpSystolic',     fmt: (v, r) => r.bpSystolic && r.bpDiastolic ? `${r.bpSystolic}/${r.bpDiastolic}` : '-' },
+  { label: '혈압판정',     key: 'bpCategory',     fmt: v => v ?? '-' },
+  { label: '혈압약복용',   key: 'bpMed',          fmt: v => v ? '복용' : '-' },
+  { label: '공복혈당',     key: 'bst',            fmt: v => v ?? '-' },
+  { label: '혈당판정',     key: 'dmCategory',     fmt: v => v ?? '-' },
+  { label: '혈당약복용',   key: 'dmMed',          fmt: v => v ? '복용' : '-' },
+  { label: '총콜레스테롤', key: 'tc',             fmt: v => v ?? '-' },
+  { label: '중성지방',     key: 'tg',             fmt: v => v ?? '-' },
+  { label: 'LDL',          key: 'ldl',            fmt: v => v ?? '-' },
+  { label: 'HDL',          key: 'hdl',            fmt: v => v ?? '-' },
+  { label: '지질판정',     key: 'dlCategory',     fmt: v => v ?? '-' },
+  { label: '지질약복용',   key: 'dlMed',          fmt: v => v ? '복용' : '-' },
+  { label: 'AST',          key: 'ast',            fmt: v => v ?? '-' },
+  { label: 'ALT',          key: 'alt',            fmt: v => v ?? '-' },
+  { label: 'γGTP',         key: 'ggt',            fmt: v => v ?? '-' },
+  { label: '사후관리소견', key: 'followupOpinion', fmt: v => v ?? '-' },
+  { label: '업무적합',     key: 'workFitness',    fmt: v => v ?? '-' },
+]
+
+const catColor = (v: string) => {
+  if (v === 'A') return '#2e7d32'
+  if (v === 'B') return '#ed6c02'
+  if (v === 'C' || v === 'D') return '#d32f2f'
+  return 'inherit'
+}
+
+const CompareDialog: React.FC<CompareDialogProps> = ({ open, empName, onClose }) => {
+  const [rows, setRows] = useState<HealthRecord[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open || !empName) return
+    setLoading(true)
+    axiosInstance.get('/admin/health/results/recent', { params: { empName } })
+      .then(res => setRows(res.data.data || []))
+      .catch(() => setRows([]))
+      .finally(() => setLoading(false))
+  }, [open, empName])
+
+  const cols = rows  // 최근순으로 이미 정렬됨
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
+        임직원 건강검진 비교 — {empName}
+        <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+        ) : rows.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>데이터가 없습니다.</Box>
+        ) : (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'grey.100' }}>
+                  <TableCell sx={{ fontWeight: 700, minWidth: 110, position: 'sticky', left: 0, bgcolor: 'grey.100', zIndex: 1 }}>항목</TableCell>
+                  {cols.map((r, i) => (
+                    <TableCell key={r.id} align="center" sx={{ fontWeight: 700, minWidth: 120 }}>
+                      {i === 0 ? '최근' : `${i + 1}회 전`}<br />
+                      <Typography variant="caption" color="text.secondary">
+                        {r.checkupDate ? String(r.checkupDate).substring(0,10).replace(/-/g,'.') : '-'}
+                      </Typography>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ROW_DEFS.map(({ label, key, fmt }) => (
+                  <TableRow key={label} hover>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.78rem', bgcolor: 'grey.50', position: 'sticky', left: 0, zIndex: 1 }}>{label}</TableCell>
+                    {cols.map(r => {
+                      const val = fmt ? fmt((r as any)[key], r) : ((r as any)[key] ?? '-')
+                      const isCat = key === 'bpCategory' || key === 'dmCategory' || key === 'dlCategory'
+                      return (
+                        <TableCell key={r.id} align="center" sx={{ fontSize: '0.82rem', color: isCat ? catColor(String(val)) : 'inherit', fontWeight: isCat ? 700 : 400 }}>
+                          {String(val)}
+                        </TableCell>
+                      )
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>닫기</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────
+
 const AdminHealthPage: React.FC = () => {
+  const [records, setRecords] = useState<HealthRecord[]>([])
+  const [pendingUnsaved, setPendingUnsaved] = useState<HealthRecord[]>([])
+  const pendingCounter = useRef(-1)
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [hospital, setHospital] = useState(0)
   const [filter, setFilter] = useState<'전체' | '추적관리' | '정상'>('전체')
   const [keyword, setKeyword] = useState('')
+  const [searchKw, setSearchKw] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<HealthRecord | null>(null)
   const [compareOpen, setCompareOpen] = useState(false)
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'info' })
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' })
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const notify = (message: string, severity: 'success' | 'info' = 'info') =>
+  const [hospitalNameInput, setHospitalNameInput] = useState('')
+  const [hospitalNameError, setHospitalNameError] = useState(false)
+
+  // 비밀번호 다이얼로그
+  const [pwdDialogOpen, setPwdDialogOpen] = useState(false)
+  const [pwdValue, setPwdValue] = useState('')
+  const [pwdError, setPwdError] = useState('')
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+
+  const notify = (message: string, severity: 'success' | 'error' | 'info' = 'info') =>
     setSnackbar({ open: true, message, severity })
 
-  const filtered = SAMPLE_DATA.filter(r => {
-    const kw = keyword.toLowerCase()
-    const matchKw = !kw || r.name.includes(kw) || r.department.includes(kw)
-    const matchFilter =
-      filter === '전체' ||
-      (filter === '추적관리' && r.followupOpinion !== '필요없음') ||
-      (filter === '정상' && r.followupOpinion === '필요없음')
-    return matchKw && matchFilter
+  const loadRecords = async () => {
+    setLoading(true)
+    try {
+      const res = await axiosInstance.get('/admin/health/results', {
+        params: { keyword: searchKw || undefined },
+      })
+      setRecords(res.data.data || [])
+    } catch {
+      notify('데이터를 불러오는 중 오류가 발생했습니다.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { loadRecords() }, [searchKw])
+
+  const doUpload = async (file: File, password?: string) => {
+    setUploading(true)
+    const resolvedHospital = hospital < DIRECT_IDX ? HOSPITALS[hospital] : hospitalNameInput.trim()
+    const formData = new FormData()
+    formData.append('file', file)
+    if (password) formData.append('password', password)
+    if (resolvedHospital) formData.append('hospitalName', resolvedHospital)
+    try {
+      const res = await axiosInstance.post('/admin/health/upload-pdf', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const parsed: HealthRecord = { ...res.data.data, id: pendingCounter.current--, _pending: true }
+      setPendingUnsaved(prev => [...prev, parsed])
+      notify(`"${file.name}" 파싱 완료 — DB 저장하기 버튼을 눌러 저장하세요.`, 'info')
+      return true
+    } catch (e: any) {
+      const msg: string = e?.response?.data?.message || ''
+      if (msg === 'PDF_PASSWORD_REQUIRED') {
+        setPendingFile(file)
+        setPwdValue('')
+        setPwdError('')
+        setPwdDialogOpen(true)
+      } else if (msg.includes('비밀번호가 올바르지')) {
+        setPwdError('비밀번호가 올바르지 않습니다. 다시 입력해주세요.')
+      } else {
+        notify(msg || 'PDF 업로드 중 오류가 발생했습니다.', 'error')
+      }
+      return false
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleSaveAll = async () => {
+    if (pendingUnsaved.length === 0) return
+    setSaving(true)
+    try {
+      for (const r of pendingUnsaved) {
+        const { _pending, id, ...body } = r
+        await axiosInstance.post('/admin/health/results', body)
+      }
+      setPendingUnsaved([])
+      notify(`${pendingUnsaved.length}건 저장 완료`, 'success')
+      await loadRecords()
+    } catch {
+      notify('저장 중 오류가 발생했습니다.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleFileButtonClick = () => {
+    if (hospital === DIRECT_IDX && !hospitalNameInput.trim()) {
+      setHospitalNameError(true)
+      return
+    }
+    fileInputRef.current?.click()
+  }
+
+  const handleUpload = (file: File) => doUpload(file)
+
+  const handleUploadWithPassword = async () => {
+    if (!pendingFile || !pwdValue.trim()) return
+    const ok = await doUpload(pendingFile, pwdValue.trim())
+    if (ok) {
+      setPwdDialogOpen(false)
+      setPendingFile(null)
+      setPwdValue('')
+      setPwdError('')
+    }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('이 검진 결과를 삭제하시겠습니까?')) return
+    try {
+      await axiosInstance.delete(`/admin/health/results/${id}`)
+      notify('삭제되었습니다.', 'success')
+      setRecords(prev => prev.filter(r => r.id !== id))
+    } catch {
+      notify('삭제 중 오류가 발생했습니다.', 'error')
+    }
+  }
+
+  const filtered = records.filter(r => {
+    if (filter === '추적관리' && (r.followupOpinion === '미작성' || r.followupOpinion === '필요없음')) return false
+    if (filter === '정상' && r.followupOpinion !== '필요없음') return false
+    return true
   })
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700 }}>
-        보건파트
-      </Typography>
+    <Box sx={{ overflowX: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 1100 }}>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>보건파트</Typography>
 
       {/* PDF 업로드 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
@@ -129,28 +317,57 @@ const AdminHealthPage: React.FC = () => {
           </Typography>
           <Tabs
             value={hospital}
-            onChange={(_, v) => setHospital(v)}
+            onChange={(_, v) => { setHospital(v); setHospitalNameError(false) }}
             sx={{ minHeight: 36 }}
             TabIndicatorProps={{ sx: { height: 3 } }}
           >
             {HOSPITALS.map((h, i) => (
               <Tab key={h} label={h} value={i} sx={{ minHeight: 36, py: 0.5, px: 2, fontSize: '0.85rem' }} />
             ))}
+            <Tab label="직접입력" value={DIRECT_IDX} sx={{ minHeight: 36, py: 0.5, px: 2, fontSize: '0.85rem' }} />
           </Tabs>
-          <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-            ← 업로드할 병원 양식을 선택하고 PDF를 끌어다 놓으세요. 하단 표에 수치가 자동 기입됩니다.
-          </Typography>
-          <Button variant="contained" startIcon={<UploadIcon />} onClick={() => notify('PDF 업로드 기능은 준비 중입니다.')}>
-            파일 선택
+          {hospital === DIRECT_IDX && (
+            <TextField
+              size="small"
+              label="병원명 *"
+              placeholder="예) 성동보건소"
+              value={hospitalNameInput}
+              onChange={e => { setHospitalNameInput(e.target.value); setHospitalNameError(false) }}
+              error={hospitalNameError}
+              helperText={hospitalNameError ? '병원명을 입력해주세요.' : ''}
+              sx={{ minWidth: 200 }}
+            />
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) handleUpload(file)
+            }}
+          />
+          <Button
+            variant="contained"
+            startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
+            disabled={uploading}
+            onClick={handleFileButtonClick}
+          >
+            {uploading ? '업로드 중...' : '파일 선택'}
           </Button>
         </Stack>
       </Paper>
 
       {/* 목록 */}
       <Paper variant="outlined">
-        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" sx={{ px: 2, pt: 1.5, pb: 1 }} spacing={1}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between"
+          sx={{ px: 2, pt: 1.5, pb: 1 }} spacing={1}>
           <Typography variant="body2" color="text.secondary">
-            총 {filtered.length}건의 데이터 (필터 적용 {filter !== '전체' ? '후' : '전'})
+            총 {filtered.length}건의 데이터 {loading && '(불러오는 중...)'}
+            {pendingUnsaved.length > 0 && (
+              <Chip size="small" label={`미저장 ${pendingUnsaved.length}건`} color="warning" sx={{ ml: 1, fontWeight: 700 }} />
+            )}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
             <FormControl size="small" sx={{ minWidth: 100 }}>
@@ -162,69 +379,99 @@ const AdminHealthPage: React.FC = () => {
             </FormControl>
             <TextField
               size="small"
-              placeholder="성명, 부서명 또는 사번 입력"
+              placeholder="성명, 부서명 또는 병원명 입력"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && setSearchKw(keyword)}
               sx={{ minWidth: 200 }}
             />
-            <Button variant="contained" size="small" startIcon={<SearchIcon />}>검색</Button>
+            <Button variant="contained" size="small" startIcon={<SearchIcon />}
+              onClick={() => setSearchKw(keyword)}>검색</Button>
           </Stack>
         </Stack>
 
         <Alert severity="info" sx={{ mx: 2, mb: 1, py: 0 }}>
-          행을 클릭하면 3개년 비교/조회 화면이 팝업으로 열립니다.
+          행을 클릭하면 3개년 비교/조회 화면이 팝업으로 열립니다. PDF 파일명 앞 6자리는 생년월일(YYMMDD) 비밀번호로 사용됩니다.
         </Alert>
 
-        <TableContainer sx={{ maxHeight: 420 }}>
-          <Table size="small" stickyHeader>
+        <TableContainer sx={{ maxHeight: 420, overflowX: 'auto' }}>
+
+          <Table size="small" stickyHeader sx={{ minWidth: 1300 }}>
             <TableHead>
               <TableRow>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>No</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>검진시기</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>병원명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>부서명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>성명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>연령</TableCell>
-                <TableCell colSpan={2} align="center" sx={{ fontWeight: 700, bgcolor: 'blue.50', color: 'primary.main', borderBottom: '1px solid #ddd' }}>고혈압</TableCell>
-                <TableCell colSpan={3} align="center" sx={{ fontWeight: 700, bgcolor: 'green.50', color: 'success.dark', borderBottom: '1px solid #ddd' }}>당뇨병</TableCell>
-                <TableCell colSpan={6} align="center" sx={{ fontWeight: 700, bgcolor: 'orange.50', color: 'warning.dark', borderBottom: '1px solid #ddd' }}>이상지질혈증</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>No</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>검진일</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap', minWidth: 67 }}>병원명</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>부서명</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>성명</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>연령</TableCell>
+                <TableCell colSpan={3} align="center" sx={{ fontWeight: 700, color: 'primary.main', borderBottom: '1px solid #ddd' }}>고혈압</TableCell>
+                <TableCell colSpan={3} align="center" sx={{ fontWeight: 700, color: 'success.dark', borderBottom: '1px solid #ddd' }}>당뇨병</TableCell>
+                <TableCell colSpan={6} align="center" sx={{ fontWeight: 700, color: 'warning.dark', borderBottom: '1px solid #ddd' }}>이상지질혈증</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>사후관리소견</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>업무적합</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>비고</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>삭제</TableCell>
               </TableRow>
               <TableRow>
-                {['건강구분', '약복용'].map(h => <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>)}
-                {['BP', '건강구분', '약복용'].map(h => <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>)}
-                {['건강구분', '약복용', 'T.C', 'TG', 'LDL', 'HDL'].map(h => <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>)}
+                {['건강구분', '약복용', 'BP'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                ))}
+                {['건강구분', '약복용', 'BST'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                ))}
+                {['건강구분', '약복용', 'T.C', 'TG', 'LDL', 'HDL'].map(h => (
+                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {filtered.map((r, idx) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={22} align="center" sx={{ py: 4 }}>
+                    <CircularProgress size={28} />
+                  </TableCell>
+                </TableRow>
+              ) : [...pendingUnsaved, ...filtered].length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={22} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                    {records.length === 0 && pendingUnsaved.length === 0
+                      ? 'PDF를 업로드하면 건강검진 결과가 자동으로 표시됩니다.'
+                      : '검색 결과가 없습니다.'}
+                  </TableCell>
+                </TableRow>
+              ) : [...pendingUnsaved, ...filtered].map((r, idx) => (
                 <TableRow
                   key={r.id}
                   hover
-                  sx={{ bgcolor: r.workFitness === '나' ? 'error.50' : 'inherit', cursor: 'pointer' }}
-                  onClick={() => { setSelectedRecord(r); setCompareOpen(true) }}
+                  sx={{
+                    bgcolor: r._pending ? 'warning.50' : r.workFitness === '나' ? 'error.50' : 'inherit',
+                    cursor: r._pending ? 'default' : 'pointer',
+                  }}
+                  onClick={() => { if (!r._pending) { setSelectedRecord(r); setCompareOpen(true) } }}
                 >
-                  <TableCell>{idx + 1}</TableCell>
-                  <TableCell>{r.checkupPeriod}</TableCell>
-                  <TableCell>{r.hospital}</TableCell>
-                  <TableCell>{r.department}</TableCell>
-                  <TableCell sx={{ color: 'primary.main', fontWeight: 600 }}>
-                    {r.name}
+                  <TableCell>
+                    {r._pending
+                      ? <Chip size="small" label="미저장" color="warning" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
+                      : idx - pendingUnsaved.length + 1}
                   </TableCell>
-                  <TableCell>{r.age}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.checkupDate)}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.hospitalName || '-'}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.department || '-'}</TableCell>
+                  <TableCell sx={{ color: 'primary.main', fontWeight: 600, whiteSpace: 'nowrap' }}>{r.empName}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{r.age ?? '-'}</TableCell>
                   <TableCell align="center">
-                    <Chip size="small" label={r.bpCategory} color={categoryColor(r.bpCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} />
+                    {r.bpCategory ? <Chip size="small" label={r.bpCategory} color={categoryColor(r.bpCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} /> : '-'}
                   </TableCell>
                   <TableCell align="center">{r.bpMed ? '복용' : '-'}</TableCell>
-                  <TableCell align="center">{r.bpValue}</TableCell>
+                  <TableCell align="center">{r.bpSystolic && r.bpDiastolic ? `${r.bpSystolic}/${r.bpDiastolic}` : '-'}</TableCell>
                   <TableCell align="center">
-                    <Chip size="small" label={r.dmCategory} color={categoryColor(r.dmCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} />
+                    {r.dmCategory ? <Chip size="small" label={r.dmCategory} color={categoryColor(r.dmCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} /> : '-'}
                   </TableCell>
                   <TableCell align="center">{r.dmMed ? '복용' : '-'}</TableCell>
+                  <TableCell align="right">{r.bst ?? '-'}</TableCell>
                   <TableCell align="center">
-                    <Chip size="small" label={r.dlCategory} color={categoryColor(r.dlCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} />
+                    {r.dlCategory ? <Chip size="small" label={r.dlCategory} color={categoryColor(r.dlCategory) as any} sx={{ fontWeight: 700, minWidth: 28 }} /> : '-'}
                   </TableCell>
                   <TableCell align="center">{r.dlMed ? '복용' : '-'}</TableCell>
                   <TableCell align="right" sx={{ color: r.tc && r.tc > 220 ? 'error.main' : 'text.primary' }}>{r.tc ?? '-'}</TableCell>
@@ -232,12 +479,23 @@ const AdminHealthPage: React.FC = () => {
                   <TableCell align="right" sx={{ color: r.ldl && r.ldl > 150 ? 'error.main' : 'text.primary' }}>{r.ldl ?? '-'}</TableCell>
                   <TableCell align="right">{r.hdl ?? '-'}</TableCell>
                   <TableCell>
-                    <Typography variant="caption" color={r.followupOpinion === '필요없음' ? 'success.main' : 'error.main'} sx={{ fontWeight: 600 }}>
-                      {r.followupOpinion}
+                    <Typography variant="caption"
+                      color={r.followupOpinion === '필요없음' ? 'success.main' : r.followupOpinion === '미작성' ? 'text.secondary' : 'error.main'}
+                      sx={{ fontWeight: 600 }}>
+                      {r.followupOpinion || '-'}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">{r.workFitness}</TableCell>
+                  <TableCell align="center">{r.workFitness || '-'}</TableCell>
                   <TableCell>{r.note || '-'}</TableCell>
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    <IconButton size="small" color="error" onClick={() =>
+                      r._pending
+                        ? setPendingUnsaved(prev => prev.filter(p => p.id !== r.id))
+                        : handleDelete(r.id)
+                    }>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -247,41 +505,79 @@ const AdminHealthPage: React.FC = () => {
         {/* 하단 버튼 */}
         <Stack direction="row" justifyContent="space-between" sx={{ p: 2 }}>
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<DownloadIcon />} onClick={() => notify('엑셀 다운로드 기능은 준비 중입니다.')}>
+            <Button variant="outlined" startIcon={<DownloadIcon />}
+              onClick={() => notify('엑셀 다운로드 기능은 준비 중입니다.')}>
               엑셀 다운로드
             </Button>
-            <Button variant="outlined" color="success" startIcon={<EmailIcon />} onClick={() => notify('건강상담 메일 발송 기능은 준비 중입니다.')}>
+            <Button variant="outlined" color="success" startIcon={<EmailIcon />}
+              onClick={() => notify('건강상담 메일발송 기능은 준비 중입니다.')}>
               건강상담 메일발송
             </Button>
-            <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => notify('상담내역 작성 기능은 준비 중입니다.')}>
+            <Button variant="outlined" startIcon={<EditNoteIcon />}
+              onClick={() => notify('상담내역 작성 기능은 준비 중입니다.')}>
               상담내역 작성하기
             </Button>
           </Stack>
-          <Button variant="contained" startIcon={<SaveIcon />} onClick={() => notify('저장되었습니다.', 'success')}>
-            DB 저장하기
+          <Button
+            variant="contained"
+            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+            disabled={saving || pendingUnsaved.length === 0}
+            onClick={handleSaveAll}
+          >
+            {saving ? '저장 중...' : `DB 저장하기${pendingUnsaved.length > 0 ? ` (${pendingUnsaved.length}건)` : ''}`}
           </Button>
         </Stack>
       </Paper>
 
-      {/* 3개년 비교 팝업 — health_checkup_compare.html iframe */}
-      <Dialog open={compareOpen} onClose={() => setCompareOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
-          임직원 건강검진 3개년 비교/조회 — {selectedRecord?.name}
-          <IconButton size="small" onClick={() => setCompareOpen(false)}>
-            <CloseIcon />
-          </IconButton>
+      {/* 비밀번호 입력 다이얼로그 */}
+      <Dialog open={pwdDialogOpen} onClose={() => { setPwdDialogOpen(false); setPendingFile(null) }} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LockIcon fontSize="small" color="warning" />
+          PDF 비밀번호 입력
         </DialogTitle>
-        <DialogContent dividers sx={{ p: 0, height: '75vh' }}>
-          <iframe
-            src="/health_checkup_compare.html"
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title="건강검진 3개년 비교"
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            이 PDF 파일은 비밀번호로 보호되어 있습니다.<br />
+            비밀번호를 입력하면 자동으로 파싱을 진행합니다.
+          </Typography>
+          {pendingFile && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontStyle: 'italic' }}>
+              파일: {pendingFile.name}
+            </Typography>
+          )}
+          <TextField
+            autoFocus
+            fullWidth
+            label="비밀번호"
+            type="password"
+            value={pwdValue}
+            onChange={e => { setPwdValue(e.target.value); setPwdError('') }}
+            onKeyDown={e => e.key === 'Enter' && handleUploadWithPassword()}
+            error={!!pwdError}
+            helperText={pwdError}
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><LockIcon fontSize="small" /></InputAdornment>,
+            }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCompareOpen(false)}>닫기</Button>
+          <Button onClick={() => { setPwdDialogOpen(false); setPendingFile(null) }}>취소</Button>
+          <Button
+            variant="contained"
+            disabled={!pwdValue.trim() || uploading}
+            onClick={handleUploadWithPassword}
+          >
+            {uploading ? <CircularProgress size={18} color="inherit" /> : '확인'}
+          </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 3개년 비교 팝업 */}
+      <CompareDialog
+        open={compareOpen}
+        empName={selectedRecord?.empName ?? null}
+        onClose={() => setCompareOpen(false)}
+      />
 
       <Snackbar
         open={snackbar.open}
@@ -293,6 +589,7 @@ const AdminHealthPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+    </Box>
     </Box>
   )
 }

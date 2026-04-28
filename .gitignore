@@ -12,6 +12,18 @@ backend/bin/
 .vscode/
 *.iml
 
+# Env
+frontend/.env.local
+frontend/.env.*.local
+
 # OS
 Thumbs.db
 .DS_Store
+
+# Logs
+backend-run.log
+*.log
+
+# Misc / temp files
+KakaoTalk_*.png
+보건파트

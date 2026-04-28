@@ -1,4 +1,5 @@
-import { useState } from 'react'
+// [2026-04-27] 로그인 화면 — 활성 QR 코드 표시 추가
+import { useState, useEffect } from 'react'
 import { useNavigate, Link as RouterLink } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,14 +16,20 @@ import {
   Link,
   Stack,
   InputAdornment,
+  Tooltip,
 } from '@mui/material'
 import PersonIcon from '@mui/icons-material/PersonOutline'
 import LockIcon from '@mui/icons-material/LockOutlined'
 import LoginIcon from '@mui/icons-material/Login'
+import QrCode2Icon from '@mui/icons-material/QrCode2'
+import { QRCodeSVG } from 'qrcode.react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import LanguageSwitcher from '../components/common/LanguageSwitcher'
 import ThemeToggle from '../components/common/ThemeToggle'
+
+const APP_ORIGIN = import.meta.env.VITE_APP_URL ?? window.location.origin
+const qrUrl = (token: string) => `${APP_ORIGIN}/?qr=${token}`
 
 type AlertSeverity = 'error' | 'warning' | 'info'
 
@@ -33,6 +40,18 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [errorSeverity, setErrorSeverity] = useState<AlertSeverity>('error')
   const [isLoading, setIsLoading] = useState(false)
+  const [activeQrToken, setActiveQrToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    axios.get('/api/public/safety-qr/active', {
+      headers: { 'ngrok-skip-browser-warning': 'true' },
+    })
+      .then(res => {
+        const data = res.data?.data
+        if (data?.token && data?.isActive) setActiveQrToken(data.token)
+      })
+      .catch(() => { /* QR 없음 — 표시 안 함 */ })
+  }, [])
 
   const loginSchema = z.object({
     username: z.string().min(1, t('errors.required')),
@@ -279,6 +298,24 @@ const LoginPage: React.FC = () => {
           >
             {t('auth.register')}
           </Link>
+          {activeQrToken && (
+            <Tooltip
+              arrow
+              title={
+                <Box sx={{ p: 1, textAlign: 'center' }}>
+                  <QRCodeSVG value={qrUrl(activeQrToken)} size={160} />
+                  <Typography variant="caption" display="block" sx={{ mt: 1, color: '#fff' }}>
+                    QR 스캔 후 안전교육 이수
+                  </Typography>
+                </Box>
+              }
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer', color: 'text.secondary' }}>
+                <QrCode2Icon fontSize="small" />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>교육이수</Typography>
+              </Box>
+            </Tooltip>
+          )}
         </Stack>
       </Box>
     </Box>

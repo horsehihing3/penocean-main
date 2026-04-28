@@ -136,7 +136,7 @@ public class AccessRequestService {
                 workers.add(AccessWorker.builder()
                         .accessRequestId(id)
                         .workerName(w.getWorkerName())
-                        .workerBirth(w.getWorkerBirth())
+                        .workerBirth(parseBirth(w.getWorkerBirth()))
                         .workerPhone(w.getWorkerPhone())
                         .workerRole(w.getWorkerRole())
                         .safetyEduCompleted(false)
@@ -237,7 +237,7 @@ public class AccessRequestService {
                     workers.add(AccessWorker.builder()
                             .accessRequestId(id)
                             .workerName(w.getWorkerName())
-                            .workerBirth(w.getWorkerBirth())
+                            .workerBirth(parseBirth(w.getWorkerBirth()))
                             .workerPhone(w.getWorkerPhone())
                             .workerRole(w.getWorkerRole())
                             .safetyEduCompleted(false)
@@ -361,7 +361,7 @@ public class AccessRequestService {
             entities.add(AccessWorker.builder()
                     .accessRequestId(id)
                     .workerName(w.getWorkerName())
-                    .workerBirth(w.getWorkerBirth())
+                    .workerBirth(parseBirth(w.getWorkerBirth()))
                     .workerPhone(w.getWorkerPhone())
                     .workerRole(w.getWorkerRole())
                     .safetyEduCompleted(false)
@@ -493,6 +493,22 @@ public class AccessRequestService {
                 .checkByShip(w.getCheckByShip())
                 .checkByShipAt(w.getCheckByShipAt())
                 .build();
+    }
+
+    // [2026-04-28] YYMMDD 문자열 → LocalDate 변환 (프론트 입력값 처리)
+    private LocalDate parseBirth(String yymmdd) {
+        if (yymmdd == null || yymmdd.isBlank()) return null;
+        String s = yymmdd.trim();
+        if (s.length() != 6) return null;
+        try {
+            int yy = Integer.parseInt(s.substring(0, 2));
+            int mm = Integer.parseInt(s.substring(2, 4));
+            int dd = Integer.parseInt(s.substring(4, 6));
+            int year = (yy < 30) ? 2000 + yy : 1900 + yy;
+            return LocalDate.of(year, mm, dd);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private AccessRequestDetailResponse.AttachmentItem toAttachmentItem(AccessAttachment a) {

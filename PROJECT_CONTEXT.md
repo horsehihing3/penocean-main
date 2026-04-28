@@ -15,6 +15,8 @@
 - [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
 
 ### 🟡 다음 작업
+- [ ] **보건파트 NHIS 파서 실제 PDF 테스트** — NhisHealthCheckupParser.java 동작 검증 (파일 업로드 → 수치 파싱 확인). 이름/검진일 파싱 정확도 검증 후 정규식 보완 필요
+- [ ] **보건파트 추가 병원 양식 파서** — 우리원/하나로/중앙/강북삼성 PDF 양식 확보 시 HealthCheckupParser 구현체 추가
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
 - [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `contractor/improvements`, `contractor/accident` 위치, `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 - [ ] **안전수칙·보건 HTML → 실제 DB 연동** — safety_rules.html / health_checkup_compare.html 현재 정적 HTML, 추후 API 연동 필요
@@ -74,6 +76,11 @@
 - [x] **공지 조회수 사용자당 1회 제한** — `tb_notice_view` 테이블 생성(V21 Flyway), 사용자·공지 조합 중복 방지
 - [x] **공지 조회수 실시간 반영** — 상세 조회 시 목록 캐시 즉시 업데이트 (새로고침 불필요), 백엔드 응답에도 증가된 값 반영
 - [x] **Flyway 활성화** — `baseline-version: 20` 설정으로 기존 스키마 건너뛰고 V21부터 자동 적용
+
+### 2026-04-28
+- [x] **출입신청 수정 버그 수정** — `WorkerItem.workerBirth` LocalDate→String(YYMMDD) 변경, `parseBirth()` 헬퍼로 서비스 내 변환
+- [x] **QR 안전교육 전면 개선** — Singleton QR, 선박→업체→작업자 cascading 콤보, 이수 완료 시 safety_edu_completed=1 업데이트, 이수증 출력, 성별 삭제, 로그인 화면 QR 표시
+- [x] **보건파트 PDF 업로드 기능 구현** — V25 마이그레이션(tb_health_checkup_result), NhisHealthCheckupParser(공단 표준 양식), HealthCheckupParserRegistry(확장 가능 구조), AdminHealthPage 실 API 연동
 
 ---
 

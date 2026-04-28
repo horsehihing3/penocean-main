@@ -1,22 +1,24 @@
-// [2026-04-27] QR 안전교육 이수 공개 페이지 (비로그인 접근 가능)
+// [2026-04-27] QR 안전교육 이수 공개 페이지 — cascading 선택 + 이수증 출력
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 import {
   Box, Typography, Paper, TextField, Button, Stepper, Step, StepLabel,
   Checkbox, FormControlLabel, CircularProgress, Alert, Divider,
+  MenuItem, Select, FormControl, InputLabel, SelectChangeEvent,
 } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import PrintIcon from '@mui/icons-material/Print'
 
 const API_BASE = '/api'
 const STEPS = ['QR 확인', '작업자 정보', '안전교육 내용', '이수 완료']
 
-interface QrInfo {
-  id: number
-  title: string
-  vesselName: string
-  content: string
-}
+const headers = { 'ngrok-skip-browser-warning': 'true' }
+
+interface QrInfo { id: number; title: string; content: string }
+interface Vessel { vesselId: number; vesselName: string }
+interface Company { companyId: number; companyName: string }
+interface Worker { workerId: number; workerName: string; workerPhone: string }
 
 export default function QrEducationPage() {
   const { token } = useParams<{ token: string }>()
@@ -26,29 +28,79 @@ export default function QrEducationPage() {
   const [agreed, setAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [completedAt, setCompletedAt] = useState('')
+
+  // cascading combo data
+  const [vessels, setVessels] = useState<Vessel[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [workers, setWorkers] = useState<Worker[]>([])
+
+  const [selectedVesselId, setSelectedVesselId] = useState<number | ''>('')
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | ''>('')
+  const [selectedWorkerId, setSelectedWorkerId] = useState<number | ''>('')
+  const [fieldWarning, setFieldWarning] = useState('')  // [2026-04-28] 순서 안내 경고
 
   const [form, setForm] = useState({
     workerName: '',
     vesselName: '',
     workDate: new Date().toISOString().split('T')[0],
-    gender: '',
     phone: '',
   })
 
+  // QR 정보 + 선박 목록 동시 로드
   useEffect(() => {
     if (!token) return
-    axios.get(`${API_BASE}/public/safety-qr/${token}`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
-    })
-      .then(res => {
-        setQrInfo(res.data.data)
+    Promise.all([
+      axios.get(`${API_BASE}/public/safety-qr/${token}`, { headers }),
+      axios.get(`${API_BASE}/public/safety-qr/vessels`, { headers }),
+    ])
+      .then(([qrRes, vesselRes]) => {
+        setQrInfo(qrRes.data.data)
+        setVessels(vesselRes.data.data || [])
         setStep(1)
       })
       .catch(() => setLoadError('유효하지 않거나 만료된 QR코드입니다.'))
   }, [token])
 
-  const handleFormChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }))
+  // 선박 선택 → 업체 로드
+  const handleVesselChange = (e: SelectChangeEvent<number | ''>) => {
+    const vid = e.target.value as number
+    setSelectedVesselId(vid)
+    setSelectedCompanyId('')
+    setSelectedWorkerId('')
+    setCompanies([])
+    setWorkers([])
+    setFieldWarning('')
+    const vessel = vessels.find(v => v.vesselId === vid)
+    setForm(p => ({ ...p, vesselName: vessel?.vesselName ?? '' }))
+    if (vid) {
+      axios.get(`${API_BASE}/public/safety-qr/vessels/${vid}/companies`, { headers })
+        .then(r => setCompanies(r.data.data || []))
+    }
+  }
+
+  // 업체 선택 → 작업자 로드
+  const handleCompanyChange = (e: SelectChangeEvent<number | ''>) => {
+    const cid = e.target.value as number
+    setSelectedCompanyId(cid)
+    setSelectedWorkerId('')
+    setWorkers([])
+    setFieldWarning('')
+    setForm(p => ({ ...p, workerName: '', phone: '' }))
+    if (selectedVesselId && cid) {
+      axios.get(`${API_BASE}/public/safety-qr/vessels/${selectedVesselId}/companies/${cid}/workers`, { headers })
+        .then(r => setWorkers(r.data.data || []))
+    }
+  }
+
+  // 작업자 선택 → 이름·연락처 자동 입력
+  const handleWorkerChange = (e: SelectChangeEvent<number | ''>) => {
+    const wid = e.target.value as number
+    setSelectedWorkerId(wid)
+    const worker = workers.find(w => w.workerId === wid)
+    if (worker) {
+      setForm(p => ({ ...p, workerName: worker.workerName, phone: worker.workerPhone || '' }))
+    }
   }
 
   const handleSubmit = async () => {
@@ -57,9 +109,13 @@ export default function QrEducationPage() {
     setSubmitError('')
     try {
       await axios.post(`${API_BASE}/public/safety-qr/${token}/complete`, {
-        ...form,
+        workerId: selectedWorkerId || null,
+        workerName: form.workerName,
+        vesselName: form.vesselName,
         workDate: form.workDate,
-      })
+        phone: form.phone,
+      }, { headers })
+      setCompletedAt(new Date().toLocaleString('ko-KR'))
       setStep(4)
     } catch {
       setSubmitError('제출 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -106,22 +162,61 @@ export default function QrEducationPage() {
         )}
 
         <Box sx={{ px: 3, py: 3 }}>
-          {/* Step 1: 작업자 정보 */}
+          {/* Step 1: 작업자 정보 — cascading 콤보 */}
           {step === 1 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant="subtitle1" fontWeight={600}>작업 정보를 입력하세요</Typography>
-              <TextField label="선박명" fullWidth value={form.vesselName} onChange={handleFormChange('vesselName')}
-                placeholder={qrInfo?.vesselName || '선박명 입력...'} />
-              <TextField label="작업일자" type="date" fullWidth value={form.workDate} onChange={handleFormChange('workDate')}
+              <Typography variant="subtitle1" fontWeight={600}>작업 정보를 선택하세요</Typography>
+
+              {fieldWarning && (
+                <Alert severity="warning" onClose={() => setFieldWarning('')}>{fieldWarning}</Alert>
+              )}
+
+              <FormControl fullWidth required>
+                <InputLabel>선박명 *</InputLabel>
+                <Select value={selectedVesselId} label="선박명 *" onChange={handleVesselChange}>
+                  {vessels.map(v => (
+                    <MenuItem key={v.vesselId} value={v.vesselId}>{v.vesselName}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* 업체명: 선박 미선택 시 클릭하면 경고 */}
+              <Box onClick={() => !selectedVesselId && setFieldWarning('먼저 선박명을 선택하세요.')}>
+                <FormControl fullWidth required disabled={!selectedVesselId}>
+                  <InputLabel>업체명 *</InputLabel>
+                  <Select value={selectedCompanyId} label="업체명 *" onChange={handleCompanyChange}>
+                    {companies.map(c => (
+                      <MenuItem key={c.companyId} value={c.companyId}>{c.companyName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* 작업자: 업체 미선택 시 클릭하면 경고 */}
+              <Box onClick={() => !selectedCompanyId && setFieldWarning(!selectedVesselId ? '먼저 선박명을 선택하세요.' : '먼저 업체명을 선택하세요.')}>
+                <FormControl fullWidth required disabled={!selectedCompanyId}>
+                  <InputLabel>작업자 *</InputLabel>
+                  <Select value={selectedWorkerId} label="작업자 *" onChange={handleWorkerChange}>
+                    {workers.map(w => (
+                      <MenuItem key={w.workerId} value={w.workerId}>{w.workerName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Box onClick={() => !selectedVesselId && setFieldWarning('먼저 선박명을 선택하세요.')}>
+                <TextField label="연락처" fullWidth value={form.phone}
+                  onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                  placeholder="연락처 자동 입력"
+                  InputProps={{ readOnly: !selectedWorkerId }} />
+              </Box>
+
+              <TextField label="작업일자" type="date" fullWidth value={form.workDate}
+                onChange={e => setForm(p => ({ ...p, workDate: e.target.value }))}
                 InputLabelProps={{ shrink: true }} />
-              <TextField label="성함" fullWidth value={form.workerName} onChange={handleFormChange('workerName')}
-                placeholder="성함 입력..." />
-              <TextField label="성별" fullWidth value={form.gender} onChange={handleFormChange('gender')}
-                placeholder="남 / 여" />
-              <TextField label="전화번호" fullWidth value={form.phone} onChange={handleFormChange('phone')}
-                placeholder="전화번호 입력..." />
+
               <Button variant="contained" size="large" fullWidth sx={{ mt: 1, py: 1.5 }}
-                disabled={!form.workerName || !form.vesselName || !form.workDate}
+                disabled={!selectedVesselId || !selectedCompanyId || !selectedWorkerId || !form.workDate}
                 onClick={() => setStep(2)}>
                 다음
               </Button>
@@ -153,14 +248,58 @@ export default function QrEducationPage() {
             </Box>
           )}
 
-          {/* Step 3: 완료 */}
+          {/* Step 4: 완료 + 이수증 */}
           {step === 4 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 3 }}>
-              <CheckCircleIcon sx={{ fontSize: 72, color: 'success.main' }} />
-              <Typography variant="h6" fontWeight={700} color="success.main">안전교육 이수 완료</Typography>
-              <Typography variant="body2" color="text.secondary" textAlign="center">
-                이수 기록이 관리자 시스템으로 전송되었습니다.<br />수고하셨습니다.
-              </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, py: 2 }}>
+                <CheckCircleIcon sx={{ fontSize: 72, color: 'success.main' }} />
+                <Typography variant="h6" fontWeight={700} color="success.main">안전교육 이수 완료</Typography>
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                  이수 기록이 관리자 시스템으로 전송되었습니다.
+                </Typography>
+              </Box>
+
+              {/* 이수증 */}
+              <Paper variant="outlined" id="certificate-print" sx={{ p: 3, borderRadius: 2, border: '2px solid #1565c0' }}>
+                <Typography variant="h6" fontWeight={700} textAlign="center" color="primary" gutterBottom>
+                  안전교육 이수증
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">성명</Typography>
+                    <Typography variant="body2" fontWeight={600}>{form.workerName}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">선박명</Typography>
+                    <Typography variant="body2" fontWeight={600}>{form.vesselName}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">작업일자</Typography>
+                    <Typography variant="body2" fontWeight={600}>{form.workDate}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">연락처</Typography>
+                    <Typography variant="body2" fontWeight={600}>{form.phone || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography variant="caption" color="text.secondary">교육명</Typography>
+                    <Typography variant="body2" fontWeight={600}>{qrInfo?.title}</Typography>
+                  </Box>
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography variant="caption" color="text.secondary">이수일시</Typography>
+                    <Typography variant="body2" fontWeight={600}>{completedAt}</Typography>
+                  </Box>
+                </Box>
+                <Divider sx={{ mt: 2, mb: 1.5 }} />
+                <Typography variant="caption" color="text.secondary" display="block" textAlign="center">
+                  팬오션 주식회사 안전경영팀
+                </Typography>
+              </Paper>
+
+              <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => window.print()} fullWidth>
+                이수증 인쇄
+              </Button>
             </Box>
           )}
         </Box>

@@ -1,3 +1,4 @@
+// [2026-04-27] QR 안전교육 이수 컨트롤러 — Singleton + 공개 cascading API 추가
 package com.penocean.ehs.controller;
 
 import com.penocean.ehs.common.ApiResponse;
@@ -48,7 +49,7 @@ public class SafetyQrController {
 
     @PostMapping("/admin/safety-qr")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "QR 생성 (관리자)")
+    @Operation(summary = "QR 생성 (관리자) — 기존 활성 QR 자동 비활성화 후 생성")
     public ResponseEntity<ApiResponse<SafetyQrResponse>> create(
             @RequestBody SafetyQrCreateRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -73,6 +74,12 @@ public class SafetyQrController {
 
     // ── 공개 (비로그인) ─────────────────────────────────────────
 
+    @GetMapping("/public/safety-qr/active")
+    @Operation(summary = "현재 활성 QR 조회 (공개) — 로그인 화면 표시용")
+    public ResponseEntity<ApiResponse<SafetyQrResponse>> activeQr() {
+        return ResponseEntity.ok(ApiResponse.success(service.getActiveOne()));
+    }
+
     @GetMapping("/public/safety-qr/{token}")
     @Operation(summary = "QR 세션 정보 조회 (공개)")
     public ResponseEntity<ApiResponse<SafetyQr>> publicInfo(@PathVariable String token) {
@@ -86,6 +93,27 @@ public class SafetyQrController {
             @RequestBody SafetyQrCompleteRequest request) {
         service.complete(token, request);
         return ResponseEntity.ok(ApiResponse.success("이수가 완료되었습니다.", Map.of("status", "completed")));
+    }
+
+    // ── 공개 cascading 조회 ──────────────────────────────────────
+
+    @GetMapping("/public/safety-qr/vessels")
+    @Operation(summary = "활성 출입신청 선박 목록 (공개)")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> vessels() {
+        return ResponseEntity.ok(ApiResponse.success(service.getActiveVessels()));
+    }
+
+    @GetMapping("/public/safety-qr/vessels/{vesselId}/companies")
+    @Operation(summary = "선박별 출입신청 업체 목록 (공개)")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> companies(@PathVariable Long vesselId) {
+        return ResponseEntity.ok(ApiResponse.success(service.getCompaniesByVessel(vesselId)));
+    }
+
+    @GetMapping("/public/safety-qr/vessels/{vesselId}/companies/{companyId}/workers")
+    @Operation(summary = "선박+업체별 출입 작업자 목록 (공개)")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> workers(
+            @PathVariable Long vesselId, @PathVariable Long companyId) {
+        return ResponseEntity.ok(ApiResponse.success(service.getWorkersByVesselAndCompany(vesselId, companyId)));
     }
 
     private User resolveUser(UserDetails userDetails) {

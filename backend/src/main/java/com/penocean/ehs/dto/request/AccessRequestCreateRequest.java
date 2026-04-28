@@ -34,7 +34,8 @@ public class AccessRequestCreateRequest {
     @Builder
     public static class WorkerItem {
         private String workerName;
-        private LocalDate workerBirth;
+        /** [2026-04-28] YYMMDD 문자열 형식 (프론트 입력값 그대로 수신, 서비스에서 LocalDate 변환) */
+        private String workerBirth;
         private String workerPhone;
         private String workerRole;
         private Boolean safetyEduCompleted;

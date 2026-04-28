@@ -19,7 +19,6 @@ interface QrItem {
   id: number
   token: string
   title: string
-  vesselName: string
   isActive: boolean
   createdBy: string
   createdAt: string
@@ -49,7 +48,7 @@ export default function AdminQrEducationPage() {
   const [expandedRecords, setExpandedRecords] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
 
-  const [form, setForm] = useState({ title: '', vesselName: '', content: '', expiresAt: '' })
+  const [form, setForm] = useState({ title: '', content: '', expiresAt: '' })
 
   const { data: list = [], isLoading } = useQuery<QrItem[]>({
     queryKey: ['safety-qr'],
@@ -71,7 +70,7 @@ export default function AdminQrEducationPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['safety-qr'] })
       setCreateOpen(false)
-      setForm({ title: '', vesselName: '', content: '', expiresAt: '' })
+      setForm({ title: '', content: '', expiresAt: '' })
     },
   })
 
@@ -102,7 +101,6 @@ export default function AdminQrEducationPage() {
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.50' }}>
               <TableCell>제목</TableCell>
-              <TableCell>선박명</TableCell>
               <TableCell>상태</TableCell>
               <TableCell align="center">이수 건수</TableCell>
               <TableCell>생성일</TableCell>
@@ -112,16 +110,15 @@ export default function AdminQrEducationPage() {
           </TableHead>
           <TableBody>
             {isLoading && (
-              <TableRow><TableCell colSpan={7} align="center">로딩 중...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} align="center">로딩 중...</TableCell></TableRow>
             )}
             {!isLoading && list.length === 0 && (
-              <TableRow><TableCell colSpan={7} align="center" sx={{ color: 'text.secondary' }}>생성된 QR코드가 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} align="center" sx={{ color: 'text.secondary' }}>생성된 QR코드가 없습니다.</TableCell></TableRow>
             )}
             {list.map(item => (
               <>
                 <TableRow key={item.id} hover>
                   <TableCell>{item.title}</TableCell>
-                  <TableCell>{item.vesselName || '-'}</TableCell>
                   <TableCell>
                     <Chip label={item.isActive ? '활성' : '비활성'} color={item.isActive ? 'success' : 'default'} size="small" />
                   </TableCell>
@@ -158,7 +155,7 @@ export default function AdminQrEducationPage() {
                 {/* 이수 기록 펼치기 */}
                 {expandedRecords === item.id && (
                   <TableRow key={`records-${item.id}`}>
-                    <TableCell colSpan={7} sx={{ p: 0 }}>
+                    <TableCell colSpan={6} sx={{ p: 0 }}>
                       <Collapse in={true}>
                         <Box sx={{ bgcolor: '#f9fafb', px: 3, py: 2 }}>
                           <Typography variant="subtitle2" gutterBottom fontWeight={600}>이수 기록 ({records.length}건)</Typography>
@@ -206,7 +203,6 @@ export default function AdminQrEducationPage() {
         <DialogTitle>QR 안전교육 생성</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <TextField label="제목 *" fullWidth value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
-          <TextField label="선박명" fullWidth value={form.vesselName} onChange={e => setForm(p => ({ ...p, vesselName: e.target.value }))} />
           <TextField label="안전교육 내용" fullWidth multiline rows={6} value={form.content}
             onChange={e => setForm(p => ({ ...p, content: e.target.value }))}
             placeholder="작업자에게 보여줄 안전교육 내용을 입력하세요." />

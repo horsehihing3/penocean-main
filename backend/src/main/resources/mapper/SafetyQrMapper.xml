@@ -4,7 +4,7 @@
 <mapper namespace="com.penocean.ehs.mapper.SafetyQrMapper">
 
     <select id="findAll" resultType="com.penocean.ehs.dto.response.SafetyQrResponse">
-        SELECT q.id, q.token, q.title, q.vessel_name AS vesselName, q.content,
+        SELECT q.id, q.token, q.title, q.content,
                q.is_active AS isActive, q.created_by AS createdBy,
                q.created_at AS createdAt, q.expires_at AS expiresAt,
                (SELECT COUNT(*) FROM tb_safety_qr_record r WHERE r.qr_id = q.id) AS recordCount
@@ -13,7 +13,7 @@
     </select>
 
     <select id="findById" resultType="com.penocean.ehs.dto.response.SafetyQrResponse">
-        SELECT q.id, q.token, q.title, q.vessel_name AS vesselName, q.content,
+        SELECT q.id, q.token, q.title, q.content,
                q.is_active AS isActive, q.created_by AS createdBy,
                q.created_at AS createdAt, q.expires_at AS expiresAt,
                (SELECT COUNT(*) FROM tb_safety_qr_record r WHERE r.qr_id = q.id) AS recordCount
@@ -21,8 +21,19 @@
         WHERE q.id = #{id}
     </select>
 
+    <!-- [2026-04-27] 로그인 화면 QR 표시용 -->
+    <select id="findActiveOne" resultType="com.penocean.ehs.dto.response.SafetyQrResponse">
+        SELECT TOP 1 q.id, q.token, q.title, q.content,
+               q.is_active AS isActive, q.created_by AS createdBy,
+               q.created_at AS createdAt, q.expires_at AS expiresAt,
+               (SELECT COUNT(*) FROM tb_safety_qr_record r WHERE r.qr_id = q.id) AS recordCount
+        FROM tb_safety_qr q
+        WHERE q.is_active = 1
+        ORDER BY q.created_at DESC
+    </select>
+
     <select id="findByToken" resultType="com.penocean.ehs.model.SafetyQr">
-        SELECT id, token, title, vessel_name AS vesselName, content,
+        SELECT id, token, title, content,
                is_active AS isActive, created_by AS createdBy,
                created_at AS createdAt, expires_at AS expiresAt
         FROM tb_safety_qr
@@ -30,17 +41,22 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tb_safety_qr (token, title, vessel_name, content, is_active, created_by, expires_at)
-        VALUES (#{token}, #{title}, #{vesselName}, #{content}, 1, #{createdBy}, #{expiresAt})
+        INSERT INTO tb_safety_qr (token, title, content, is_active, created_by, expires_at)
+        VALUES (#{token}, #{title}, #{content}, 1, #{createdBy}, #{expiresAt})
     </insert>
 
     <update id="deactivate">
         UPDATE tb_safety_qr SET is_active = 0 WHERE id = #{id}
     </update>
 
+    <!-- [2026-04-27] Singleton: 기존 활성 QR 전체 비활성화 -->
+    <update id="deactivateAll">
+        UPDATE tb_safety_qr SET is_active = 0 WHERE is_active = 1
+    </update>
+
     <insert id="insertRecord" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tb_safety_qr_record (qr_id, worker_name, vessel_name, work_date, gender, phone)
-        VALUES (#{qrId}, #{workerName}, #{vesselName}, #{workDate}, #{gender}, #{phone})
+        INSERT INTO tb_safety_qr_record (qr_id, worker_id, worker_name, vessel_name, work_date, gender, phone)
+        VALUES (#{qrId}, #{workerId}, #{workerName}, #{vesselName}, #{workDate}, #{gender}, #{phone})
     </insert>
 
     <select id="findRecordsByQrId" resultType="com.penocean.ehs.dto.response.SafetyQrRecordResponse">
@@ -56,6 +72,40 @@
 
     <select id="countRecordsByQrId" resultType="int">
         SELECT COUNT(*) FROM tb_safety_qr_record WHERE qr_id = #{qrId}
+    </select>
+
+    <!-- [2026-04-27] 공개 cascading: 오늘 이후 출입신청이 있는 선박 목록 -->
+    <select id="findActiveVessels" resultType="map">
+        SELECT DISTINCT ar.vessel_id AS vesselId, v.name AS vesselName
+        FROM tb_access_request ar
+        JOIN tb_vessel v ON v.id = ar.vessel_id
+        WHERE ar.deleted = 0
+          AND ar.planned_end_date >= CAST(GETDATE() AS DATE)
+        ORDER BY v.name
+    </select>
+
+    <!-- [2026-04-27] 선택된 선박의 출입신청 업체 목록 -->
+    <select id="findCompaniesByVessel" resultType="map">
+        SELECT DISTINCT ar.company_id AS companyId, c.name AS companyName
+        FROM tb_access_request ar
+        JOIN tb_company c ON c.id = ar.company_id AND c.deleted = 0
+        WHERE ar.deleted = 0
+          AND ar.vessel_id = #{vesselId}
+          AND ar.planned_end_date >= CAST(GETDATE() AS DATE)
+        ORDER BY c.name
+    </select>
+
+    <!-- [2026-04-27] 선박+업체 조합의 출입 작업자 목록 -->
+    <select id="findWorkersByVesselAndCompany" resultType="map">
+        SELECT DISTINCT w.id AS workerId, w.worker_name AS workerName, w.worker_phone AS workerPhone
+        FROM tb_access_worker w
+        JOIN tb_access_request ar ON ar.id = w.access_request_id
+        WHERE ar.deleted = 0
+          AND w.deleted = 0
+          AND ar.vessel_id = #{vesselId}
+          AND ar.company_id = #{companyId}
+          AND ar.planned_end_date >= CAST(GETDATE() AS DATE)
+        ORDER BY w.worker_name
     </select>
 
 </mapper>

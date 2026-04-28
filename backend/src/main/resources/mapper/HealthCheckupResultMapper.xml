@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.penocean.ehs.mapper.HealthCheckupResultMapper">
+
+  <resultMap id="ResultMap" type="com.penocean.ehs.model.HealthCheckupResult">
+    <id  property="id"             column="id"/>
+    <result property="checkupYear"     column="checkup_year"/>
+    <result property="checkupDate"     column="checkup_date"/>
+    <result property="hospitalName"    column="hospital_name"/>
+    <result property="department"      column="department"/>
+    <result property="empName"         column="emp_name"/>
+    <result property="birthDate"       column="birth_date"/>
+    <result property="gender"          column="gender"/>
+    <result property="age"             column="age"/>
+    <result property="height"          column="height"/>
+    <result property="weight"          column="weight"/>
+    <result property="bmi"             column="bmi"/>
+    <result property="waist"           column="waist"/>
+    <result property="visionRight"     column="vision_right"/>
+    <result property="visionLeft"      column="vision_left"/>
+    <result property="bpSystolic"      column="bp_systolic"/>
+    <result property="bpDiastolic"     column="bp_diastolic"/>
+    <result property="bpCategory"      column="bp_category"/>
+    <result property="bpMed"           column="bp_med"/>
+    <result property="hemoglobin"      column="hemoglobin"/>
+    <result property="bst"             column="bst"/>
+    <result property="dmCategory"      column="dm_category"/>
+    <result property="dmMed"           column="dm_med"/>
+    <result property="tc"              column="tc"/>
+    <result property="hdl"             column="hdl"/>
+    <result property="tg"              column="tg"/>
+    <result property="ldl"             column="ldl"/>
+    <result property="dlCategory"      column="dl_category"/>
+    <result property="dlMed"           column="dl_med"/>
+    <result property="creatinine"      column="creatinine"/>
+    <result property="egfr"            column="egfr"/>
+    <result property="ast"             column="ast"/>
+    <result property="alt"             column="alt"/>
+    <result property="ggt"             column="ggt"/>
+    <result property="followupOpinion" column="followup_opinion"/>
+    <result property="workFitness"     column="work_fitness"/>
+    <result property="note"            column="note"/>
+    <result property="parserType"      column="parser_type"/>
+    <result property="sourceFile"      column="source_file"/>
+    <result property="createdBy"       column="created_by"/>
+    <result property="createdAt"       column="created_at"/>
+    <result property="deleted"         column="deleted"/>
+  </resultMap>
+
+  <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO tb_health_checkup_result (
+      checkup_year, checkup_date, hospital_name, department,
+      emp_name, birth_date, gender, age,
+      height, weight, bmi, waist, vision_right, vision_left,
+      bp_systolic, bp_diastolic, bp_category, bp_med,
+      hemoglobin, bst, dm_category, dm_med,
+      tc, hdl, tg, ldl, dl_category, dl_med,
+      creatinine, egfr, ast, alt, ggt,
+      followup_opinion, work_fitness, note,
+      parser_type, source_file, created_by, created_at, deleted
+    ) VALUES (
+      #{checkupYear,jdbcType=INTEGER},
+      #{checkupDate,jdbcType=DATE},
+      #{hospitalName,jdbcType=NVARCHAR},
+      #{department,jdbcType=NVARCHAR},
+      #{empName},
+      #{birthDate,jdbcType=DATE},
+      #{gender,jdbcType=NVARCHAR},
+      #{age,jdbcType=INTEGER},
+      #{height,jdbcType=DECIMAL},
+      #{weight,jdbcType=DECIMAL},
+      #{bmi,jdbcType=DECIMAL},
+      #{waist,jdbcType=DECIMAL},
+      #{visionRight,jdbcType=DECIMAL},
+      #{visionLeft,jdbcType=DECIMAL},
+      #{bpSystolic,jdbcType=INTEGER},
+      #{bpDiastolic,jdbcType=INTEGER},
+      #{bpCategory,jdbcType=NVARCHAR},
+      #{bpMed},
+      #{hemoglobin,jdbcType=DECIMAL},
+      #{bst,jdbcType=INTEGER},
+      #{dmCategory,jdbcType=NVARCHAR},
+      #{dmMed},
+      #{tc,jdbcType=INTEGER},
+      #{hdl,jdbcType=INTEGER},
+      #{tg,jdbcType=INTEGER},
+      #{ldl,jdbcType=INTEGER},
+      #{dlCategory,jdbcType=NVARCHAR},
+      #{dlMed},
+      #{creatinine,jdbcType=DECIMAL},
+      #{egfr,jdbcType=INTEGER},
+      #{ast,jdbcType=INTEGER},
+      #{alt,jdbcType=INTEGER},
+      #{ggt,jdbcType=INTEGER},
+      #{followupOpinion,jdbcType=NVARCHAR},
+      #{workFitness,jdbcType=NVARCHAR},
+      #{note,jdbcType=NVARCHAR},
+      #{parserType,jdbcType=NVARCHAR},
+      #{sourceFile,jdbcType=NVARCHAR},
+      #{createdBy,jdbcType=NVARCHAR},
+      SYSUTCDATETIME(), 0
+    )
+  </insert>
+
+  <select id="findAll" resultMap="ResultMap">
+    SELECT * FROM tb_health_checkup_result
+    <where>
+      deleted = 0
+      <if test="year != null">AND checkup_year = #{year}</if>
+      <if test="keyword != null and keyword != ''">
+        AND (emp_name LIKE '%' + #{keyword} + '%'
+          OR department LIKE '%' + #{keyword} + '%'
+          OR hospital_name LIKE '%' + #{keyword} + '%')
+      </if>
+    </where>
+    ORDER BY checkup_date DESC, id DESC
+  </select>
+
+  <select id="findById" resultMap="ResultMap">
+    SELECT * FROM tb_health_checkup_result WHERE id = #{id} AND deleted = 0
+  </select>
+
+  <update id="updateNote">
+    UPDATE tb_health_checkup_result
+    SET followup_opinion = #{followupOpinion},
+        work_fitness     = #{workFitness},
+        note             = #{note},
+        department       = #{department},
+        bp_med           = #{bpMed},
+        dm_med           = #{dmMed},
+        dl_med           = #{dlMed},
+        emp_name         = #{empName}
+    WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <delete id="softDelete">
+    DELETE FROM tb_health_checkup_result WHERE id = #{id}
+  </delete>
+
+  <!-- [2026-04-28] 동일 성명 최근 N건: 3개년 비교 팝업용 -->
+  <select id="findRecentByEmpName" resultMap="ResultMap">
+    SELECT TOP #{limit} * FROM tb_health_checkup_result
+    WHERE emp_name = #{empName} AND deleted = 0
+    ORDER BY checkup_date DESC, id DESC
+  </select>
+
+</mapper>
