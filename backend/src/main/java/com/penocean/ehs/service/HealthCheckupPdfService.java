@@ -4,6 +4,7 @@ package com.penocean.ehs.service;
 import com.penocean.ehs.exception.BadRequestException;
 import com.penocean.ehs.health.HealthCheckupParser;
 import com.penocean.ehs.health.HealthCheckupParserRegistry;
+import com.penocean.ehs.health.HospitalAppImageParser;
 import com.penocean.ehs.health.ParsedHealthData;
 import com.penocean.ehs.mapper.HealthCheckupResultMapper;
 import com.penocean.ehs.model.HealthCheckupResult;
@@ -16,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,6 +28,7 @@ public class HealthCheckupPdfService {
 
     private final HealthCheckupResultMapper mapper;
     private final HealthCheckupParserRegistry registry;
+    private final HospitalAppImageParser imageParser;
 
     @Transactional(readOnly = true)
     public List<HealthCheckupResult> list(Integer year, String keyword) {
@@ -34,6 +38,27 @@ public class HealthCheckupPdfService {
     @Transactional(readOnly = true)
     public List<HealthCheckupResult> recentByEmpName(String empName, int limit) {
         return mapper.findRecentByEmpName(empName, limit);
+    }
+
+    // [2026-04-28] 다중 이미지 파싱 — DB 저장 없이 반환 (병원 앱 스크린샷용)
+    public HealthCheckupResult parseImages(List<MultipartFile> files, String createdBy) {
+        if (files == null || files.isEmpty()) throw new BadRequestException("이미지 파일이 없습니다.");
+
+        List<byte[]> bytesList = new ArrayList<>();
+        List<String> filenames = new ArrayList<>();
+        for (MultipartFile f : files) {
+            if (f.isEmpty()) continue;
+            try {
+                bytesList.add(f.getBytes());
+                filenames.add(Objects.requireNonNullElse(f.getOriginalFilename(), "image.jpg"));
+            } catch (IOException e) {
+                throw new BadRequestException("파일 읽기 실패: " + e.getMessage());
+            }
+        }
+        if (bytesList.isEmpty()) throw new BadRequestException("유효한 이미지 파일이 없습니다.");
+
+        ParsedHealthData parsed = imageParser.parseImages(bytesList, filenames);
+        return toEntity(parsed, filenames.get(0), createdBy);
     }
 
     // [2026-04-28] 파싱만 수행 — DB 저장 없이 파싱 결과 반환

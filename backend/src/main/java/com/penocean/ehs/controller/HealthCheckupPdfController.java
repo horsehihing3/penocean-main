@@ -49,6 +49,22 @@ public class HealthCheckupPdfController {
         return ResponseEntity.ok(ApiResponse.success(service.recentByEmpName(empName, 3)));
     }
 
+    // [2026-04-28] 다중 이미지 파싱 — Claude Vision API 사용. DB 저장 없이 반환.
+    @PostMapping(value = "/upload-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "병원 앱 스크린샷(JPG/PNG) 파싱 — Claude Vision API. 여러 장 동시 업로드 가능")
+    public ResponseEntity<ApiResponse<HealthCheckupResult>> uploadImages(
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestParam(value = "hospitalName", required = false) String hospitalName,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User caller = resolveUser(userDetails);
+        HealthCheckupResult result = service.parseImages(files, caller.getUsername());
+        if (hospitalName != null && !hospitalName.isBlank()) {
+            result.setHospitalName(hospitalName.trim());
+        }
+        return ResponseEntity.ok(ApiResponse.success("파싱 완료", result));
+    }
+
     // [2026-04-28] 파싱만 수행 — DB 저장 없이 반환. 프론트에서 "DB 저장하기" 클릭 시 POST /results 로 저장.
     @PostMapping(value = "/upload-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")

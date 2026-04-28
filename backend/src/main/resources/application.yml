@@ -101,6 +101,10 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+# Anthropic Claude API — 이미지 파서(HospitalAppImageParser) 사용 시 필요
+anthropic:
+  api-key: ${ANTHROPIC_API_KEY:}
+
 # Springdoc OpenAPI
 springdoc:
   api-docs:

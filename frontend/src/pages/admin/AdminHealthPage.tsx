@@ -42,6 +42,14 @@ interface HealthRecord {
   tg: number | null
   ldl: number | null
   hdl: number | null
+  height: number | null
+  weight: number | null
+  bmi: number | null
+  waist: number | null
+  ast: number | null
+  alt: number | null
+  ggt: number | null
+  gender: string | null
   followupOpinion: string
   workFitness: string
   note: string
@@ -62,42 +70,8 @@ const formatDate = (dateStr: string) => {
   return dateStr.substring(0, 10).replace(/-/g, '.')
 }
 
-// ── 3개년 비교 팝업 ────────────────────────────────────────────
+// ── 3개년 비교 팝업 (연도당 최신 1건, 최대 3개년) ────────────────────────
 interface CompareDialogProps { open: boolean; empName: string | null; onClose: () => void }
-
-const ROW_DEFS: { label: string; key: keyof HealthRecord; fmt?: (v: any, r: HealthRecord) => string }[] = [
-  { label: '검진일',       key: 'checkupDate',    fmt: v => v ? String(v).substring(0,10).replace(/-/g,'.') : '-' },
-  { label: '병원명',       key: 'hospitalName',   fmt: v => v ?? '-' },
-  { label: '나이',         key: 'age',            fmt: v => v != null ? `${v}세` : '-' },
-  { label: '키(cm)',       key: 'height',         fmt: v => v ?? '-' },
-  { label: '체중(kg)',     key: 'weight',         fmt: v => v ?? '-' },
-  { label: 'BMI',          key: 'bmi',            fmt: v => v ?? '-' },
-  { label: '허리둘레(cm)', key: 'waist',          fmt: v => v ?? '-' },
-  { label: '혈압(mmHg)',   key: 'bpSystolic',     fmt: (v, r) => r.bpSystolic && r.bpDiastolic ? `${r.bpSystolic}/${r.bpDiastolic}` : '-' },
-  { label: '혈압판정',     key: 'bpCategory',     fmt: v => v ?? '-' },
-  { label: '혈압약복용',   key: 'bpMed',          fmt: v => v ? '복용' : '-' },
-  { label: '공복혈당',     key: 'bst',            fmt: v => v ?? '-' },
-  { label: '혈당판정',     key: 'dmCategory',     fmt: v => v ?? '-' },
-  { label: '혈당약복용',   key: 'dmMed',          fmt: v => v ? '복용' : '-' },
-  { label: '총콜레스테롤', key: 'tc',             fmt: v => v ?? '-' },
-  { label: '중성지방',     key: 'tg',             fmt: v => v ?? '-' },
-  { label: 'LDL',          key: 'ldl',            fmt: v => v ?? '-' },
-  { label: 'HDL',          key: 'hdl',            fmt: v => v ?? '-' },
-  { label: '지질판정',     key: 'dlCategory',     fmt: v => v ?? '-' },
-  { label: '지질약복용',   key: 'dlMed',          fmt: v => v ? '복용' : '-' },
-  { label: 'AST',          key: 'ast',            fmt: v => v ?? '-' },
-  { label: 'ALT',          key: 'alt',            fmt: v => v ?? '-' },
-  { label: 'γGTP',         key: 'ggt',            fmt: v => v ?? '-' },
-  { label: '사후관리소견', key: 'followupOpinion', fmt: v => v ?? '-' },
-  { label: '업무적합',     key: 'workFitness',    fmt: v => v ?? '-' },
-]
-
-const catColor = (v: string) => {
-  if (v === 'A') return '#2e7d32'
-  if (v === 'B') return '#ed6c02'
-  if (v === 'C' || v === 'D') return '#d32f2f'
-  return 'inherit'
-}
 
 const CompareDialog: React.FC<CompareDialogProps> = ({ open, empName, onClose }) => {
   const [rows, setRows] = useState<HealthRecord[]>([])
@@ -112,53 +86,145 @@ const CompareDialog: React.FC<CompareDialogProps> = ({ open, empName, onClose })
       .finally(() => setLoading(false))
   }, [open, empName])
 
-  const cols = rows  // 최근순으로 이미 정렬됨
+  // 연도 오름차순 정렬 (왼쪽=과거 → 오른쪽=최근)
+  const cols = [...rows].sort((a, b) => (a.checkupYear ?? 0) - (b.checkupYear ?? 0))
+  const latest = cols[cols.length - 1]
+
+  const T: Record<string, React.CSSProperties> = {
+    tbl:       { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
+    iLbl:      { padding: '8px 12px', border: '1px solid #dde5f0', background: '#e8edf5', color: '#4a5a78', fontWeight: 600, width: 72, textAlign: 'center' },
+    iVal:      { padding: '8px 12px', border: '1px solid #dde5f0', background: '#f7f9fc', color: '#1a2a4a', fontWeight: 500 },
+    yItemTh:   { padding: '10px 8px', textAlign: 'center', fontWeight: 700, border: '1px solid #cdd8eb', background: '#d5dff0', color: '#2d3f60', minWidth: 130 },
+    yColTh:    { padding: '10px 8px', textAlign: 'center', fontWeight: 700, border: '1px solid #cdd8eb', background: '#dce8fb', color: '#1a3a7a', letterSpacing: 1 },
+    subLbl:    { padding: '4px 14px', border: '1px solid #dde5f0', background: '#d5dff0', color: '#8a99b0', fontSize: 11, textAlign: 'left', whiteSpace: 'nowrap' },
+    subCell:   { padding: '4px 10px', border: '1px solid #dde5f0', textAlign: 'center', fontSize: 11, color: '#8a99b0' },
+    rowLbl:    { padding: '7px 14px', border: '1px solid #dde5f0', background: '#f0f4fa', color: '#3a4a62', fontWeight: 500, textAlign: 'left', whiteSpace: 'nowrap' },
+    dataCell:  { padding: '7px 10px', border: '1px solid #dde5f0', textAlign: 'center', color: '#444', minWidth: 100 },
+  }
+
+  const dash = <span style={{ color: '#b0bcc8' }}>-</span>
+
+  const catNode = (v: string | null | undefined) => {
+    if (!v) return dash
+    if (v === 'A') return <span style={{ color: '#1d8a4a', fontWeight: 600 }}>{v}</span>
+    if (v === 'B') return <span style={{ color: '#d97706', fontWeight: 600 }}>{v}</span>
+    return <span style={{ color: '#e05252', fontWeight: 600 }}>{v}</span>
+  }
+  const medNode = (v: boolean | null | undefined) => v ? <span>복용</span> : dash
+  const numNode = (v: number | null | undefined, warnThr?: number, cautionThr?: number) => {
+    if (v == null) return dash
+    if (warnThr != null && v >= warnThr) return <span style={{ color: '#e05252', fontWeight: 600 }}>{v}</span>
+    if (cautionThr != null && v >= cautionThr) return <span style={{ color: '#d97706', fontWeight: 600 }}>{v}</span>
+    return <span>{v}</span>
+  }
+  const bpNode = (r: HealthRecord) =>
+    r.bpSystolic && r.bpDiastolic ? <span>{r.bpSystolic}/{r.bpDiastolic}</span> : dash
+  const gotNode = (r: HealthRecord) => {
+    if (r.ast == null && r.alt == null && r.ggt == null) return dash
+    return <span style={{ color: '#2563eb', fontWeight: 500 }}>{[r.ast, r.alt, r.ggt].map(v => v ?? '-').join('/')}</span>
+  }
+  const opinionNode = (v: string | null | undefined) => {
+    if (!v || v === '미작성') return <span style={{ color: '#b0bcc8' }}>미작성</span>
+    if (v === '필요없음') return <span style={{ color: '#1d8a4a', fontWeight: 600 }}>정상</span>
+    return <span style={{ color: '#e05252', fontWeight: 600 }}>{v}</span>
+  }
+  const fitnessNode = (v: string | null | undefined) => {
+    if (!v) return dash
+    if (v === '나') return <span style={{ color: '#2563eb', fontWeight: 600 }}>{v}</span>
+    return <span>{v}</span>
+  }
+
+  const DATA_ROWS: { label: string; render: (r: HealthRecord) => React.ReactNode }[] = [
+    { label: '고혈압',          render: r => catNode(r.bpCategory) },
+    { label: 'HTN medi',       render: r => medNode(r.bpMed) },
+    { label: 'BP',              render: r => bpNode(r) },
+    { label: '이상지질',        render: r => catNode(r.dlCategory) },
+    { label: '중성지방',        render: r => numNode(r.tg, 200, 150) },
+    { label: '콜레스테롤',      render: r => numNode(r.tc, 240, 200) },
+    { label: 'HDL',             render: r => numNode(r.hdl) },
+    { label: 'LDL',             render: r => numNode(r.ldl, 160, 130) },
+    { label: 'DL medi',         render: r => medNode(r.dlMed) },
+    { label: '당뇨',            render: r => catNode(r.dmCategory) },
+    { label: 'BS',              render: r => numNode(r.bst, 126, 100) },
+    { label: 'DM medi',         render: r => medNode(r.dmMed) },
+    { label: 'GOT/GPT/r-GPT',  render: r => gotNode(r) },
+    { label: 'BMI',             render: r => numNode(r.bmi != null ? Number(r.bmi) : null, 30, 25) },
+    { label: '업무적합',        render: r => fitnessNode(r.workFitness) },
+    { label: '사후관리소견',    render: r => opinionNode(r.followupOpinion) },
+    { label: '비고',            render: r => r.note ? <span style={{ color: '#5a6a82' }}>{r.note}</span> : dash },
+  ]
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, fontWeight: 700, color: '#1a2a4a' }}>
         임직원 건강검진 비교 — {empName}
         <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ p: 0 }}>
+      <DialogContent dividers sx={{ p: 0, background: '#f2f5f9' }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
         ) : rows.length === 0 ? (
           <Box sx={{ p: 4, textAlign: 'center', color: 'text.secondary' }}>데이터가 없습니다.</Box>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: 'grey.100' }}>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 110, position: 'sticky', left: 0, bgcolor: 'grey.100', zIndex: 1 }}>항목</TableCell>
-                  {cols.map((r, i) => (
-                    <TableCell key={r.id} align="center" sx={{ fontWeight: 700, minWidth: 120 }}>
-                      {i === 0 ? '최근' : `${i + 1}회 전`}<br />
-                      <Typography variant="caption" color="text.secondary">
-                        {r.checkupDate ? String(r.checkupDate).substring(0,10).replace(/-/g,'.') : '-'}
-                      </Typography>
-                    </TableCell>
+          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            {/* 인적사항 */}
+            <Box sx={{ background: '#fff', borderRadius: 1.5, boxShadow: '0 2px 8px rgba(30,50,100,0.07)', overflow: 'hidden' }}>
+              <table style={T.tbl}>
+                <tbody>
+                  <tr>
+                    <td style={T.iLbl}>이름</td>
+                    <td style={T.iVal}>{latest?.empName ?? '-'}</td>
+                    <td style={T.iLbl}>연령/성별</td>
+                    <td style={T.iVal}>{latest?.age ?? '-'} / {latest?.gender ?? '-'}</td>
+                  </tr>
+                  <tr>
+                    <td style={T.iLbl}>부서</td>
+                    <td style={T.iVal}>{latest?.department ?? '-'}</td>
+                    <td style={T.iLbl}>최근병원</td>
+                    <td style={T.iVal}>{latest?.hospitalName ?? '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </Box>
+
+            {/* 연도별 비교표 */}
+            <Box sx={{ background: '#fff', borderRadius: 1.5, boxShadow: '0 2px 8px rgba(30,50,100,0.07)', overflow: 'auto' }}>
+              <table style={T.tbl}>
+                <thead>
+                  <tr>
+                    <th style={T.yItemTh}>검진항목</th>
+                    {cols.map(r => (
+                      <th key={r.id} style={T.yColTh}>{r.checkupYear ?? '-'}</th>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={T.subLbl}>검진일</td>
+                    {cols.map(r => (
+                      <td key={r.id} style={T.subCell}>
+                        {r.checkupDate ? String(r.checkupDate).substring(0, 10).replace(/-/g, '.') : '-'}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr>
+                    <td style={T.subLbl}>병원명</td>
+                    {cols.map(r => (
+                      <td key={r.id} style={T.subCell}>{r.hospitalName ?? '-'}</td>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {DATA_ROWS.map(({ label, render }, idx) => (
+                    <tr key={label} style={{ background: idx % 2 === 1 ? '#f8fafd' : undefined }}>
+                      <td style={T.rowLbl}>{label}</td>
+                      {cols.map(r => (
+                        <td key={r.id} style={T.dataCell}>{render(r)}</td>
+                      ))}
+                    </tr>
                   ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ROW_DEFS.map(({ label, key, fmt }) => (
-                  <TableRow key={label} hover>
-                    <TableCell sx={{ fontWeight: 600, fontSize: '0.78rem', bgcolor: 'grey.50', position: 'sticky', left: 0, zIndex: 1 }}>{label}</TableCell>
-                    {cols.map(r => {
-                      const val = fmt ? fmt((r as any)[key], r) : ((r as any)[key] ?? '-')
-                      const isCat = key === 'bpCategory' || key === 'dmCategory' || key === 'dlCategory'
-                      return (
-                        <TableCell key={r.id} align="center" sx={{ fontSize: '0.82rem', color: isCat ? catColor(String(val)) : 'inherit', fontWeight: isCat ? 700 : 400 }}>
-                          {String(val)}
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </tbody>
+              </table>
+            </Box>
+          </Box>
         )}
       </DialogContent>
       <DialogActions>
@@ -188,6 +254,8 @@ const AdminHealthPage: React.FC = () => {
 
   const [hospitalNameInput, setHospitalNameInput] = useState('')
   const [hospitalNameError, setHospitalNameError] = useState(false)
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   // 비밀번호 다이얼로그
   const [pwdDialogOpen, setPwdDialogOpen] = useState(false)
@@ -274,6 +342,37 @@ const AdminHealthPage: React.FC = () => {
     fileInputRef.current?.click()
   }
 
+  const handleImageButtonClick = () => {
+    if (hospital === DIRECT_IDX && !hospitalNameInput.trim()) {
+      setHospitalNameError(true)
+      return
+    }
+    imageInputRef.current?.click()
+  }
+
+  const handleImageUpload = async (files: FileList) => {
+    if (!files || files.length === 0) return
+    setUploadingImages(true)
+    const resolvedHospital = hospital < DIRECT_IDX ? HOSPITALS[hospital] : hospitalNameInput.trim()
+    const formData = new FormData()
+    Array.from(files).forEach(f => formData.append('files', f))
+    if (resolvedHospital) formData.append('hospitalName', resolvedHospital)
+    try {
+      const res = await axiosInstance.post('/admin/health/upload-images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const parsed: HealthRecord = { ...res.data.data, id: pendingCounter.current--, _pending: true }
+      setPendingUnsaved(prev => [...prev, parsed])
+      notify(`이미지 ${files.length}장 파싱 완료 — DB 저장하기 버튼을 눌러 저장하세요.`, 'info')
+    } catch (e: any) {
+      const msg: string = e?.response?.data?.message || ''
+      notify(msg || '이미지 업로드 중 오류가 발생했습니다.', 'error')
+    } finally {
+      setUploadingImages(false)
+      if (imageInputRef.current) imageInputRef.current.value = ''
+    }
+  }
+
   const handleUpload = (file: File) => doUpload(file)
 
   const handleUploadWithPassword = async () => {
@@ -348,13 +447,32 @@ const AdminHealthPage: React.FC = () => {
               if (file) handleUpload(file)
             }}
           />
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+            multiple
+            style={{ display: 'none' }}
+            onChange={e => {
+              if (e.target.files && e.target.files.length > 0) handleImageUpload(e.target.files)
+            }}
+          />
           <Button
             variant="contained"
             startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
-            disabled={uploading}
+            disabled={uploading || uploadingImages}
             onClick={handleFileButtonClick}
           >
-            {uploading ? '업로드 중...' : '파일 선택'}
+            {uploading ? '업로드 중...' : 'PDF 선택'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={uploadingImages ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
+            disabled={uploading || uploadingImages}
+            onClick={handleImageButtonClick}
+            title="병원 앱 스크린샷(JPG/PNG) — 여러 장 동시 선택 가능"
+          >
+            {uploadingImages ? '분석 중...' : '이미지(JPG) 선택'}
           </Button>
         </Stack>
       </Paper>
