@@ -134,15 +134,62 @@
     WHERE id = #{id} AND deleted = 0
   </update>
 
+  <!-- [2026-04-28] 전체 필드 수정 — 수작업 편집용. 카테고리는 서비스에서 재계산 후 전달 -->
+  <update id="updateAll">
+    UPDATE tb_health_checkup_result
+    SET checkup_year     = #{r.checkupYear,jdbcType=INTEGER},
+        checkup_date     = #{r.checkupDate,jdbcType=DATE},
+        hospital_name    = #{r.hospitalName,jdbcType=NVARCHAR},
+        department       = #{r.department,jdbcType=NVARCHAR},
+        emp_name         = #{r.empName},
+        age              = #{r.age,jdbcType=INTEGER},
+        bp_systolic      = #{r.bpSystolic,jdbcType=INTEGER},
+        bp_diastolic     = #{r.bpDiastolic,jdbcType=INTEGER},
+        bp_category      = #{r.bpCategory,jdbcType=NVARCHAR},
+        bp_med           = #{r.bpMed},
+        bst              = #{r.bst,jdbcType=INTEGER},
+        dm_category      = #{r.dmCategory,jdbcType=NVARCHAR},
+        dm_med           = #{r.dmMed},
+        tc               = #{r.tc,jdbcType=INTEGER},
+        hdl              = #{r.hdl,jdbcType=INTEGER},
+        tg               = #{r.tg,jdbcType=INTEGER},
+        ldl              = #{r.ldl,jdbcType=INTEGER},
+        dl_category      = #{r.dlCategory,jdbcType=NVARCHAR},
+        dl_med           = #{r.dlMed},
+        ast              = #{r.ast,jdbcType=INTEGER},
+        alt              = #{r.alt,jdbcType=INTEGER},
+        ggt              = #{r.ggt,jdbcType=INTEGER},
+        height           = #{r.height,jdbcType=DECIMAL},
+        weight           = #{r.weight,jdbcType=DECIMAL},
+        bmi              = #{r.bmi,jdbcType=DECIMAL},
+        followup_opinion = #{r.followupOpinion,jdbcType=NVARCHAR},
+        work_fitness     = #{r.workFitness,jdbcType=NVARCHAR},
+        note             = #{r.note,jdbcType=NVARCHAR}
+    WHERE id = #{r.id} AND deleted = 0
+  </update>
+
   <delete id="softDelete">
     DELETE FROM tb_health_checkup_result WHERE id = #{id}
   </delete>
 
-  <!-- [2026-04-28] 동일 성명 최근 N건: 3개년 비교 팝업용 -->
+  <!-- [2026-04-28] 동일 성명 최근 N개년, 연도당 최신 1건만 반환 (3개년 비교 팝업용) -->
   <select id="findRecentByEmpName" resultMap="ResultMap">
-    SELECT TOP #{limit} * FROM tb_health_checkup_result
-    WHERE emp_name = #{empName} AND deleted = 0
-    ORDER BY checkup_date DESC, id DESC
+    SELECT TOP (#{limit}) id, checkup_year, checkup_date, hospital_name, department,
+           emp_name, birth_date, gender, age,
+           height, weight, bmi, waist, vision_right, vision_left,
+           bp_systolic, bp_diastolic, bp_category, bp_med,
+           hemoglobin, bst, dm_category, dm_med,
+           tc, hdl, tg, ldl, dl_category, dl_med,
+           creatinine, egfr, ast, alt, ggt,
+           followup_opinion, work_fitness, note,
+           parser_type, source_file, created_by, created_at, deleted
+    FROM (
+      SELECT *, ROW_NUMBER() OVER (PARTITION BY checkup_year ORDER BY id DESC) AS rn
+      FROM tb_health_checkup_result
+      WHERE emp_name = #{empName} AND deleted = 0
+    ) t
+    WHERE t.rn = 1
+    ORDER BY checkup_year DESC
   </select>
 
 </mapper>

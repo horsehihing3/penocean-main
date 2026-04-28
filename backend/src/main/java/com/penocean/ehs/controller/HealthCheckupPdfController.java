@@ -96,21 +96,15 @@ public class HealthCheckupPdfController {
         return ResponseEntity.ok(ApiResponse.success("저장 완료", service.save(result)));
     }
 
+    // [2026-04-28] 전체 필드 수정 — 수작업 편집 다이얼로그용
     @PutMapping("/results/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "건강검진 결과 메모 수정 (사후관리소견·업무적합·비고·부서·약복용)")
+    @Operation(summary = "건강검진 결과 전체 필드 수정")
     public ResponseEntity<ApiResponse<Void>> update(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
-        service.updateMutable(id,
-                (String) body.get("empName"),
-                (String) body.get("followupOpinion"),
-                (String) body.get("workFitness"),
-                (String) body.get("note"),
-                (String) body.get("department"),
-                toBool(body.get("bpMed")),
-                toBool(body.get("dmMed")),
-                toBool(body.get("dlMed")));
+            @RequestBody HealthCheckupResult result) {
+        result.setId(id);
+        service.updateAll(result);
         return ResponseEntity.ok(ApiResponse.success("수정되었습니다.", null));
     }
 

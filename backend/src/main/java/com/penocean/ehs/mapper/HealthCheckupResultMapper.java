@@ -27,6 +27,9 @@ public interface HealthCheckupResultMapper {
                     @Param("dlMed") Boolean dlMed,
                     @Param("empName") String empName);
 
+    // [2026-04-28] 전체 필드 수정 — 수작업 편집용
+    void updateAll(@Param("r") HealthCheckupResult r);
+
     void softDelete(@Param("id") Long id);
 
     // [2026-04-28] 동일 성명 최근 N건 조회 (3개년 비교용)

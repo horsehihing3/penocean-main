@@ -99,6 +99,19 @@ public class HealthCheckupPdfService {
                 empName);
     }
 
+    // [2026-04-28] 전체 필드 수정 — 수작업 편집 다이얼로그용. 카테고리 자동 재계산
+    @Transactional
+    public void updateAll(HealthCheckupResult r) {
+        if (mapper.findById(r.getId()) == null) throw new BadRequestException("존재하지 않는 검진 결과입니다: " + r.getId());
+        // 수치 변경 시 판정 카테고리 재계산
+        r.setBpCategory(deriveBpCategory(r.getBpSystolic(), r.getBpDiastolic()));
+        r.setDmCategory(deriveDmCategory(r.getBst()));
+        r.setDlCategory(deriveDlCategory(r.getTc(), r.getLdl()));
+        // checkupYear 자동 동기화
+        if (r.getCheckupDate() != null) r.setCheckupYear(r.getCheckupDate().getYear());
+        mapper.updateAll(r);
+    }
+
     @Transactional
     public void delete(Long id) {
         mapper.softDelete(id);

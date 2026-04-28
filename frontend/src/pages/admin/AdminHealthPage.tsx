@@ -6,7 +6,7 @@ import {
   TableBody, TableRow, TableCell, TableContainer, TextField,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions,
   IconButton, Alert, Tabs, Tab, FormControl, Select, MenuItem,
-  Snackbar, CircularProgress, InputAdornment,
+  Snackbar, CircularProgress, InputAdornment, Switch, FormControlLabel, Divider,
 } from '@mui/material'
 import LockIcon from '@mui/icons-material/Lock'
 import CloseIcon from '@mui/icons-material/Close'
@@ -234,6 +234,117 @@ const CompareDialog: React.FC<CompareDialogProps> = ({ open, empName, onClose })
   )
 }
 
+// ── 수작업 편집 다이얼로그 ────────────────────────────────────────
+interface EditDialogProps {
+  open: boolean
+  record: HealthRecord | null
+  saving: boolean
+  onClose: () => void
+  onSave: (r: HealthRecord) => void
+}
+
+const EditDialog: React.FC<EditDialogProps> = ({ open, record, saving, onClose, onSave }) => {
+  const [form, setForm] = useState<HealthRecord | null>(null)
+
+  useEffect(() => { if (record) setForm({ ...record }) }, [record])
+
+  if (!form) return null
+
+  const str = (key: keyof HealthRecord) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f!, [key]: e.target.value || null }))
+  const num = (key: keyof HealthRecord) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(f => ({ ...f!, [key]: e.target.value === '' ? null : Number(e.target.value) }))
+  const bool = (key: keyof HealthRecord) => (_: any, checked: boolean) =>
+    setForm(f => ({ ...f!, [key]: checked }))
+
+  const F = (label: string, key: keyof HealthRecord, type = 'text', width = 140) => (
+    <TextField key={String(key)} size="small" label={label} type={type}
+      value={(form as any)[key] ?? ''}
+      onChange={type === 'number' ? num(key) : str(key)}
+      sx={{ width }} inputProps={type === 'number' ? { step: 'any' } : undefined} />
+  )
+  const M = (label: string, key: keyof HealthRecord) => (
+    <FormControlLabel key={String(key)} sx={{ ml: 0 }}
+      control={<Switch checked={!!(form as any)[key]} onChange={bool(key)} size="small" />}
+      label={<Typography variant="body2">{label}</Typography>} />
+  )
+  const SEC = (title: string) => (
+    <Typography key={title} variant="caption" color="primary.main" sx={{ fontWeight: 700, mt: 0.5 }}>{title}</Typography>
+  )
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5, fontWeight: 700 }}>
+        검진 결과 수정
+        <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={1.5}>
+          {SEC('기본 정보')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5}>
+            {F('성명 *', 'empName', 'text', 120)}
+            {F('부서', 'department', 'text', 120)}
+            {F('검진일', 'checkupDate', 'date', 160)}
+            {F('병원명', 'hospitalName', 'text', 130)}
+            {F('나이', 'age', 'number', 80)}
+          </Stack>
+          <Divider />
+          {SEC('혈압')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5} alignItems="center">
+            {F('수축기(mmHg)', 'bpSystolic', 'number', 130)}
+            {F('이완기(mmHg)', 'bpDiastolic', 'number', 130)}
+            {M('혈압약 복용', 'bpMed')}
+          </Stack>
+          <Divider />
+          {SEC('혈당')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5} alignItems="center">
+            {F('공복혈당(mg/dL)', 'bst', 'number', 140)}
+            {M('혈당약 복용', 'dmMed')}
+          </Stack>
+          <Divider />
+          {SEC('이상지질혈증')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5} alignItems="center">
+            {F('총콜레스테롤', 'tc', 'number', 120)}
+            {F('중성지방', 'tg', 'number', 100)}
+            {F('LDL', 'ldl', 'number', 80)}
+            {F('HDL', 'hdl', 'number', 80)}
+            {M('지질약 복용', 'dlMed')}
+          </Stack>
+          <Divider />
+          {SEC('간기능')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5}>
+            {F('AST', 'ast', 'number', 90)}
+            {F('ALT', 'alt', 'number', 90)}
+            {F('GGT', 'ggt', 'number', 90)}
+          </Stack>
+          <Divider />
+          {SEC('신체계측')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5}>
+            {F('키(cm)', 'height', 'number', 100)}
+            {F('체중(kg)', 'weight', 'number', 100)}
+            {F('BMI', 'bmi', 'number', 90)}
+          </Stack>
+          <Divider />
+          {SEC('사후관리')}
+          <Stack direction="row" flexWrap="wrap" gap={1.5}>
+            {F('사후관리소견', 'followupOpinion', 'text', 180)}
+            {F('업무적합', 'workFitness', 'text', 90)}
+            <TextField size="small" label="비고" value={form.note ?? ''}
+              onChange={str('note')} multiline rows={2} sx={{ width: 320 }} />
+          </Stack>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={saving}>취소</Button>
+        <Button variant="contained" disabled={saving || !form.empName} onClick={() => onSave(form)}
+          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}>
+          {saving ? '저장 중...' : '저장'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
 // ───────────────────────────────────────────────────────────────
 
 const AdminHealthPage: React.FC = () => {
@@ -249,6 +360,9 @@ const AdminHealthPage: React.FC = () => {
   const [searchKw, setSearchKw] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<HealthRecord | null>(null)
   const [compareOpen, setCompareOpen] = useState(false)
+  const [editRecord, setEditRecord] = useState<HealthRecord | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editSaving, setEditSaving] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -386,6 +500,20 @@ const AdminHealthPage: React.FC = () => {
     }
   }
 
+  const handleEditSave = async (r: HealthRecord) => {
+    setEditSaving(true)
+    try {
+      await axiosInstance.put(`/admin/health/results/${r.id}`, r)
+      setRecords(prev => prev.map(x => x.id === r.id ? { ...x, ...r } : x))
+      notify('수정되었습니다.', 'success')
+      setEditOpen(false)
+    } catch {
+      notify('수정 중 오류가 발생했습니다.', 'error')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
   const handleDelete = async (id: number) => {
     if (!confirm('이 검진 결과를 삭제하시겠습니까?')) return
     try {
@@ -467,12 +595,11 @@ const AdminHealthPage: React.FC = () => {
           </Button>
           <Button
             variant="outlined"
-            startIcon={uploadingImages ? <CircularProgress size={16} color="inherit" /> : <UploadIcon />}
-            disabled={uploading || uploadingImages}
-            onClick={handleImageButtonClick}
-            title="병원 앱 스크린샷(JPG/PNG) — 여러 장 동시 선택 가능"
+            startIcon={<UploadIcon />}
+            onClick={() => notify('이미지 업로드 기능은 준비 중입니다.', 'info')}
+            title="병원 앱 스크린샷(JPG/PNG) — ANTHROPIC_API_KEY 설정 후 활성화"
           >
-            {uploadingImages ? '분석 중...' : '이미지(JPG) 선택'}
+            이미지(JPG) 선택
           </Button>
         </Stack>
       </Paper>
@@ -529,6 +656,7 @@ const AdminHealthPage: React.FC = () => {
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>사후관리소견</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>업무적합</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>비고</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>편집</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>삭제</TableCell>
               </TableRow>
               <TableRow>
@@ -605,6 +733,13 @@ const AdminHealthPage: React.FC = () => {
                   </TableCell>
                   <TableCell align="center">{r.workFitness || '-'}</TableCell>
                   <TableCell>{r.note || '-'}</TableCell>
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    {!r._pending && (
+                      <IconButton size="small" color="primary" onClick={() => { setEditRecord(r); setEditOpen(true) }}>
+                        <EditNoteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </TableCell>
                   <TableCell onClick={e => e.stopPropagation()}>
                     <IconButton size="small" color="error" onClick={() =>
                       r._pending
@@ -689,6 +824,15 @@ const AdminHealthPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 수작업 편집 다이얼로그 */}
+      <EditDialog
+        open={editOpen}
+        record={editRecord}
+        saving={editSaving}
+        onClose={() => setEditOpen(false)}
+        onSave={handleEditSave}
+      />
 
       {/* 3개년 비교 팝업 */}
       <CompareDialog
