@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-04-27 ~ 04-28 (보건파트 + QR + 공지사항 세션)
+
+- **공지사항 대상역할 제거·저장 버그 수정·조회수 1회 제한·Flyway 활성화**
+- **CONTRACTOR 역할 격리** — `contractor/*` RoleRoute 가드, 사이드바 숨김
+- **미사용 health 페이지 제거** — `/health/checkup`, `/health/trend`
+- **출입신청 수정 버그** — `WorkerItem.workerBirth` LocalDate→String(YYMMDD)
+- **QR 안전교육 전면 개선** — Singleton QR, cascading 콤보, 이수증 출력, 로그인 화면 QR 표시
+- **보건파트 PDF 업로드** — V25 마이그레이션, NhisHealthCheckupParser, HealthCheckupParserRegistry, AdminHealthPage 실 API 연동
+- **보건파트 3개년 비교 팝업 재설계** — HTML 템플릿 스타일, 연도당 최신 1건 dedupe(`ROW_NUMBER OVER PARTITION BY checkup_year`)
+- **병원 앱 스크린샷 파서** — `HospitalAppImageParser`(Claude Vision API), `POST /upload-images`, 이미지 버튼 준비중 처리
+- **보건파트 수작업 편집** — 전체 필드 편집 다이얼로그, `updateAll` mapper·service, 카테고리 자동 재계산
+
+---
+
 ## 2026-04-25 (관리자 UI 개선 세션)
 
 - 회사 원격 DB(211.171.152.242:51084, penocean) 연결 전환 — Flyway 비활성화
