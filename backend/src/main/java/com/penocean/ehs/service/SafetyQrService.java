@@ -78,7 +78,6 @@ public class SafetyQrService {
         record.setWorkerName(req.getWorkerName());
         record.setVesselName(req.getVesselName());
         record.setWorkDate(req.getWorkDate());
-        record.setGender(req.getGender());
         record.setPhone(req.getPhone());
         mapper.insertRecord(record);
 

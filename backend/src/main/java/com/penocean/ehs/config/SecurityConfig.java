@@ -50,7 +50,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/actuator/health",
                                 "/files/**",
-                                "/public/**"
+                                "/public/**",
+                                "/form-templates/*/download"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

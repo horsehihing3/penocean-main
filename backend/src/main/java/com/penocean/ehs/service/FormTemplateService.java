@@ -54,14 +54,7 @@ public class FormTemplateService {
     public Long create(FormTemplateCreateRequest request,
                        FileStorageService.Stored stored, User caller) {
         assertAdmin(caller);
-        if (request.getCode() == null || request.getCode().isBlank()) {
-            throw new BadRequestException("code는 필수입니다.");
-        }
-        if (formMapper.existsByCode(request.getCode()) > 0) {
-            throw new BadRequestException("동일 code의 양식이 이미 존재합니다.");
-        }
         FormTemplate f = FormTemplate.builder()
-                .code(request.getCode())
                 .category(request.getCategory())
                 .title(request.getTitle())
                 .description(request.getDescription())
@@ -74,8 +67,13 @@ public class FormTemplateService {
                 .active(request.getActive() == null ? Boolean.TRUE : request.getActive())
                 .build();
         formMapper.insert(f);
-        log.info("FormTemplate created: id={}, code={}", f.getId(), f.getCode());
+        log.info("FormTemplate created: id={}, title={}", f.getId(), f.getTitle());
         return f.getId();
+    }
+
+    @Transactional
+    public void incrementDownload(Long id) {
+        formMapper.incrementDownloadCount(id);
     }
 
     @Transactional

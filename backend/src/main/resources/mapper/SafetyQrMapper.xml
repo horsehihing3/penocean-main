@@ -55,14 +55,14 @@
     </update>
 
     <insert id="insertRecord" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tb_safety_qr_record (qr_id, worker_id, worker_name, vessel_name, work_date, gender, phone)
-        VALUES (#{qrId}, #{workerId}, #{workerName}, #{vesselName}, #{workDate}, #{gender}, #{phone})
+        INSERT INTO tb_safety_qr_record (qr_id, worker_id, worker_name, vessel_name, work_date, phone)
+        VALUES (#{qrId}, #{workerId}, #{workerName}, #{vesselName}, #{workDate}, #{phone})
     </insert>
 
     <select id="findRecordsByQrId" resultType="com.penocean.ehs.dto.response.SafetyQrRecordResponse">
         SELECT r.id, r.qr_id AS qrId, q.title AS qrTitle,
                r.worker_name AS workerName, r.vessel_name AS vesselName,
-               r.work_date AS workDate, r.gender, r.phone,
+               r.work_date AS workDate, r.phone,
                r.completed_at AS completedAt
         FROM tb_safety_qr_record r
         JOIN tb_safety_qr q ON q.id = r.qr_id

@@ -12,7 +12,6 @@ public class SafetyQrRecord {
     private String workerName;
     private String vesselName;
     private LocalDate workDate;
-    private String gender;
     private String phone;
     private LocalDateTime completedAt;
 }

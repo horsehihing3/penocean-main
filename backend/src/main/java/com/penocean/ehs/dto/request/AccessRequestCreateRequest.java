@@ -39,5 +39,7 @@ public class AccessRequestCreateRequest {
         private String workerPhone;
         private String workerRole;
         private Boolean safetyEduCompleted;
+        /** [2026-04-29] yyyy-MM-dd 형식. 값이 있으면 서비스에서 safetyEduCompleted=true 자동 설정 */
+        private String safetyEduCompletedAt;
     }
 }

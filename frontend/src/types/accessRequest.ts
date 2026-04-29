@@ -105,7 +105,7 @@ export interface CreateAccessRequestPayload {
   safetyManagerName?: string | null
   safetyManagerTel?: string | null
   safetyManagerEmail?: string | null
-  workers?: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCompletedAt' | 'safetyEduCertificateUrl'>>
+  workers?: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCertificateUrl'>>
 }
 
 export interface UpdateAccessRequestPayload extends CreateAccessRequestPayload {}
@@ -116,7 +116,7 @@ export interface ReviewPayload {
 }
 
 export interface AddWorkersPayload {
-  workers: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCompletedAt' | 'safetyEduCertificateUrl'>>
+  workers: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCertificateUrl'>>
 }
 
 export type AccessRequestPage = PageResponse<AccessRequestListItem>

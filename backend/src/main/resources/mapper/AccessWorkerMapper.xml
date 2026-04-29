@@ -59,7 +59,7 @@
   <insert id="bulkInsert">
     INSERT INTO tb_access_worker (
       access_request_id, worker_name, worker_birth, worker_phone, worker_role,
-      safety_edu_completed, created_at, deleted
+      safety_edu_completed, safety_edu_completed_at, created_at, deleted
     ) VALUES
     <foreach collection="list" item="w" separator=",">
       (
@@ -68,7 +68,7 @@
           <when test="w.safetyEduCompleted != null">#{w.safetyEduCompleted}</when>
           <otherwise>0</otherwise>
         </choose>,
-        SYSUTCDATETIME(), 0
+        #{w.safetyEduCompletedAt}, SYSUTCDATETIME(), 0
       )
     </foreach>
   </insert>

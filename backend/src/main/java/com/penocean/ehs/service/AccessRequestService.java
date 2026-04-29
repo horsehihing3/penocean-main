@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,13 +134,15 @@ public class AccessRequestService {
         if (request.getWorkers() != null && !request.getWorkers().isEmpty()) {
             List<AccessWorker> workers = new ArrayList<>();
             for (AccessRequestCreateRequest.WorkerItem w : request.getWorkers()) {
+                LocalDateTime eduAt = parseEduDate(w.getSafetyEduCompletedAt());
                 workers.add(AccessWorker.builder()
                         .accessRequestId(id)
                         .workerName(w.getWorkerName())
                         .workerBirth(parseBirth(w.getWorkerBirth()))
                         .workerPhone(w.getWorkerPhone())
                         .workerRole(w.getWorkerRole())
-                        .safetyEduCompleted(false)
+                        .safetyEduCompleted(eduAt != null)
+                        .safetyEduCompletedAt(eduAt)
                         .build());
             }
             accessWorkerMapper.bulkInsert(workers);
@@ -234,13 +237,15 @@ public class AccessRequestService {
             if (!request.getWorkers().isEmpty()) {
                 List<AccessWorker> workers = new ArrayList<>();
                 for (AccessRequestCreateRequest.WorkerItem w : request.getWorkers()) {
+                    LocalDateTime eduAt = parseEduDate(w.getSafetyEduCompletedAt());
                     workers.add(AccessWorker.builder()
                             .accessRequestId(id)
                             .workerName(w.getWorkerName())
                             .workerBirth(parseBirth(w.getWorkerBirth()))
                             .workerPhone(w.getWorkerPhone())
                             .workerRole(w.getWorkerRole())
-                            .safetyEduCompleted(false)
+                            .safetyEduCompleted(eduAt != null)
+                            .safetyEduCompletedAt(eduAt)
                             .build());
                 }
                 accessWorkerMapper.bulkInsert(workers);
@@ -358,13 +363,15 @@ public class AccessRequestService {
         if (workers == null || workers.isEmpty()) return;
         List<AccessWorker> entities = new ArrayList<>();
         for (AccessRequestCreateRequest.WorkerItem w : workers) {
+            LocalDateTime eduAt = parseEduDate(w.getSafetyEduCompletedAt());
             entities.add(AccessWorker.builder()
                     .accessRequestId(id)
                     .workerName(w.getWorkerName())
                     .workerBirth(parseBirth(w.getWorkerBirth()))
                     .workerPhone(w.getWorkerPhone())
                     .workerRole(w.getWorkerRole())
-                    .safetyEduCompleted(false)
+                    .safetyEduCompleted(eduAt != null)
+                    .safetyEduCompletedAt(eduAt)
                     .build());
         }
         accessWorkerMapper.bulkInsert(entities);
@@ -493,6 +500,16 @@ public class AccessRequestService {
                 .checkByShip(w.getCheckByShip())
                 .checkByShipAt(w.getCheckByShipAt())
                 .build();
+    }
+
+    // [2026-04-29] yyyy-MM-dd 문자열 → LocalDateTime 변환 (교육이수일자)
+    private LocalDateTime parseEduDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        try {
+            return LocalDate.parse(dateStr.trim()).atStartOfDay();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // [2026-04-28] YYMMDD 문자열 → LocalDate 변환 (프론트 입력값 처리)

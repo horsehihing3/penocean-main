@@ -41,7 +41,7 @@ import { useAuth } from '../../context/AuthContext'
 
 type SnackbarState = { open: boolean; message: string; severity: 'success' | 'error' }
 
-const CATEGORIES = ['SAFETY', 'HEALTH', 'CONTRACT', 'OPERATION', 'OTHER']
+const CATEGORIES = ['안전', '건강', '계약', '작업', '기타']
 
 const FormLibraryPage: React.FC = () => {
   const { t } = useTranslation()
@@ -60,8 +60,7 @@ const FormLibraryPage: React.FC = () => {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [form, setForm] = useState({
-    code: '',
-    category: 'SAFETY',
+    category: '안전',
     title: '',
     description: '',
     version: '1.0',
@@ -103,7 +102,7 @@ const FormLibraryPage: React.FC = () => {
       qc.invalidateQueries({ queryKey: ['form-templates'] })
       setSnackbar({ open: true, message: t('form.createSuccess'), severity: 'success' })
       setCreateOpen(false)
-      setForm({ code: '', category: 'SAFETY', title: '', description: '', version: '1.0' })
+      setForm({ category: '안전', title: '', description: '', version: '1.0' })
       setFile(null)
     },
     onError: (err) => {
@@ -124,7 +123,7 @@ const FormLibraryPage: React.FC = () => {
   }
 
   const submitCreate = () => {
-    if (!form.code.trim() || !form.title.trim() || !file) {
+    if (!form.title.trim() || !file) {
       setSnackbar({ open: true, message: t('errors.required'), severity: 'error' })
       return
     }
@@ -220,9 +219,6 @@ const FormLibraryPage: React.FC = () => {
                   <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                     {it.title}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                    {it.code}
-                  </Typography>
                   {it.description && (
                     <Typography
                       variant="body2"
@@ -247,9 +243,10 @@ const FormLibraryPage: React.FC = () => {
                     size="small"
                     variant="contained"
                     startIcon={<DownloadIcon />}
-                    href={it.filePath}
-                    target="_blank"
-                    rel="noopener"
+                    onClick={() => {
+                      window.open(`${import.meta.env.VITE_API_URL || '/api'}/form-templates/${it.id}/download`, '_blank')
+                      qc.invalidateQueries({ queryKey: ['form-templates'] })
+                    }}
                   >
                     {t('form.download')}
                   </Button>
@@ -318,13 +315,6 @@ const FormLibraryPage: React.FC = () => {
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 0.5 }}>
-            <TextField
-              size="small"
-              fullWidth
-              label={t('form.code')}
-              value={form.code}
-              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
-            />
             <FormControl size="small" fullWidth>
               <InputLabel>{t('form.category')}</InputLabel>
               <Select

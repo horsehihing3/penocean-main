@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FormTemplateCreateRequest {
 
-    private String code;
     private String category;
     private String title;
     private String description;

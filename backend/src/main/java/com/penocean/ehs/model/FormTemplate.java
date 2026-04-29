@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class FormTemplate {
 
     private Long id;
-    private String code;                // UNIQUE
     private String category;
     private String title;
     private String description;

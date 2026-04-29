@@ -74,6 +74,7 @@ const schema = z.object({
       workerPhone: z.string().optional(),
       workerRole: z.string().optional(),
       safetyEduCompleted: z.boolean(),
+      safetyEduCompletedAt: z.string().optional(),
     })
   ),
 })
@@ -134,6 +135,7 @@ const AccessRequestCreatePage: React.FC = () => {
     getValues,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -174,6 +176,7 @@ const AccessRequestCreatePage: React.FC = () => {
         workerPhone: w.workerPhone ?? '',
         workerRole: w.workerRole ?? '',
         safetyEduCompleted: !!w.safetyEduCompleted,
+        safetyEduCompletedAt: w.safetyEduCompletedAt ? w.safetyEduCompletedAt.substring(0, 10) : '',
       })),
     })
   }, [detail, reset])
@@ -189,8 +192,29 @@ const AccessRequestCreatePage: React.FC = () => {
     return '-'
   }, [isEditMode, detail, isAdminOrDept, watchedCompanyId, companies])
 
-  const watchedStart = useWatch({ control, name: 'plannedStartDate' })
-  const watchedEnd   = useWatch({ control, name: 'plannedEndDate' })
+  const watchedStart   = useWatch({ control, name: 'plannedStartDate' })
+  const watchedEnd     = useWatch({ control, name: 'plannedEndDate' })
+  const watchedWorkers = useWatch({ control, name: 'workers' })
+
+  // ─── 승선신청 활성화 조건 ────────────────────────────────────────────────
+  const missingItems = useMemo(() => {
+    const items: string[] = []
+    if (!existingAttachment('PLEDGE') && !pendingFiles['PLEDGE'])
+      items.push('안전보건서약서')
+    if (!existingAttachment('WORK_PLAN') && !pendingFiles['WORK_PLAN'])
+      items.push('작업계획서')
+    if (!noRiskAssessment && !existingAttachment('RISK_ASSESSMENT') && !pendingFiles['RISK_ASSESSMENT'])
+      items.push('위험성평가표')
+    if (watchedWorkers && watchedWorkers.length > 0) {
+      const hasIncomplete = watchedWorkers.some(
+        (w) => !w.safetyEduCompleted || !w.safetyEduCompletedAt
+      )
+      if (hasIncomplete) items.push('작업자 교육이수 미완료')
+    }
+    return items
+  }, [pendingFiles, detail, noRiskAssessment, watchedWorkers])
+
+  const canSubmit = missingItems.length === 0
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
   const extractErrorMessage = (err: unknown): string => {
@@ -277,6 +301,7 @@ const AccessRequestCreatePage: React.FC = () => {
         workerPhone: w.workerPhone ?? '',
         workerRole: w.workerRole ?? '',
         safetyEduCompleted: false,
+        safetyEduCompletedAt: '',
       }))
       setSnackbar({
         open: true,
@@ -646,7 +671,7 @@ const AccessRequestCreatePage: React.FC = () => {
               size="small"
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => append({ workerName: '', workerBirth: '', workerPhone: '', workerRole: '', safetyEduCompleted: false })}
+              onClick={() => append({ workerName: '', workerBirth: '', workerPhone: '', workerRole: '', safetyEduCompleted: false, safetyEduCompletedAt: '' })}
             >
               {t('accessRequest.worker.add')}
             </Button>
@@ -673,12 +698,7 @@ const AccessRequestCreatePage: React.FC = () => {
               </TableHead>
               <TableBody>
                 {fields.map((f, idx) => {
-                  const existingWorker = isEditMode ? detail?.workers?.[idx] : null
-                  const eduDate = existingWorker?.safetyEduCompletedAt
-                    ? formatDate(existingWorker.safetyEduCompletedAt)
-                    : '-'
-                  const eduCompleted = existingWorker?.safetyEduCompleted ?? false
-                  const certUrl = existingWorker?.safetyEduCertificateUrl ?? null
+                  const certUrl = isEditMode ? (detail?.workers?.[idx]?.safetyEduCertificateUrl ?? null) : null
 
                   return (
                     <TableRow key={f.id} hover>
@@ -718,17 +738,46 @@ const AccessRequestCreatePage: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Typography variant="caption">{eduDate}</Typography>
+                        <Controller
+                          name={`workers.${idx}.safetyEduCompletedAt`}
+                          control={control}
+                          render={({ field }) => (
+                            <AppDatePicker
+                              label=""
+                              value={field.value || null}
+                              onChange={(iso) => {
+                                field.onChange(iso ?? '')
+                                setValue(`workers.${idx}.safetyEduCompleted`, !!iso)
+                              }}
+                              size="small"
+                              fullWidth={false}
+                            />
+                          )}
+                        />
                       </TableCell>
                       <TableCell align="center">
-                        <Typography
-                          variant="caption"
-                          sx={{ color: eduCompleted ? 'success.main' : 'text.secondary', fontWeight: 600 }}
-                        >
-                          {eduCompleted
-                            ? t('accessRequest.worker.eduStatusCompleted')
-                            : t('accessRequest.worker.eduStatusPending')}
-                        </Typography>
+                        <Controller
+                          name={`workers.${idx}.safetyEduCompleted`}
+                          control={control}
+                          render={({ field }) => {
+                            const dateVal = watch(`workers.${idx}.safetyEduCompletedAt`) ?? ''
+                            const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateVal) && !isNaN(Date.parse(dateVal))
+                            // 날짜가 유효하면 이수 강제
+                            const effectiveValue = isValidDate ? true : field.value
+                            return (
+                              <FormControl size="small" sx={{ minWidth: 80 }}>
+                                <Select
+                                  value={effectiveValue ? 'Y' : 'N'}
+                                  onChange={(e) => field.onChange(e.target.value === 'Y')}
+                                  disabled={isValidDate}
+                                >
+                                  <MenuItem value="N">{t('accessRequest.worker.eduStatusPending')}</MenuItem>
+                                  <MenuItem value="Y">{t('accessRequest.worker.eduStatusCompleted')}</MenuItem>
+                                </Select>
+                              </FormControl>
+                            )
+                          }}
+                        />
                       </TableCell>
                       <TableCell align="center">
                         {certUrl ? (
@@ -928,15 +977,22 @@ const AccessRequestCreatePage: React.FC = () => {
           </Button>
 
           {/* 승선 신청 */}
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<SendIcon />}
-            onClick={onBoardingRequest}
-            disabled={isBusy}
+          <Tooltip
+            title={missingItems.length > 0 ? `미완료: ${missingItems.join(', ')}` : ''}
+            arrow
           >
-            {isBusy ? <CircularProgress size={20} /> : t('accessRequest.action.boardingRequest')}
-          </Button>
+            <span>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SendIcon />}
+                onClick={onBoardingRequest}
+                disabled={isBusy || !canSubmit}
+              >
+                {isBusy ? <CircularProgress size={20} /> : t('accessRequest.action.boardingRequest')}
+              </Button>
+            </span>
+          </Tooltip>
 
           {/* 삭제 — edit mode only (DRAFT 상태) */}
           {isEditMode && detail?.status === 'DRAFT' && (

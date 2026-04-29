@@ -9,6 +9,5 @@ public class SafetyQrCompleteRequest {
     private String workerName;
     private String vesselName;
     private LocalDate workDate;
-    private String gender;
     private String phone;
 }

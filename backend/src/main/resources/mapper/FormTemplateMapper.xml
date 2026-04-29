@@ -5,7 +5,6 @@
 
   <resultMap id="FormResultMap" type="com.penocean.ehs.model.FormTemplate">
     <id property="id" column="id"/>
-    <result property="code" column="code"/>
     <result property="category" column="category"/>
     <result property="title" column="title"/>
     <result property="description" column="description"/>
@@ -24,7 +23,6 @@
 
   <resultMap id="ResponseMap" type="com.penocean.ehs.dto.response.FormTemplateResponse">
     <id property="id" column="id"/>
-    <result property="code" column="code"/>
     <result property="category" column="category"/>
     <result property="title" column="title"/>
     <result property="description" column="description"/>
@@ -45,21 +43,21 @@
       f.deleted = 0
       <if test="category != null and category != ''">AND f.category = #{category}</if>
       <if test="keyword != null and keyword != ''">
-        AND (f.title LIKE '%' + #{keyword} + '%' OR f.code LIKE '%' + #{keyword} + '%')
+        AND f.title LIKE '%' + #{keyword} + '%'
       </if>
       <if test="activeOnly != null and activeOnly == true">AND f.active = 1</if>
     </where>
   </sql>
 
   <select id="findById" resultMap="FormResultMap">
-    SELECT id, code, category, title, description, file_name, file_path, file_size, mime_type,
+    SELECT id, category, title, description, file_name, file_path, file_size, mime_type,
            version, download_count, uploaded_by, active, created_at, updated_at, deleted
       FROM tb_form_template
      WHERE id = #{id} AND deleted = 0
   </select>
 
   <select id="findByIdWithDetail" resultMap="ResponseMap">
-    SELECT f.id, f.code, f.category, f.title, f.description,
+    SELECT f.id, f.category, f.title, f.description,
            f.file_name, f.file_path, f.file_size, f.mime_type,
            f.version, f.download_count, f.uploaded_by, u.name AS uploader_name,
            f.active, f.created_at
@@ -69,7 +67,7 @@
   </select>
 
   <select id="findPage" resultMap="ResponseMap">
-    SELECT f.id, f.code, f.category, f.title, f.description,
+    SELECT f.id, f.category, f.title, f.description,
            f.file_name, f.file_path, f.file_size, f.mime_type,
            f.version, f.download_count, f.uploaded_by, u.name AS uploader_name,
            f.active, f.created_at
@@ -87,10 +85,10 @@
 
   <insert id="insert" useGeneratedKeys="true" keyProperty="id">
     INSERT INTO tb_form_template (
-      code, category, title, description, file_name, file_path, file_size, mime_type,
+      category, title, description, file_name, file_path, file_size, mime_type,
       version, download_count, uploaded_by, active, created_at, deleted
     ) VALUES (
-      #{code}, #{category}, #{title}, #{description}, #{fileName}, #{filePath}, #{fileSize}, #{mimeType},
+      #{category}, #{title}, #{description}, #{fileName}, #{filePath}, #{fileSize}, #{mimeType},
       #{version}, 0, #{uploadedBy},
       <choose><when test="active != null">#{active}</when><otherwise>1</otherwise></choose>,
       SYSUTCDATETIME(), 0
@@ -105,8 +103,5 @@
     UPDATE tb_form_template SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
   </update>
 
-  <select id="existsByCode" resultType="int">
-    SELECT COUNT(1) FROM tb_form_template WHERE code = #{code} AND deleted = 0
-  </select>
 
 </mapper>

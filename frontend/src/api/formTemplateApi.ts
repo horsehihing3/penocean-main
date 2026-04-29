@@ -7,7 +7,6 @@ import type {
 } from '../types/formTemplate'
 
 interface CreateFormTemplateInput {
-  code: string
   category: string
   title: string
   description?: string
@@ -43,7 +42,7 @@ export const formTemplateApi = {
   ): Promise<{ id: number }> => {
     const fd = new FormData()
     fd.append(
-      'data',
+      'meta',
       new Blob([JSON.stringify(payload)], { type: 'application/json' })
     )
     fd.append('file', file)

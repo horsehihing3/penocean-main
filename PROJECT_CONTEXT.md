@@ -9,7 +9,6 @@
 ## ⚡ 다음 세션 작업 (우선순위 순)
 
 ### 🔴 최우선
-- [ ] **파일 업로드/다운로드 실제 동작 확인** — `./uploads` 경로, `FileController` 엔드포인트, 프론트 연동 여부
 - [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
 
 ### 🟡 다음 작업
@@ -20,6 +19,7 @@
 - [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 - [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
 - [ ] **사업장 메뉴 CONTRACT_DEPT 접근 범위 결정** — 출입신청 목록 조회 허용 여부 기획 확인 필요
+- [ ] **출입신청 첨부파일 다운로드 원본 파일명** — 서식함과 동일하게 `/access-requests/{id}/attachments/{attId}/download` 엔드포인트 추가 검토
 
 ---
 
@@ -38,7 +38,7 @@
 | 평가 개선요청 이력 | EvaluationImprovementController, contractor/improvements | ✅ |
 | 산업재해 | IndustrialAccidentController, contractor/accident | ✅ |
 | 공지사항 | NoticeController, notice/board | ✅ |
-| 서식함 | FormTemplateController, notice/forms | ✅ |
+| 서식함 | FormTemplateController, notice/forms | ✅ 실 동작 |
 | 보건파트 (PDF업로드·파싱·3개년비교·편집) | HealthCheckupPdfController, AdminHealthPage | ✅ 실 동작 |
 | 안전보건실적 (육상) | SafetyPerformanceLandController | ✅ |
 | 안전보건실적 (해상) | SafetyPerformanceSeaController | ✅ |
@@ -57,6 +57,18 @@
 
 ## ✅ 완료된 작업
 
+- [x] **파일 업로드/다운로드 동작 확인** — 서식함 업로드·다운로드 실 동작 확인 완료
+  - `FileStorageService` → `./uploads/{subDir}/{yyyyMM}/{uuid}_{파일명}` 저장
+  - 다운로드: `GET /form-templates/{id}/download` — 원본 파일명으로 Content-Disposition 설정
+  - SecurityConfig에 `/form-templates/*/download` permitAll 추가
+- [x] **서식함 code 필드 제거** — DB unique 제약 해제 + nullable 변경, 프론트/백엔드 모두 제거
+- [x] **서식함 카테고리 한글화** — SAFETY→안전, HEALTH→건강, CONTRACT→계약, OPERATION→작업, OTHER→기타
+- [x] **서식함 다운로드 수 즉시 반영** — 다운로드 클릭 시 react-query 캐시 갱신
+- [x] **출입신청 작업자 교육이수일자 입력 기능** — 날짜 피커 추가, 유효 날짜 입력 시 이수확인 자동 변경
+- [x] **출입신청 승선신청 버튼 활성화 조건** — 첨부파일 3종 + 모든 작업자 이수 완료 시만 활성화, Tooltip으로 미완료 항목 안내
+- [x] **QR 교육 이수 → 출입신청 연동 확인** — workerId 선택 시 tb_access_worker 자동 갱신 정상 확인
+- [x] **QR gender 필드 제거** — SafetyQrCompleteRequest, SafetyQrRecord, SafetyQrRecordResponse, Mapper XML, AdminQrEducationPage 모두 제거
+
 > 이전 완료 항목 → `docs/ARCHIVE.md` 참조
 
 ---
@@ -70,6 +82,7 @@
 | admin 로그인 실패 (Bad credentials) | V3 시드 bcrypt 해시 불일치 | DB UPDATE로 올바른 해시 적용 완료 |
 | gradle-wrapper.jar 없음 | git clone 시 jar 파일 누락 | GitHub에서 직접 다운로드: `Invoke-WebRequest` 사용 |
 | 백엔드 Mapper XML 변경 후 반영 안됨 | 캐시된 build/ 사용 | `./gradlew clean bootRun` 으로 강제 재빌드 |
+| tb_form_template.code NOT NULL 오류 | code 필드 제거 후 DB 컬럼 제약 잔존 | `DROP CONSTRAINT UQ_tb_form_template_code` 후 `ALTER COLUMN code NULL` |
 
 ---
 
@@ -79,6 +92,8 @@
 - **SOM 연동 범위** — 외부 SOM 시스템 접근 방식 미확인
 - **파일 저장소** — 현재 로컬 디스크(`./uploads`), 향후 Azure Blob / S3 전환 여부 미결
 - **ANTHROPIC_API_KEY** — 발급 후 `application-local.yml`에 설정하면 이미지 파서 즉시 활성화
+- **tb_safety_qr_record.gender 컬럼** — 코드에서 제거됨, DB 컬럼은 nullable로 잔존. 필요시 `ALTER TABLE tb_safety_qr_record DROP COLUMN gender`
+- **tb_form_template.code 컬럼** — nullable로 변경됨, 완전 삭제 시 `ALTER TABLE tb_form_template DROP COLUMN code`
 
 ---
 

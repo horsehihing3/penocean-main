@@ -31,7 +31,6 @@ interface QrRecord {
   workerName: string
   vesselName: string
   workDate: string
-  gender: string
   phone: string
   completedAt: string
 }
@@ -168,7 +167,6 @@ export default function AdminQrEducationPage() {
                                   <TableCell>성함</TableCell>
                                   <TableCell>선박명</TableCell>
                                   <TableCell>작업일자</TableCell>
-                                  <TableCell>성별</TableCell>
                                   <TableCell>전화번호</TableCell>
                                   <TableCell>이수일시</TableCell>
                                 </TableRow>
@@ -179,7 +177,6 @@ export default function AdminQrEducationPage() {
                                     <TableCell>{r.workerName}</TableCell>
                                     <TableCell>{r.vesselName}</TableCell>
                                     <TableCell>{r.workDate}</TableCell>
-                                    <TableCell>{r.gender || '-'}</TableCell>
                                     <TableCell>{r.phone || '-'}</TableCell>
                                     <TableCell>{r.completedAt?.slice(0, 16).replace('T', ' ')}</TableCell>
                                   </TableRow>

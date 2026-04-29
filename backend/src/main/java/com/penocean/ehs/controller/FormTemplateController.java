@@ -8,6 +8,7 @@ import com.penocean.ehs.exception.BadRequestException;
 import com.penocean.ehs.exception.ResourceNotFoundException;
 import com.penocean.ehs.exception.UnauthorizedException;
 import com.penocean.ehs.mapper.UserMapper;
+import com.penocean.ehs.model.FormTemplate;
 import com.penocean.ehs.model.User;
 import com.penocean.ehs.service.FileStorageService;
 import com.penocean.ehs.service.FormTemplateService;
@@ -15,6 +16,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.PathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +29,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 @RestController
@@ -35,6 +44,9 @@ public class FormTemplateController {
     private final FileStorageService fileStorageService;
     private final UserMapper userMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${file.upload-dir:./uploads}")
+    private String uploadDir;
 
     @GetMapping
     @Operation(summary = "양식 목록")
@@ -70,6 +82,24 @@ public class FormTemplateController {
         FileStorageService.Stored stored = fileStorageService.save(file, "form-template");
         Long id = service.create(request, stored, caller);
         return ResponseEntity.ok(ApiResponse.success("등록되었습니다", Map.of("id", id)));
+    }
+
+    @GetMapping("/{id}/download")
+    @Operation(summary = "양식 파일 다운로드 (원본 파일명)")
+    public ResponseEntity<Resource> download(@PathVariable Long id) throws Exception {
+        FormTemplate f = service.getEntity(id);
+        service.incrementDownload(id);
+        Path filePath = Paths.get(uploadDir).toAbsolutePath().resolve(f.getFilePath()).normalize();
+        Resource resource = new PathResource(filePath);
+        if (!resource.exists()) throw new ResourceNotFoundException("File", "path", f.getFilePath());
+        String filename = f.getFileName() == null ? filePath.getFileName().toString() : f.getFileName();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(filename, StandardCharsets.UTF_8)
+                                .build().toString())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     @DeleteMapping("/{id}")

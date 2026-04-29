@@ -29,6 +29,4 @@ public interface FormTemplateMapper {
     void incrementDownloadCount(@Param("id") Long id);
 
     void softDelete(@Param("id") Long id);
-
-    int existsByCode(@Param("code") String code);
 }
