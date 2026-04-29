@@ -77,6 +77,7 @@ export interface AccessRequestDetailResponse extends AccessRequestListItem {
   safetyManagerName?: string | null
   safetyManagerTel?: string | null
   safetyManagerEmail?: string | null
+  noRiskAssessment?: boolean
   workers: AccessRequestWorker[]
   attachments: AccessRequestAttachment[]
   reviewLogs: AccessRequestReviewLog[]
@@ -105,6 +106,7 @@ export interface CreateAccessRequestPayload {
   safetyManagerName?: string | null
   safetyManagerTel?: string | null
   safetyManagerEmail?: string | null
+  noRiskAssessment?: boolean
   workers?: Array<Omit<AccessRequestWorker, 'id' | 'safetyEduCertificateUrl'>>
 }
 

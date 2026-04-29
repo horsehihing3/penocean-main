@@ -291,7 +291,9 @@ const AccessRequestDetailPage: React.FC = () => {
     if (!detail) return { allEduDone: false, hasRequiredAttachments: false, hasAnyWorker: false }
     const workers = detail.workers ?? []
     const allEduDone = workers.length > 0 && workers.every((w) => !!w.safetyEduCompleted)
-    const reqTypes: AttachmentType[] = ['RISK_ASSESSMENT', 'PLEDGE', 'WORK_PLAN']
+    const reqTypes: AttachmentType[] = detail.noRiskAssessment
+      ? ['PLEDGE', 'WORK_PLAN']
+      : ['RISK_ASSESSMENT', 'PLEDGE', 'WORK_PLAN']
     const hasRequiredAttachments = reqTypes.every((tp) =>
       (detail.attachments ?? []).some((a) => a.attachmentType === tp)
     )
@@ -761,9 +763,14 @@ const AccessRequestDetailPage: React.FC = () => {
                     justifyContent="space-between"
                     sx={{ mb: 1 }}
                   >
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                      {t(`accessRequest.attachment.types.${type}`)}
-                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {t(`accessRequest.attachment.types.${type}`)}
+                      </Typography>
+                      {type === 'RISK_ASSESSMENT' && detail.noRiskAssessment && (
+                        <Chip label="없음 처리" size="small" color="default" />
+                      )}
+                    </Stack>
                     {canEdit && (
                       <Button
                         size="small"

@@ -126,6 +126,7 @@ public class AccessRequestService {
                 .safetyManagerName(request.getSafetyManagerName())
                 .safetyManagerTel(request.getSafetyManagerTel())
                 .safetyManagerEmail(request.getSafetyManagerEmail())
+                .noRiskAssessment(Boolean.TRUE.equals(request.getNoRiskAssessment()))
                 .build();
         accessRequestMapper.insert(entity);
         Long id = entity.getId();
@@ -182,6 +183,7 @@ public class AccessRequestService {
                 .safetyManagerName(source.getSafetyManagerName())
                 .safetyManagerTel(source.getSafetyManagerTel())
                 .safetyManagerEmail(source.getSafetyManagerEmail())
+                .noRiskAssessment(Boolean.TRUE.equals(source.getNoRiskAssessment()))
                 .build();
         accessRequestMapper.insert(copy);
         Long newId = copy.getId();
@@ -230,6 +232,7 @@ public class AccessRequestService {
         entity.setSafetyManagerName(request.getSafetyManagerName());
         entity.setSafetyManagerTel(request.getSafetyManagerTel());
         entity.setSafetyManagerEmail(request.getSafetyManagerEmail());
+        entity.setNoRiskAssessment(Boolean.TRUE.equals(request.getNoRiskAssessment()));
         accessRequestMapper.updateCore(entity);
 
         if (request.getWorkers() != null) {

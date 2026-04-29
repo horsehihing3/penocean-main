@@ -46,12 +46,12 @@
       safety_edu_completed, safety_edu_completed_at, safety_edu_certificate_url,
       created_at, deleted
     ) VALUES (
-      #{accessRequestId}, #{workerName}, #{workerBirth}, #{workerPhone}, #{workerRole},
+      #{accessRequestId}, #{workerName}, #{workerBirth,jdbcType=DATE}, #{workerPhone,jdbcType=NVARCHAR}, #{workerRole,jdbcType=NVARCHAR},
       <choose>
         <when test="safetyEduCompleted != null">#{safetyEduCompleted}</when>
         <otherwise>0</otherwise>
       </choose>,
-      #{safetyEduCompletedAt}, #{safetyEduCertificateUrl},
+      #{safetyEduCompletedAt,jdbcType=TIMESTAMP}, #{safetyEduCertificateUrl,jdbcType=VARCHAR},
       SYSUTCDATETIME(), 0
     )
   </insert>
@@ -63,12 +63,12 @@
     ) VALUES
     <foreach collection="list" item="w" separator=",">
       (
-        #{w.accessRequestId}, #{w.workerName}, #{w.workerBirth}, #{w.workerPhone}, #{w.workerRole},
+        #{w.accessRequestId}, #{w.workerName}, #{w.workerBirth,jdbcType=DATE}, #{w.workerPhone,jdbcType=NVARCHAR}, #{w.workerRole,jdbcType=NVARCHAR},
         <choose>
           <when test="w.safetyEduCompleted != null">#{w.safetyEduCompleted}</when>
           <otherwise>0</otherwise>
         </choose>,
-        #{w.safetyEduCompletedAt}, SYSUTCDATETIME(), 0
+        #{w.safetyEduCompletedAt,jdbcType=TIMESTAMP}, SYSUTCDATETIME(), 0
       )
     </foreach>
   </insert>

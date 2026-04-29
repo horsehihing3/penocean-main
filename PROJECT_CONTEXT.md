@@ -57,6 +57,11 @@
 
 ## ✅ 완료된 작업
 
+- [x] **출입신청 임시저장 null datetime 오류 수정** — `AccessWorkerMapper.xml` bulkInsert의 `safetyEduCompletedAt`, `workerBirth`, `workerPhone`, `workerRole` null 파라미터에 jdbcType 명시 (`TIMESTAMP`, `DATE`, `NVARCHAR`)
+- [x] **출입신청 위험성평가표없음 체크 저장/복원** — DB `no_risk_assessment BIT` 컬럼 추가, 전 레이어(모델·DTO·Mapper·서비스·프론트) 연동. 상세 화면 "없음 처리" 뱃지 표시, 승선신청 조건에서 자동 제외
+- [x] **출입신청 저장 후 작업자 목록 빈 화면 수정** — `staleTime: 60s` 캐시 문제, `onSuccess`에서 `queryClient.invalidateQueries` 추가
+- [x] **출입신청 승선신청 전체 흐름 실 동작 확인** — 임시저장 → 첨부파일 업로드 → 작업자 교육이수 → 승선신청 정상 처리
+- [x] **ngrok 터널 설정** — MSIX 버전 panic 버그 우회, Downloads 폴더 독립 바이너리 + authtoken 설정으로 `showbiz-colt-endorphin.ngrok-free.dev` 연결
 - [x] **파일 업로드/다운로드 동작 확인** — 서식함 업로드·다운로드 실 동작 확인 완료
   - `FileStorageService` → `./uploads/{subDir}/{yyyyMM}/{uuid}_{파일명}` 저장
   - 다운로드: `GET /form-templates/{id}/download` — 원본 파일명으로 Content-Disposition 설정
@@ -69,7 +74,7 @@
 - [x] **QR 교육 이수 → 출입신청 연동 확인** — workerId 선택 시 tb_access_worker 자동 갱신 정상 확인
 - [x] **QR gender 필드 제거** — SafetyQrCompleteRequest, SafetyQrRecord, SafetyQrRecordResponse, Mapper XML, AdminQrEducationPage 모두 제거
 
-> 이전 완료 항목 → `docs/ARCHIVE.md` 참조
+> 이전 완료 항목 → `docs/ARCHIVE.md` 참조 (완료 항목 13개 → 다음 세션 시 ARCHIVE 이동 필요)
 
 ---
 
@@ -83,6 +88,8 @@
 | gradle-wrapper.jar 없음 | git clone 시 jar 파일 누락 | GitHub에서 직접 다운로드: `Invoke-WebRequest` 사용 |
 | 백엔드 Mapper XML 변경 후 반영 안됨 | 캐시된 build/ 사용 | `./gradlew clean bootRun` 으로 강제 재빌드 |
 | tb_form_template.code NOT NULL 오류 | code 필드 제거 후 DB 컬럼 제약 잔존 | `DROP CONSTRAINT UQ_tb_form_template_code` 후 `ALTER COLUMN code NULL` |
+| MyBatis foreach null 파라미터 오류 | foreach 내 null은 `jdbc-type-for-null` 전역 설정 미적용 | 각 파라미터에 직접 `jdbcType=DATE/TIMESTAMP/NVARCHAR` 명시 |
+| ngrok MSIX 버전 panic | `disabled updater should never run` 런타임 패닉 | `C:\Users\user\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe` 사용 |
 
 ---
 

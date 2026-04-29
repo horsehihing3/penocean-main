@@ -37,6 +37,8 @@ public class AccessRequestDetailResponse {
     private String safetyManagerName;
     private String safetyManagerTel;
     private String safetyManagerEmail;
+    // [2026-04-29] 위험성평가표 없음 체크
+    private Boolean noRiskAssessment;
     // [2026-04-23] PPT 슬라이드 14: 업종명 (tb_code JOIN)
     private String industryName;
     private LocalDateTime createdAt;

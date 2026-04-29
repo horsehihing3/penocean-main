@@ -24,6 +24,8 @@ public class AccessRequestUpdateRequest {
     private String safetyManagerName;
     private String safetyManagerTel;
     private String safetyManagerEmail;
+    // [2026-04-29] 위험성평가표 없음 체크
+    private Boolean noRiskAssessment;
     /** null이면 workers 변경 없음. 빈 리스트면 전체 삭제 후 재삽입. */
     private List<AccessRequestCreateRequest.WorkerItem> workers;
 }

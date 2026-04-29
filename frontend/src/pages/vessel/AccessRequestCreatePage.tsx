@@ -44,7 +44,7 @@ import { useTranslation } from 'react-i18next'
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { format, parseISO } from 'date-fns'
 import { accessRequestApi } from '../../api/accessRequestApi'
@@ -85,6 +85,7 @@ type SnackbarState = { open: boolean; message: string; severity: 'success' | 'er
 const AccessRequestCreatePage: React.FC = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { id: idParam } = useParams<{ id?: string }>()
   const editId = idParam ? Number(idParam) : null
   const isEditMode = editId != null && !Number.isNaN(editId)
@@ -179,6 +180,8 @@ const AccessRequestCreatePage: React.FC = () => {
         safetyEduCompletedAt: w.safetyEduCompletedAt ? w.safetyEduCompletedAt.substring(0, 10) : '',
       })),
     })
+    // [2026-04-29] 위험성평가표 없음 체크 복원
+    setNoRiskAssessment(!!detail.noRiskAssessment)
   }, [detail, reset])
 
   // ─── Industry name (auto-fill from company selection) ────────────────────
@@ -192,27 +195,38 @@ const AccessRequestCreatePage: React.FC = () => {
     return '-'
   }, [isEditMode, detail, isAdminOrDept, watchedCompanyId, companies])
 
-  const watchedStart   = useWatch({ control, name: 'plannedStartDate' })
-  const watchedEnd     = useWatch({ control, name: 'plannedEndDate' })
-  const watchedWorkers = useWatch({ control, name: 'workers' })
+  const watchedStart       = useWatch({ control, name: 'plannedStartDate' })
+  const watchedEnd         = useWatch({ control, name: 'plannedEndDate' })
+  const watchedWorkers     = useWatch({ control, name: 'workers' })
+  const watchedVesselId    = useWatch({ control, name: 'vesselId' })
+  const watchedWorkType    = useWatch({ control, name: 'workType' })
+  const watchedWorkDesc    = useWatch({ control, name: 'workDescription' })
 
   // ─── 승선신청 활성화 조건 ────────────────────────────────────────────────
   const missingItems = useMemo(() => {
+    const hasAtt = (type: AttachmentType) =>
+      !!pendingFiles[type] || !!detail?.attachments?.find((a) => a.attachmentType === type)
     const items: string[] = []
-    if (!existingAttachment('PLEDGE') && !pendingFiles['PLEDGE'])
-      items.push('안전보건서약서')
-    if (!existingAttachment('WORK_PLAN') && !pendingFiles['WORK_PLAN'])
-      items.push('작업계획서')
-    if (!noRiskAssessment && !existingAttachment('RISK_ASSESSMENT') && !pendingFiles['RISK_ASSESSMENT'])
-      items.push('위험성평가표')
-    if (watchedWorkers && watchedWorkers.length > 0) {
-      const hasIncomplete = watchedWorkers.some(
-        (w) => !w.safetyEduCompleted || !w.safetyEduCompletedAt
-      )
-      if (hasIncomplete) items.push('작업자 교육이수 미완료')
+    // 필수 입력값
+    if (!watchedVesselId || Number(watchedVesselId) <= 0) items.push('방문선박')
+    if (!watchedWorkType?.trim())  items.push('작업종류')
+    if (!watchedWorkDesc?.trim())  items.push('작업내용')
+    if (!watchedStart)             items.push('작업시작일')
+    if (!watchedEnd)               items.push('작업종료일')
+    // 작업자 1명 이상
+    if (!watchedWorkers || watchedWorkers.length === 0) {
+      items.push('작업자 1명 이상 등록')
+    } else {
+      if (watchedWorkers.some((w) => !w.safetyEduCompleted || !w.safetyEduCompletedAt))
+        items.push('작업자 교육이수 미완료')
     }
+    // 필수 첨부파일
+    if (!hasAtt('PLEDGE'))    items.push('안전보건서약서')
+    if (!hasAtt('WORK_PLAN')) items.push('작업계획서')
+    if (!noRiskAssessment && !hasAtt('RISK_ASSESSMENT')) items.push('위험성평가표')
     return items
-  }, [pendingFiles, detail, noRiskAssessment, watchedWorkers])
+  }, [pendingFiles, detail, noRiskAssessment, watchedWorkers,
+      watchedVesselId, watchedWorkType, watchedWorkDesc, watchedStart, watchedEnd])
 
   const canSubmit = missingItems.length === 0
 
@@ -329,6 +343,7 @@ const AccessRequestCreatePage: React.FC = () => {
         safetyManagerName: values.safetyManagerName || null,
         safetyManagerTel: values.safetyManagerTel || null,
         safetyManagerEmail: values.safetyManagerEmail || null,
+        noRiskAssessment: noRiskAssessment,
         workers: values.workers,
       }
       let requestId: number
@@ -349,6 +364,7 @@ const AccessRequestCreatePage: React.FC = () => {
       return requestId
     },
     onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['access-requests'] })
       setSnackbar({ open: true, message: t('common.save'), severity: 'success' })
       setTimeout(() => navigate(`/vessel/access-request/${id}`), 500)
     },

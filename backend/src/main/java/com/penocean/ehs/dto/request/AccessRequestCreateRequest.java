@@ -26,6 +26,8 @@ public class AccessRequestCreateRequest {
     private String safetyManagerName;
     private String safetyManagerTel;
     private String safetyManagerEmail;
+    // [2026-04-29] 위험성평가표 없음 체크
+    private Boolean noRiskAssessment;
     private List<WorkerItem> workers;
 
     @Data

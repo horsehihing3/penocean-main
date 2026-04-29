@@ -23,6 +23,7 @@
     <result property="safetyManagerName" column="safety_manager_name"/>
     <result property="safetyManagerTel" column="safety_manager_tel"/>
     <result property="safetyManagerEmail" column="safety_manager_email"/>
+    <result property="noRiskAssessment" column="no_risk_assessment"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
     <result property="deleted" column="deleted"/>
@@ -68,6 +69,7 @@
     <result property="safetyManagerName" column="safety_manager_name"/>
     <result property="safetyManagerTel" column="safety_manager_tel"/>
     <result property="safetyManagerEmail" column="safety_manager_email"/>
+    <result property="noRiskAssessment" column="no_risk_assessment"/>
     <result property="industryName" column="industry_name"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
@@ -107,7 +109,7 @@
            planned_start_date, planned_end_date, worker_count, status,
            submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
            safety_manager_name, safety_manager_tel, safety_manager_email,
-           created_at, updated_at, deleted
+           no_risk_assessment, created_at, updated_at, deleted
       FROM tb_access_request
      WHERE id = #{id} AND deleted = 0
   </select>
@@ -135,6 +137,7 @@
         ar.safety_manager_name,
         ar.safety_manager_tel,
         ar.safety_manager_email,
+        ar.no_risk_assessment,
         ic.name AS industry_name,
         ar.created_at,
         ar.updated_at
@@ -186,7 +189,7 @@
       planned_start_date, planned_end_date, worker_count, status,
       submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
       safety_manager_name, safety_manager_tel, safety_manager_email,
-      created_at, deleted
+      no_risk_assessment, created_at, deleted
     ) VALUES (
       #{requestNo}, #{companyId}, #{vesselId},
       #{portId,jdbcType=BIGINT}, #{workType}, #{workDescription},
@@ -207,6 +210,10 @@
       #{safetyManagerName,jdbcType=NVARCHAR},
       #{safetyManagerTel,jdbcType=NVARCHAR},
       #{safetyManagerEmail,jdbcType=NVARCHAR},
+      <choose>
+        <when test="noRiskAssessment != null and noRiskAssessment">1</when>
+        <otherwise>0</otherwise>
+      </choose>,
       SYSUTCDATETIME(), 0
     )
   </insert>
@@ -222,6 +229,11 @@
            safety_manager_name  = #{safetyManagerName,jdbcType=NVARCHAR},
            safety_manager_tel   = #{safetyManagerTel,jdbcType=NVARCHAR},
            safety_manager_email = #{safetyManagerEmail,jdbcType=NVARCHAR},
+           no_risk_assessment   =
+             <choose>
+               <when test="noRiskAssessment != null and noRiskAssessment">1</when>
+               <otherwise>0</otherwise>
+             </choose>,
            updated_at = SYSUTCDATETIME()
      WHERE id = #{id} AND deleted = 0
   </update>

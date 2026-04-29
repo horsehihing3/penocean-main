@@ -30,6 +30,8 @@ public class AccessRequest {
     private Long reviewedBy;
     private LocalDateTime reviewedAt;
     private String improvementRequestReason;
+    // [2026-04-29] 위험성평가표 없음 체크
+    private Boolean noRiskAssessment;
     // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
     private String safetyManagerName;
     private String safetyManagerTel;
