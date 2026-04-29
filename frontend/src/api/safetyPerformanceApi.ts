@@ -10,6 +10,7 @@ import type {
   SeaCrewIncidentBulkPayload,
   SeaCrewIncidentListParams,
   SeaCrewIncidentPage,
+  SeaYearlyStats,
 } from '../types/safetyPerformance'
 
 export const safetyPerformanceLandApi = {
@@ -76,6 +77,15 @@ export const safetyPerformanceSeaApi = {
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     )
+  },
+
+  // [2026-04-30] 연도별 집계 통계
+  yearlyStats: async (years = 4): Promise<SeaYearlyStats[]> => {
+    const res = await axiosInstance.get<ApiResponse<SeaYearlyStats[]>>(
+      '/safety-performance/sea/yearly-stats',
+      { params: { years } }
+    )
+    return res.data.data
   },
 }
 

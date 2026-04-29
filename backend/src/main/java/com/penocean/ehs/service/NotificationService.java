@@ -58,6 +58,7 @@ public class NotificationService {
     }
 
     /** PPT 요구: 등록완료 시 팀메일 발송. app.team-emails 에 쉼표 구분으로 설정. */
+    // [2026-04-30] notifyTeam을 public으로 유지하고 notifyRegistrationRequestToAdmins에서 호출
     public void notifyTeam(String subject, String body) {
         if (teamEmailsRaw == null || teamEmailsRaw.isBlank()) {
             log.info("app.team-emails not configured; skipping team email '{}'", subject);
@@ -85,7 +86,9 @@ public class NotificationService {
                 "%s(%s) 님의 안전보건포털 가입신청이 접수되었습니다.\n"
                         + "포털 로그인 후 가입신청서 검토 및 승인바랍니다.%s",
                 companyName, businessNumber, portalLinkLine());
+        // [2026-04-30] SYSTEM 알림(DB) + 팀메일 이메일 발송 병행
         notifyAdmins(subject, body);
+        notifyTeam(subject, body);
     }
 
     /** PPT slide 8 - 2-day reminder: 미승인 상태가 지속되는 가입신청을 관리자에게 재알림 */

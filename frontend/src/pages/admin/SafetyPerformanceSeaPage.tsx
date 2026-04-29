@@ -1,4 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
+// [2026-04-30] PPT 슬라이드 28 기준으로 전면 재설계
+// 선박 선택 + 연도 조회 → 12개월 인라인 편집 테이블 → 임시저장/최종제출
+import { useRef, useState } from 'react'
 import {
   Box,
   Paper,
@@ -10,682 +12,372 @@ import {
   InputLabel,
   Select,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Grid,
-  IconButton,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
   Snackbar,
   Alert,
-  Tabs,
-  Tab,
-  Chip,
   CircularProgress,
-  useMediaQuery,
-  useTheme,
+  Divider,
 } from '@mui/material'
-import {
-  DataGrid,
-  GridColDef,
-  GridColumnVisibilityModel,
-} from '@mui/x-data-grid'
-import CloseIcon from '@mui/icons-material/Close'
-import AddIcon from '@mui/icons-material/Add'
+import SearchIcon from '@mui/icons-material/Search'
+import DownloadIcon from '@mui/icons-material/Download'
+import SaveIcon from '@mui/icons-material/Save'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import UploadIcon from '@mui/icons-material/Upload'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { format, parseISO } from 'date-fns'
-import {
-  safetyPerformanceSeaApi,
-  seaCrewIncidentApi,
-} from '../../api/safetyPerformanceApi'
+import { safetyPerformanceSeaApi } from '../../api/safetyPerformanceApi'
 import { lookupApi } from '../../api/lookupApi'
-import type {
-  SafetyPerformanceSea,
-  SafetyPerformanceSeaUpsertPayload,
-  SeaCrewIncident,
-  SeaCrewIncidentType,
-} from '../../types/safetyPerformance'
+import type { SafetyPerformanceSea } from '../../types/safetyPerformance'
 
-type SnackbarState = { open: boolean; message: string; severity: 'success' | 'error' }
-
-const POS_SM_URL = 'https://pos-sm.panocean.com'
 const currentYear = new Date().getFullYear()
 const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i)
-const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1)
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
+const POS_SM_URL = 'https://pos-sm.panocean.com'
+
+type SnackState = { open: boolean; message: string; severity: 'success' | 'error' | 'info' }
+
+type RowKey = 'crewCount' | 'illnessCount' | 'injuryCount' | 'evacuationCount' | 'sickLeaveDays'
+const ROW_DEFS: { key: RowKey; label: string; unit: string }[] = [
+  { key: 'crewCount',      label: '관리 척수',    unit: '척' },
+  { key: 'illnessCount',   label: '질병 발생',    unit: '건' },
+  { key: 'injuryCount',    label: '부상 사고',    unit: '건' },
+  { key: 'evacuationCount',label: '후송 건수',    unit: '건' },
+  { key: 'sickLeaveDays',  label: '병가 일수',    unit: '일' },
+]
+
+type MonthData = {
+  id?: number
+  crewCount: number
+  illnessCount: number
+  injuryCount: number
+  evacuationCount: number
+  sickLeaveDays: number
+}
+
+const emptyMonth = (): MonthData => ({
+  crewCount: 0, illnessCount: 0, injuryCount: 0, evacuationCount: 0, sickLeaveDays: 0,
+})
 
 const SafetyPerformanceSeaPage: React.FC = () => {
-  const { t } = useTranslation()
   const qc = useQueryClient()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [tab, setTab] = useState(0)
-  const [periodYear, setPeriodYear] = useState<number | ''>(currentYear)
-  const [periodMonth, setPeriodMonth] = useState<number | ''>('')
-  const [vesselId, setVesselId] = useState<string>('')
-  const [incidentType, setIncidentType] = useState<SeaCrewIncidentType | ''>('')
-  const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const [selectedVesselId, setSelectedVesselId] = useState<number | ''>('')
+  const [selectedYear, setSelectedYear]         = useState(currentYear)
+  const [queried, setQueried]                   = useState(false)
+  const [tableData, setTableData]               = useState<Record<number, MonthData>>({})
+  const [snack, setSnack]                       = useState<SnackState>({ open: false, message: '', severity: 'success' })
 
-  const [upsertOpen, setUpsertOpen] = useState(false)
-
-  const vesselsQuery = useQuery({
+  const { data: vessels = [] } = useQuery({
     queryKey: ['lookup', 'vessels'],
     queryFn: () => lookupApi.vessels(),
   })
-  const vessels = vesselsQuery.data ?? []
-  const [snackbar, setSnackbar] = useState<SnackbarState>({
-    open: false,
-    message: '',
-    severity: 'success',
-  })
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const emptyForm: SafetyPerformanceSeaUpsertPayload = {
-    vesselId: 0,
-    periodYear: currentYear,
-    periodMonth: new Date().getMonth() + 1,
-    crewCount: 0,
-    illnessCount: 0,
-    injuryCount: 0,
-    evacuationCount: 0,
-    sickLeaveDays: 0,
-    comment: '',
-  }
-  const [form, setForm] = useState<SafetyPerformanceSeaUpsertPayload>(emptyForm)
+  const selectedVessel = vessels.find((v) => v.id === selectedVesselId)
 
-  const monthlyColumnVisibility: GridColumnVisibilityModel = useMemo(
-    () =>
-      isMobile
-        ? { evacuationCount: false, sickLeaveDays: false, posSmSyncedAt: false }
-        : {},
-    [isMobile]
-  )
-
-  const monthlyQuery = useQuery({
-    queryKey: [
-      'safetyPerformance',
-      'sea',
-      { periodYear, periodMonth, vesselId, page, pageSize },
-    ],
+  // 조회: vessel + year로 12개월 데이터 로드
+  const listQuery = useQuery({
+    queryKey: ['safetyPerformance', 'sea', 'table', selectedVesselId, selectedYear],
     queryFn: () =>
       safetyPerformanceSeaApi.list({
-        periodYear: periodYear === '' ? undefined : Number(periodYear),
-        periodMonth: periodMonth === '' ? undefined : Number(periodMonth),
-        vesselId: vesselId ? Number(vesselId) : undefined,
-        page,
-        size: pageSize,
+        vesselId: Number(selectedVesselId),
+        periodYear: selectedYear,
+        size: 12,
       }),
-    enabled: tab === 0,
-    placeholderData: (prev) => prev,
+    enabled: false, // 조회 버튼 클릭 시만 실행
   })
 
-  const crewQuery = useQuery({
-    queryKey: [
-      'seaCrewIncidents',
-      { periodYear, periodMonth, vesselId, incidentType, page, pageSize },
-    ],
-    queryFn: () =>
-      seaCrewIncidentApi.list({
-        periodYear: periodYear === '' ? undefined : Number(periodYear),
-        periodMonth: periodMonth === '' ? undefined : Number(periodMonth),
-        vesselId: vesselId ? Number(vesselId) : undefined,
-        incidentType: incidentType || undefined,
-        page,
-        size: pageSize,
-      }),
-    enabled: tab === 1,
-    placeholderData: (prev) => prev,
-  })
-
-  const extractErrorMessage = (err: unknown): string => {
-    if (axios.isAxiosError(err)) {
-      const m = (err.response?.data as { message?: string } | undefined)?.message
-      if (m) return m
+  const handleQuery = async () => {
+    if (!selectedVesselId) {
+      setSnack({ open: true, message: '선박을 선택해주세요.', severity: 'info' })
+      return
     }
-    return t('approval.actionFailed')
+    const result = await listQuery.refetch()
+    const loaded: Record<number, MonthData> = {}
+    MONTHS.forEach((m) => { loaded[m] = emptyMonth() })
+    ;(result.data?.content ?? []).forEach((r: SafetyPerformanceSea) => {
+      loaded[r.periodMonth] = {
+        id: r.id,
+        crewCount:       r.crewCount      ?? 0,
+        illnessCount:    r.illnessCount   ?? 0,
+        injuryCount:     r.injuryCount    ?? 0,
+        evacuationCount: r.evacuationCount ?? 0,
+        sickLeaveDays:   r.sickLeaveDays  ?? 0,
+      }
+    })
+    setTableData(loaded)
+    setQueried(true)
   }
 
-  const upsertMut = useMutation({
-    mutationFn: (payload: SafetyPerformanceSeaUpsertPayload) =>
-      safetyPerformanceSeaApi.upsert(payload),
+  const extractError = (err: unknown) => {
+    if (axios.isAxiosError(err)) {
+      return (err.response?.data as { message?: string } | undefined)?.message ?? '저장에 실패했습니다.'
+    }
+    return '저장에 실패했습니다.'
+  }
+
+  const saveMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedVesselId) return
+      const promises = MONTHS.map((m) =>
+        safetyPerformanceSeaApi.upsert({
+          vesselId:        Number(selectedVesselId),
+          periodYear:      selectedYear,
+          periodMonth:     m,
+          crewCount:       tableData[m]?.crewCount      ?? 0,
+          illnessCount:    tableData[m]?.illnessCount   ?? 0,
+          injuryCount:     tableData[m]?.injuryCount    ?? 0,
+          evacuationCount: tableData[m]?.evacuationCount ?? 0,
+          sickLeaveDays:   tableData[m]?.sickLeaveDays  ?? 0,
+        })
+      )
+      await Promise.all(promises)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['safetyPerformance', 'sea'] })
-      setSnackbar({ open: true, message: t('performance.saveSuccess'), severity: 'success' })
-      setUpsertOpen(false)
-      setForm(emptyForm)
+      qc.invalidateQueries({ queryKey: ['seaYearlyStats'] })
     },
-    onError: (err) =>
-      setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' }),
+    onError: (err) => setSnack({ open: true, message: extractError(err), severity: 'error' }),
   })
+
+  const handleTempSave = async () => {
+    await saveMut.mutateAsync()
+    setSnack({ open: true, message: '임시 저장되었습니다.', severity: 'success' })
+  }
+
+  const handleFinalSave = async () => {
+    await saveMut.mutateAsync()
+    setSnack({ open: true, message: '최종 제출되었습니다.', severity: 'success' })
+  }
 
   const importMut = useMutation({
     mutationFn: (file: File) => safetyPerformanceSeaApi.importExcel(file),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['seaCrewIncidents'] })
-      qc.invalidateQueries({ queryKey: ['safetyPerformance', 'sea'] })
-      setSnackbar({ open: true, message: t('performance.importSuccess'), severity: 'success' })
-    },
-    onError: (err) =>
-      setSnackbar({ open: true, message: extractErrorMessage(err), severity: 'error' }),
+    onSuccess: () => setSnack({ open: true, message: '엑셀 업로드 완료', severity: 'success' }),
+    onError: () => setSnack({ open: true, message: '엑셀 업로드 실패', severity: 'error' }),
   })
-
-  const formatDate = (iso: string) => {
-    try {
-      return format(parseISO(iso), 'yyyy-MM-dd')
-    } catch {
-      return iso
-    }
-  }
-
-  const monthlyColumns: GridColDef<SafetyPerformanceSea>[] = [
-    {
-      field: 'vesselName',
-      headerName: t('accessRequest.vessel'),
-      flex: 1,
-      minWidth: 140,
-      valueGetter: (p) => p.row.vesselName || `#${p.row.vesselId}`,
-    },
-    {
-      field: 'period',
-      headerName: t('performance.period'),
-      width: 110,
-      sortable: false,
-      valueGetter: (p) => `${p.row.periodYear}-${String(p.row.periodMonth).padStart(2, '0')}`,
-    },
-    { field: 'crewCount', headerName: t('performance.crewCount'), width: 100, type: 'number' },
-    { field: 'illnessCount', headerName: t('performance.illnessCount'), width: 100, type: 'number' },
-    { field: 'injuryCount', headerName: t('performance.injuryCount'), width: 100, type: 'number' },
-    { field: 'evacuationCount', headerName: t('performance.evacuationCount'), width: 110, type: 'number' },
-    { field: 'sickLeaveDays', headerName: t('performance.sickLeaveDays'), width: 120, type: 'number' },
-    {
-      field: 'posSmSyncedAt',
-      headerName: t('performance.posSmSyncedAt'),
-      width: 140,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-  ]
-
-  const crewColumns: GridColDef<SeaCrewIncident>[] = [
-    {
-      field: 'vesselName',
-      headerName: t('accessRequest.vessel'),
-      width: 140,
-      valueGetter: (p) => p.row.vesselName || `#${p.row.vesselId}`,
-    },
-    {
-      field: 'period',
-      headerName: t('performance.period'),
-      width: 100,
-      sortable: false,
-      valueGetter: (p) => `${p.row.periodYear}-${String(p.row.periodMonth).padStart(2, '0')}`,
-    },
-    { field: 'crewName', headerName: t('performance.crewName'), width: 130 },
-    { field: 'crewRole', headerName: t('performance.crewRole'), width: 120 },
-    {
-      field: 'incidentType',
-      headerName: t('performance.incidentType'),
-      width: 110,
-      renderCell: (p) => (
-        <Chip
-          size="small"
-          label={t(`performance.incidentTypes.${p.value as SeaCrewIncidentType}`)}
-          color={(p.value as SeaCrewIncidentType) === 'ILLNESS' ? 'info' : 'warning'}
-          sx={{ fontWeight: 600 }}
-        />
-      ),
-    },
-    {
-      field: 'incidentDate',
-      headerName: t('performance.incidentDate'),
-      width: 120,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    { field: 'diagnosis', headerName: t('performance.diagnosis'), flex: 1, minWidth: 180 },
-    {
-      field: 'evacuationRequired',
-      headerName: t('performance.evacRequired'),
-      width: 110,
-      type: 'boolean',
-    },
-    {
-      field: 'returnToDutyDate',
-      headerName: t('performance.returnToDutyDate'),
-      width: 140,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-  ]
-
-  const submitUpsert = () => {
-    if (!form.vesselId || !form.periodYear || !form.periodMonth) {
-      setSnackbar({ open: true, message: t('errors.required'), severity: 'error' })
-      return
-    }
-    upsertMut.mutate(form)
-  }
 
   const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      importMut.mutate(file)
-      e.target.value = ''
-    }
+    if (file) { importMut.mutate(file); e.target.value = '' }
   }
 
-  const isMonthlyTab = tab === 0
+  const updateCell = (month: number, key: RowKey, value: number) => {
+    setTableData((prev) => ({
+      ...prev,
+      [month]: { ...(prev[month] ?? emptyMonth()), [key]: value },
+    }))
+  }
+
+  const rowTotal = (key: RowKey) =>
+    MONTHS.reduce((s, m) => s + (tableData[m]?.[key] ?? 0), 0)
+
+  const isSaving = saveMut.isPending
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        justifyContent="space-between"
-        spacing={1}
-      >
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          {t('performance.sea.pageTitle')}
+
+      {/* 상단 헤더 */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography variant="h5" fontWeight={700}>
+          해상 안전보건 예산 및 실적
         </Typography>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            startIcon={<OpenInNewIcon />}
-            href={POS_SM_URL}
-            target="_blank"
-            rel="noopener"
-          >
-            {t('performance.posSm')}
-          </Button>
-          {!isMonthlyTab && (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                hidden
-                onChange={handleFilePick}
-              />
-              <Button
-                variant="outlined"
-                startIcon={<UploadIcon />}
-                disabled={importMut.isPending}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {importMut.isPending ? (
-                  <CircularProgress size={18} />
-                ) : (
-                  t('performance.excelImport')
-                )}
-              </Button>
-            </>
-          )}
-          {isMonthlyTab && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setForm({
-                  ...emptyForm,
-                  periodYear: periodYear === '' ? currentYear : Number(periodYear),
-                  periodMonth:
-                    periodMonth === ''
-                      ? new Date().getMonth() + 1
-                      : Number(periodMonth),
-                })
-                setUpsertOpen(true)
-              }}
-            >
-              {t('performance.monthlyEntry')}
-            </Button>
-          )}
-        </Stack>
+        <Button
+          variant="outlined"
+          startIcon={<OpenInNewIcon />}
+          href={POS_SM_URL}
+          target="_blank"
+          rel="noopener"
+          size="small"
+        >
+          POS-SM 바로가기
+        </Button>
       </Stack>
 
-      <Paper variant="outlined">
-        <Tabs
-          value={tab}
-          onChange={(_, v) => {
-            setTab(v)
-            setPage(0)
-          }}
-          sx={{ px: 2 }}
-        >
-          <Tab label={t('performance.tabMonthly')} />
-          <Tab label={t('performance.tabCrew')} />
-        </Tabs>
-      </Paper>
-
+      {/* 조회 조건 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', md: 'center' }}
-        >
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>{t('performance.year')}</InputLabel>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            조회 선박 선택 :
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>선박 선택</InputLabel>
             <Select
-              label={t('performance.year')}
-              value={periodYear}
+              label="선박 선택"
+              value={selectedVesselId}
               onChange={(e) => {
-                setPeriodYear(e.target.value === '' ? '' : Number(e.target.value))
-                setPage(0)
+                setSelectedVesselId(e.target.value === '' ? '' : Number(e.target.value))
+                setQueried(false)
               }}
             >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
-              {yearOptions.map((y) => (
-                <MenuItem key={y} value={y}>
-                  {y}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>{t('performance.month')}</InputLabel>
-            <Select
-              label={t('performance.month')}
-              value={periodMonth}
-              onChange={(e) => {
-                setPeriodMonth(e.target.value === '' ? '' : Number(e.target.value))
-                setPage(0)
-              }}
-            >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
-              {monthOptions.map((m) => (
-                <MenuItem key={m} value={m}>
-                  {m}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>{t('accessRequest.vessel')}</InputLabel>
-            <Select
-              label={t('accessRequest.vessel')}
-              value={vesselId}
-              onChange={(e) => {
-                setVesselId(String(e.target.value))
-                setPage(0)
-              }}
-            >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
+              <MenuItem value="">전체</MenuItem>
               {vessels.map((v) => (
-                <MenuItem key={v.id} value={String(v.id)}>
-                  {v.name}
-                  {v.imoNumber ? ` (IMO ${v.imoNumber})` : ''}
+                <MenuItem key={v.id} value={v.id}>
+                  {v.name}{v.imoNumber ? ` (IMO ${v.imoNumber})` : ''}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          {!isMonthlyTab && (
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>{t('performance.incidentType')}</InputLabel>
-              <Select
-                label={t('performance.incidentType')}
-                value={incidentType}
-                onChange={(e) => {
-                  setIncidentType(e.target.value as SeaCrewIncidentType | '')
-                  setPage(0)
-                }}
-              >
-                <MenuItem value="">{t('approval.filterAll')}</MenuItem>
-                <MenuItem value="ILLNESS">{t('performance.incidentTypes.ILLNESS')}</MenuItem>
-                <MenuItem value="INJURY">{t('performance.incidentTypes.INJURY')}</MenuItem>
-              </Select>
-            </FormControl>
-          )}
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            조회 연도 설정
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 90 }}>
+            <Select value={selectedYear} onChange={(e) => { setSelectedYear(Number(e.target.value)); setQueried(false) }}>
+              {yearOptions.map((y) => <MenuItem key={y} value={y}>{y}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <Typography variant="body2">년</Typography>
+          <Button
+            variant="contained"
+            startIcon={listQuery.isFetching ? <CircularProgress size={16} color="inherit" /> : <SearchIcon />}
+            onClick={handleQuery}
+            disabled={listQuery.isFetching}
+          >
+            조회
+          </Button>
         </Stack>
       </Paper>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
-        }}
-      >
-        {isMonthlyTab ? (
-          <>
-            {monthlyQuery.isError && (
-              <Alert severity="error" sx={{ m: 2 }}>
-                {t('approval.loadError')}
-              </Alert>
-            )}
-            <DataGrid
-              rows={monthlyQuery.data?.content ?? []}
-              getRowId={(r) => r.id}
-              columns={monthlyColumns}
-              columnVisibilityModel={monthlyColumnVisibility}
-              loading={monthlyQuery.isLoading || monthlyQuery.isFetching}
-              paginationMode="server"
-              rowCount={monthlyQuery.data?.totalElements ?? 0}
-              paginationModel={{ page, pageSize }}
-              onPaginationModelChange={(m) => {
-                setPage(m.page)
-                setPageSize(m.pageSize)
-              }}
-              pageSizeOptions={[10, 20, 50]}
-              disableRowSelectionOnClick
-              localeText={{ noRowsLabel: t('approval.empty') }}
-              sx={{ border: 0, flex: 1 }}
-            />
-          </>
+      {/* 데이터 테이블 */}
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <Box sx={{ width: 4, height: 20, bgcolor: 'primary.main', borderRadius: 1 }} />
+          <Typography variant="subtitle1" fontWeight={700}>
+            해상 안전보건 예산 및 실적
+            {selectedVessel ? ` - [${selectedVessel.name}]` : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">(단위: 건/척/일)</Typography>
+        </Stack>
+
+        {!queried ? (
+          <Box sx={{ py: 6, textAlign: 'center' }}>
+            <Typography color="text.secondary">선박과 연도를 선택한 후 [조회] 버튼을 눌러주세요.</Typography>
+          </Box>
         ) : (
+          <TableContainer>
+            <Table size="small" sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'grey.100' }}>
+                  <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>구분 (항목)</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: 60, textAlign: 'center' }}>단위</TableCell>
+                  {MONTHS.map((m) => (
+                    <TableCell key={m} align="center" sx={{ fontWeight: 700, minWidth: 72 }}>
+                      {m}월
+                    </TableCell>
+                  ))}
+                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 80, color: 'primary.main' }}>
+                    합계
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ROW_DEFS.map((row) => (
+                  <TableRow key={row.key} hover>
+                    <TableCell sx={{ fontWeight: 600 }}>{row.label}</TableCell>
+                    <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                      {row.unit}
+                    </TableCell>
+                    {MONTHS.map((m) => (
+                      <TableCell key={m} align="center" sx={{ p: 0.5 }}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={tableData[m]?.[row.key] ?? 0}
+                          onChange={(e) => updateCell(m, row.key, Number(e.target.value) || 0)}
+                          inputProps={{
+                            min: 0,
+                            style: { textAlign: 'center', padding: '4px 6px', fontSize: '0.85rem' },
+                          }}
+                          sx={{ width: 64 }}
+                        />
+                      </TableCell>
+                    ))}
+                    <TableCell
+                      align="center"
+                      sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.95rem' }}
+                    >
+                      {rowTotal(row.key).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {queried && (
           <>
-            {crewQuery.isError && (
-              <Alert severity="error" sx={{ m: 2 }}>
-                {t('approval.loadError')}
-              </Alert>
-            )}
-            <DataGrid
-              rows={crewQuery.data?.content ?? []}
-              getRowId={(r) => r.id}
-              columns={crewColumns}
-              loading={crewQuery.isLoading || crewQuery.isFetching}
-              paginationMode="server"
-              rowCount={crewQuery.data?.totalElements ?? 0}
-              paginationModel={{ page, pageSize }}
-              onPaginationModelChange={(m) => {
-                setPage(m.page)
-                setPageSize(m.pageSize)
-              }}
-              pageSizeOptions={[10, 20, 50]}
-              disableRowSelectionOnClick
-              localeText={{ noRowsLabel: t('approval.empty') }}
-              sx={{ border: 0, flex: 1 }}
-            />
+            <Divider sx={{ my: 2 }} />
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Stack direction="row" spacing={1}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  hidden
+                  onChange={handleFilePick}
+                />
+                <Button
+                  variant="outlined"
+                  startIcon={importMut.isPending ? <CircularProgress size={16} /> : <UploadIcon />}
+                  disabled={importMut.isPending}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  엑셀 업로드
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => setSnack({ open: true, message: '엑셀 다운로드는 준비 중입니다.', severity: 'info' })}
+                >
+                  엑셀 다운로드
+                </Button>
+              </Stack>
+
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="outlined"
+                  startIcon={isSaving ? <CircularProgress size={16} /> : <SaveIcon />}
+                  disabled={isSaving}
+                  onClick={handleTempSave}
+                >
+                  임시 저장
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <CheckCircleOutlineIcon />}
+                  disabled={isSaving}
+                  onClick={handleFinalSave}
+                  sx={{ bgcolor: 'primary.dark' }}
+                >
+                  최종 제출하기
+                </Button>
+              </Stack>
+            </Stack>
           </>
         )}
       </Paper>
 
-      <Dialog
-        open={upsertOpen}
-        onClose={() => setUpsertOpen(false)}
-        maxWidth="md"
-        fullWidth
-        fullScreen={isMobile}
-      >
-        <DialogTitle
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          {t('performance.monthlyEntry')}
-          <IconButton onClick={() => setUpsertOpen(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} sm={4}>
-              <FormControl size="small" fullWidth required>
-                <InputLabel>{t('accessRequest.vessel')}</InputLabel>
-                <Select
-                  label={t('accessRequest.vessel')}
-                  value={form.vesselId || ''}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, vesselId: e.target.value === '' ? 0 : Number(e.target.value) }))
-                  }
-                >
-                  <MenuItem value="">
-                    <em>{t('common.selectPlaceholder', { defaultValue: '선택하세요' })}</em>
-                  </MenuItem>
-                  {vessels.map((v) => (
-                    <MenuItem key={v.id} value={v.id}>
-                      {v.name}
-                      {v.imoNumber ? ` (IMO ${v.imoNumber})` : ''}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6} sm={4}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t('performance.year')}</InputLabel>
-                <Select
-                  label={t('performance.year')}
-                  value={form.periodYear}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, periodYear: Number(e.target.value) }))
-                  }
-                >
-                  {yearOptions.map((y) => (
-                    <MenuItem key={y} value={y}>
-                      {y}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6} sm={4}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>{t('performance.month')}</InputLabel>
-                <Select
-                  label={t('performance.month')}
-                  value={form.periodMonth}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, periodMonth: Number(e.target.value) }))
-                  }
-                >
-                  {monthOptions.map((m) => (
-                    <MenuItem key={m} value={m}>
-                      {m}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                size="small"
-                fullWidth
-                type="number"
-                label={t('performance.crewCount')}
-                value={form.crewCount || ''}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, crewCount: Number(e.target.value) || 0 }))
-                }
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                size="small"
-                fullWidth
-                type="number"
-                label={t('performance.illnessCount')}
-                value={form.illnessCount || ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    illnessCount: Number(e.target.value) || 0,
-                  }))
-                }
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                size="small"
-                fullWidth
-                type="number"
-                label={t('performance.injuryCount')}
-                value={form.injuryCount || ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    injuryCount: Number(e.target.value) || 0,
-                  }))
-                }
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <TextField
-                size="small"
-                fullWidth
-                type="number"
-                label={t('performance.evacuationCount')}
-                value={form.evacuationCount || ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    evacuationCount: Number(e.target.value) || 0,
-                  }))
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                size="small"
-                fullWidth
-                type="number"
-                label={t('performance.sickLeaveDays')}
-                value={form.sickLeaveDays || ''}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    sickLeaveDays: Number(e.target.value) || 0,
-                  }))
-                }
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                size="small"
-                fullWidth
-                multiline
-                minRows={2}
-                label={t('performance.comment')}
-                value={form.comment || ''}
-                onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button onClick={() => setUpsertOpen(false)}>{t('common.cancel')}</Button>
-          <Button
-            variant="contained"
-            disabled={upsertMut.isPending}
-            onClick={submitUpsert}
-          >
-            {upsertMut.isPending ? <CircularProgress size={20} /> : t('common.save')}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Snackbar
-        open={snackbar.open}
+        open={snack.open}
         autoHideDuration={3500}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snack.severity}
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
           sx={{ width: '100%' }}
         >
-          {snackbar.message}
+          {snack.message}
         </Alert>
       </Snackbar>
     </Box>

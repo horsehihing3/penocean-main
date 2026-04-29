@@ -8,14 +8,13 @@
 
 ## ⚡ 다음 세션 작업 (우선순위 순)
 
-### 🔴 최우선
-- [ ] **이메일 발송 연결 확인** — Office365 SMTP 환경변수 설정 여부 및 실제 발송 테스트
-
 ### 🟡 다음 작업
 - [ ] **보건파트 NHIS 파서 실제 PDF 테스트** — NhisHealthCheckupParser.java 동작 검증 (파일 업로드 → 수치 파싱 확인). 이름/검진일 파싱 정확도 검증 후 정규식 보완 필요
 - [ ] **보건파트 이미지 파서 활성화** — ANTHROPIC_API_KEY 발급 후 `application-local.yml`에 설정, `이미지(JPG) 선택` 버튼 실제 동작 전환 (현재 준비중 메시지)
 - [ ] **보건파트 추가 병원 PDF 파서** — 우리원/하나로/중앙/강북삼성 PDF 양식 확보 시 HealthCheckupParser 구현체 추가
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
+- [ ] **안전보건실적(해상) 화면 고객 의견 수렴 후 재개발** — SafetyPerformanceSeaPage PPT 기준 재설계 완료 상태로 대기. `/admin/sea-budget` 현재 준비중 화면, 고객 확인 후 전환
+- [ ] **이메일 팬오션 SMTP 전환** — 현재 Gmail App Password 임시 사용. 팬오션 IT팀에서 SMTP 서버/계정 정보 받은 후 `application-local.yml`만 수정
 - [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 - [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
 - [ ] **사업장 메뉴 CONTRACT_DEPT 접근 범위 결정** — 출입신청 목록 조회 허용 여부 기획 확인 필요
@@ -41,7 +40,8 @@
 | 서식함 | FormTemplateController, notice/forms | ✅ 실 동작 |
 | 보건파트 (PDF업로드·파싱·3개년비교·편집) | HealthCheckupPdfController, AdminHealthPage | ✅ 실 동작 |
 | 안전보건실적 (육상) | SafetyPerformanceLandController | ✅ |
-| 안전보건실적 (해상) | SafetyPerformanceSeaController | ✅ |
+| 안전보건실적 (해상) | SafetyPerformanceSeaController | ✅ API, 화면 준비중 |
+| 해상직원 질병/부상 통계 | SeaCrewStatsPage, yearly-stats API | ✅ 실 동작 |
 | 해상직원 사건사고 | SeaCrewIncidentController | ⚠ 백엔드만, 프론트 미구현 |
 | 일일안전일지 | DailySafetyLogController | ✅ |
 | 안전수칙 관리 | SafetyRuleController | ✅ |
@@ -57,24 +57,7 @@
 
 ## ✅ 완료된 작업
 
-- [x] **출입신청 임시저장 null datetime 오류 수정** — `AccessWorkerMapper.xml` bulkInsert의 `safetyEduCompletedAt`, `workerBirth`, `workerPhone`, `workerRole` null 파라미터에 jdbcType 명시 (`TIMESTAMP`, `DATE`, `NVARCHAR`)
-- [x] **출입신청 위험성평가표없음 체크 저장/복원** — DB `no_risk_assessment BIT` 컬럼 추가, 전 레이어(모델·DTO·Mapper·서비스·프론트) 연동. 상세 화면 "없음 처리" 뱃지 표시, 승선신청 조건에서 자동 제외
-- [x] **출입신청 저장 후 작업자 목록 빈 화면 수정** — `staleTime: 60s` 캐시 문제, `onSuccess`에서 `queryClient.invalidateQueries` 추가
-- [x] **출입신청 승선신청 전체 흐름 실 동작 확인** — 임시저장 → 첨부파일 업로드 → 작업자 교육이수 → 승선신청 정상 처리
-- [x] **ngrok 터널 설정** — MSIX 버전 panic 버그 우회, Downloads 폴더 독립 바이너리 + authtoken 설정으로 `showbiz-colt-endorphin.ngrok-free.dev` 연결
-- [x] **파일 업로드/다운로드 동작 확인** — 서식함 업로드·다운로드 실 동작 확인 완료
-  - `FileStorageService` → `./uploads/{subDir}/{yyyyMM}/{uuid}_{파일명}` 저장
-  - 다운로드: `GET /form-templates/{id}/download` — 원본 파일명으로 Content-Disposition 설정
-  - SecurityConfig에 `/form-templates/*/download` permitAll 추가
-- [x] **서식함 code 필드 제거** — DB unique 제약 해제 + nullable 변경, 프론트/백엔드 모두 제거
-- [x] **서식함 카테고리 한글화** — SAFETY→안전, HEALTH→건강, CONTRACT→계약, OPERATION→작업, OTHER→기타
-- [x] **서식함 다운로드 수 즉시 반영** — 다운로드 클릭 시 react-query 캐시 갱신
-- [x] **출입신청 작업자 교육이수일자 입력 기능** — 날짜 피커 추가, 유효 날짜 입력 시 이수확인 자동 변경
-- [x] **출입신청 승선신청 버튼 활성화 조건** — 첨부파일 3종 + 모든 작업자 이수 완료 시만 활성화, Tooltip으로 미완료 항목 안내
-- [x] **QR 교육 이수 → 출입신청 연동 확인** — workerId 선택 시 tb_access_worker 자동 갱신 정상 확인
-- [x] **QR gender 필드 제거** — SafetyQrCompleteRequest, SafetyQrRecord, SafetyQrRecordResponse, Mapper XML, AdminQrEducationPage 모두 제거
-
-> 이전 완료 항목 → `docs/ARCHIVE.md` 참조 (완료 항목 13개 → 다음 세션 시 ARCHIVE 이동 필요)
+> 이전 완료 항목 전부 → `docs/ARCHIVE.md` 참조
 
 ---
 
@@ -90,17 +73,19 @@
 | tb_form_template.code NOT NULL 오류 | code 필드 제거 후 DB 컬럼 제약 잔존 | `DROP CONSTRAINT UQ_tb_form_template_code` 후 `ALTER COLUMN code NULL` |
 | MyBatis foreach null 파라미터 오류 | foreach 내 null은 `jdbc-type-for-null` 전역 설정 미적용 | 각 파라미터에 직접 `jdbcType=DATE/TIMESTAMP/NVARCHAR` 명시 |
 | ngrok MSIX 버전 panic | `disabled updater should never run` 런타임 패닉 | `C:\Users\user\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe` 사용 |
+| SafetyPerformanceSea 저장 시 varbinary→datetime2 변환 오류 | `posSmSyncedAt` null 전달 시 VARBINARY(0)으로 전송됨 | `SafetyPerformanceSeaMapper.xml` insert/update에 `jdbcType=TIMESTAMP/NVARCHAR/BIGINT` 명시 |
 
 ---
 
 ## ⚠️ 결정 보류 / 미확인 사항
 
-- **Microsoft Graph vs SMTP** — 이메일 발송 방식 결정 필요 (Azure 앱 등록 여부 확인)
+- **이메일 SMTP 전환** — 현재 Gmail(horsehihing3@gmail.com) 임시 사용. 팬오션 IT팀 SMTP 정보 확보 후 `application-local.yml`만 수정하면 됨
 - **SOM 연동 범위** — 외부 SOM 시스템 접근 방식 미확인
 - **파일 저장소** — 현재 로컬 디스크(`./uploads`), 향후 Azure Blob / S3 전환 여부 미결
 - **ANTHROPIC_API_KEY** — 발급 후 `application-local.yml`에 설정하면 이미지 파서 즉시 활성화
 - **tb_safety_qr_record.gender 컬럼** — 코드에서 제거됨, DB 컬럼은 nullable로 잔존. 필요시 `ALTER TABLE tb_safety_qr_record DROP COLUMN gender`
 - **tb_form_template.code 컬럼** — nullable로 변경됨, 완전 삭제 시 `ALTER TABLE tb_form_template DROP COLUMN code`
+- **안전보건실적(해상) 화면** — SafetyPerformanceSeaPage PPT 기준 재설계 대기, `/admin/sea-budget` 현재 준비중
 
 ---
 
@@ -122,10 +107,10 @@ DB_URL              # jdbc:sqlserver://...
 DB_USERNAME         # DB 계정
 DB_PASSWORD         # DB 비밀번호
 JWT_SECRET          # 32자 이상 랜덤 문자열
-MAIL_HOST           # smtp.office365.com
+MAIL_HOST           # smtp.gmail.com (임시) / 향후 팬오션 SMTP
 MAIL_PORT           # 587
-MAIL_USERNAME       # 발신 이메일
-MAIL_PASSWORD       # 이메일 비밀번호
+MAIL_USERNAME       # 발신 이메일 (현재 horsehihing3@gmail.com)
+MAIL_PASSWORD       # Gmail App Password (현재 적용됨)
 AZURE_CLIENT_ID     # Microsoft Graph 앱 ID (미사용 시 공란)
 AZURE_CLIENT_SECRET # Microsoft Graph 시크릿
 AZURE_TENANT_ID     # Azure 테넌트 ID
@@ -146,10 +131,10 @@ ANTHROPIC_API_KEY   # Claude Vision API 키 — 이미지 파서 활성화 시 �
 | 역할 | 경로 | 상태 |
 |------|------|------|
 | 공통 | `/login` | ✅ |
-| 공통 | `/register` | ✅ |
+| 공통 | `/register` | ✅ (중복확인·우편번호 검색 포함) |
 | 공통 | `/` (Dashboard) | ✅ |
 | 공통 | `/profile` | ✅ |
-| 공통 | `/qr/education` | ✅ |
+| 공통 | `/qr/:token` | ✅ |
 | 소개 | `/introduction/policy` | ✅ |
 | 소개 | `/introduction/goal` | ✅ |
 | 소개 | `/introduction/certificate` | ✅ |
@@ -174,7 +159,9 @@ ANTHROPIC_API_KEY   # Claude Vision API 키 — 이미지 파서 활성화 시 �
 | admin | `/admin/safety-rule` | ✅ |
 | admin | `/admin/audit-inspection` | ✅ |
 | admin | `/admin/safety-performance/land` | ✅ |
-| admin | `/admin/safety-performance/sea` | ✅ |
+| admin | `/admin/safety-performance/sea` | ✅ (해상 안전보건실적 월간 편집) |
+| admin | `/admin/sea-budget` | ⏳ 준비중 화면 |
+| admin | `/admin/sea-crew-stats` | ✅ 실 동작 (해상직원 질병/부상 통계) |
 
 ---
 

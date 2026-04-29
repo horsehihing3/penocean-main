@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -47,6 +50,22 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse response = authService.register(request);
         return ResponseEntity.ok(ApiResponse.success("가입 신청이 접수되었습니다. 관리자 승인 후 로그인하실 수 있습니다.", response));
+    }
+
+    // [2026-04-30] 아이디 중복확인
+    @GetMapping("/check-username")
+    @Operation(summary = "아이디 중복확인")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkUsername(@RequestParam String username) {
+        boolean available = authService.isUsernameAvailable(username);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("available", available)));
+    }
+
+    // [2026-04-30] 사업자번호 중복확인
+    @GetMapping("/check-business-number")
+    @Operation(summary = "사업자번호 중복확인")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkBusinessNumber(@RequestParam String businessNumber) {
+        boolean available = authService.isBusinessNumberAvailable(businessNumber);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("available", available)));
     }
 
     @GetMapping("/me")

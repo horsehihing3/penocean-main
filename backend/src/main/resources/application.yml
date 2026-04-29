@@ -38,7 +38,7 @@ spring:
       max-request-size: 100MB
 
   mail:
-    host: ${MAIL_HOST:smtp.office365.com}
+    host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
@@ -48,6 +48,7 @@ spring:
           auth: true
           starttls:
             enable: true
+            required: true
 
 # MyBatis Configuration
 mybatis:

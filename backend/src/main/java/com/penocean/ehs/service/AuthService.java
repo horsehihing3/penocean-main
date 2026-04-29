@@ -205,4 +205,14 @@ public class AuthService {
 
         return UserResponse.from(newUser);
     }
+
+    // [2026-04-30] 아이디 중복확인
+    public boolean isUsernameAvailable(String username) {
+        return userMapper.existsByUsername(username) == 0;
+    }
+
+    // [2026-04-30] 사업자번호 중복확인
+    public boolean isBusinessNumberAvailable(String businessNumber) {
+        return companyMapper.findByBusinessNumber(businessNumber) == null;
+    }
 }

@@ -4,6 +4,7 @@ import com.penocean.ehs.common.ApiResponse;
 import com.penocean.ehs.common.PageResponse;
 import com.penocean.ehs.dto.request.SafetyPerformanceSeaRequest;
 import com.penocean.ehs.dto.response.SafetyPerformanceSeaResponse;
+import com.penocean.ehs.dto.response.SeaYearlyStatsResponse;
 import com.penocean.ehs.exception.ResourceNotFoundException;
 import com.penocean.ehs.exception.UnauthorizedException;
 import com.penocean.ehs.mapper.UserMapper;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -72,6 +74,16 @@ public class SafetyPerformanceSeaController {
         String uploadId = service.importExcel(file, caller);
         return ResponseEntity.ok(ApiResponse.success("업로드되었습니다",
                 Map.of("excelUploadId", uploadId)));
+    }
+
+    // [2026-04-30] 연도별 집계 통계
+    @GetMapping("/yearly-stats")
+    @Operation(summary = "해상직원 질병/부상 연도별 집계 통계")
+    public ResponseEntity<ApiResponse<List<SeaYearlyStatsResponse>>> yearlyStats(
+            @RequestParam(defaultValue = "4") int years,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        resolveUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.success(service.yearlyStats(years)));
     }
 
     private User resolveUser(UserDetails userDetails) {

@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-04-30 (이메일·회원가입 기능·해상 통계 세션)
+
+- **Gmail SMTP 이메일 발송 연결** — `application.yml` Gmail 설정, `application-local.yml` App Password 적용, `NotificationService.notifyRegistrationRequestToAdmins`에 `notifyTeam()` 추가로 관리자 이메일 알림 실 동작
+- **회원가입 아이디 중복확인** — `GET /auth/check-username`, `AuthController·AuthService·UserMapper` 연동, 프론트 중복확인 버튼 + ✅/❌ 아이콘
+- **회원가입 사업자번호 중복확인** — `GET /auth/check-business-number`, `CompanyMapper.findByBusinessNumber` 활용
+- **회원가입 우편번호 검색** — Kakao Postcode API (`index.html` 스크립트 추가), 우편번호 자동 입력
+- **해상직원 질병/부상 통계 실 API 연결** — `SeaCrewStatsPage` 하드코딩 제거, `GET /safety-performance/sea/yearly-stats?years=N` 신규 엔드포인트 구현, `SeaYearlyStatsResponse` DTO 추가
+- **해상 안전보건실적 null 파라미터 오류 수정** — `SafetyPerformanceSeaMapper.xml` insert/update의 `posSmSyncedAt(TIMESTAMP)`, `excelUploadId/comment(NVARCHAR)`, `uploadedBy(BIGINT)` jdbcType 명시
+- **해상 안전보건실적 화면 PPT 기준 재설계** — 선박 선택 + 연도 조회 + 12개월 인라인 편집 테이블 + 임시저장/최종제출 레이아웃 (현재는 `/admin/sea-budget` 준비중 화면 유지, 고객 의견 수렴 후 전환 예정)
+
+---
+
 ## 2026-04-27 ~ 04-28 (보건파트 + QR + 공지사항 세션)
 
 - **공지사항 대상역할 제거·저장 버그 수정·조회수 1회 제한·Flyway 활성화**

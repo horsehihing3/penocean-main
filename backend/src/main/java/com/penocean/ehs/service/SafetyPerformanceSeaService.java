@@ -3,6 +3,7 @@ package com.penocean.ehs.service;
 import com.penocean.ehs.common.PageResponse;
 import com.penocean.ehs.dto.request.SafetyPerformanceSeaRequest;
 import com.penocean.ehs.dto.response.SafetyPerformanceSeaResponse;
+import com.penocean.ehs.dto.response.SeaYearlyStatsResponse;
 import com.penocean.ehs.exception.BadRequestException;
 import com.penocean.ehs.mapper.SafetyPerformanceSeaMapper;
 import com.penocean.ehs.model.SafetyPerformanceSea;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -100,4 +103,18 @@ public class SafetyPerformanceSeaService {
     }
 
     private int nvl(Integer v) { return v == null ? 0 : v; }
+
+    // [2026-04-30] 연도별 집계 통계 (최근 N년)
+    @Transactional(readOnly = true)
+    public List<SeaYearlyStatsResponse> yearlyStats(int years) {
+        int fromYear = LocalDate.now().getYear() - years + 1;
+        List<SeaYearlyStatsResponse> stats = mapper.yearlyStats(fromYear);
+        stats.forEach(s -> {
+            double rate = s.getVesselCount() > 0
+                    ? (double) s.getIncidentTotal() / s.getVesselCount() * 100
+                    : 0.0;
+            s.setIncidentRate(Math.round(rate * 100.0) / 100.0);
+        });
+        return stats;
+    }
 }

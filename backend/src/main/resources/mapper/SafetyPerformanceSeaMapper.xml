@@ -105,8 +105,12 @@
       excel_upload_id, uploaded_by, comment, created_at, deleted
     ) VALUES (
       #{vesselId}, #{periodYear}, #{periodMonth}, #{crewCount}, #{illnessCount},
-      #{injuryCount}, #{evacuationCount}, #{sickLeaveDays}, #{posSmSyncedAt},
-      #{excelUploadId}, #{uploadedBy}, #{comment}, SYSUTCDATETIME(), 0
+      #{injuryCount}, #{evacuationCount}, #{sickLeaveDays},
+      #{posSmSyncedAt,jdbcType=TIMESTAMP},
+      #{excelUploadId,jdbcType=NVARCHAR},
+      #{uploadedBy,jdbcType=BIGINT},
+      #{comment,jdbcType=NVARCHAR},
+      SYSUTCDATETIME(), 0
     )
   </insert>
 
@@ -117,10 +121,10 @@
            injury_count = #{injuryCount},
            evacuation_count = #{evacuationCount},
            sick_leave_days = #{sickLeaveDays},
-           pos_sm_synced_at = COALESCE(#{posSmSyncedAt}, pos_sm_synced_at),
-           excel_upload_id = COALESCE(#{excelUploadId}, excel_upload_id),
-           uploaded_by = #{uploadedBy},
-           comment = #{comment},
+           pos_sm_synced_at = COALESCE(#{posSmSyncedAt,jdbcType=TIMESTAMP}, pos_sm_synced_at),
+           excel_upload_id = COALESCE(#{excelUploadId,jdbcType=NVARCHAR}, excel_upload_id),
+           uploaded_by = #{uploadedBy,jdbcType=BIGINT},
+           comment = #{comment,jdbcType=NVARCHAR},
            updated_at = SYSUTCDATETIME()
      WHERE id = #{id} AND deleted = 0
   </update>
@@ -143,5 +147,21 @@
   <update id="softDelete">
     UPDATE tb_safety_performance_sea SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = #{id}
   </update>
+
+  <!-- [2026-04-30] 연도별 집계 통계 -->
+  <select id="yearlyStats" resultType="com.penocean.ehs.dto.response.SeaYearlyStatsResponse">
+    SELECT
+      sp.period_year                            AS year,
+      COUNT(DISTINCT sp.vessel_id)              AS vesselCount,
+      COALESCE(SUM(sp.illness_count), 0)        AS illnessTotal,
+      COALESCE(SUM(sp.injury_count),  0)        AS injuryTotal,
+      COALESCE(SUM(sp.illness_count), 0)
+        + COALESCE(SUM(sp.injury_count), 0)     AS incidentTotal
+    FROM tb_safety_performance_sea sp
+    WHERE sp.deleted = 0
+      AND sp.period_year >= #{fromYear}
+    GROUP BY sp.period_year
+    ORDER BY sp.period_year
+  </select>
 
 </mapper>

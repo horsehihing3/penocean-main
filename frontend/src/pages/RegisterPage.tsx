@@ -32,17 +32,28 @@ import {
   TableRow,
   TableCell,
   TableContainer,
-  IconButton,
   InputAdornment,
 } from '@mui/material'
 import SecurityIcon from '@mui/icons-material/Security'
 import LockIcon from '@mui/icons-material/LockOutlined'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import CancelIcon from '@mui/icons-material/Cancel'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import axiosInstance from '../api/axiosInstance'
 import { codeMasterApi, type CodeMaster, type Department } from '../api/codeMasterApi'
 import LanguageSwitcher from '../components/common/LanguageSwitcher'
 import ThemeToggle from '../components/common/ThemeToggle'
+
+// 카카오 우편번호 API 타입
+declare global {
+  interface Window {
+    daum: {
+      Postcode: new (config: { oncomplete: (data: { zonecode: string; roadAddress: string; jibunAddress: string }) => void }) => { open: () => void }
+    }
+  }
+}
 
 // PPT 기본 값. 관리자 편집 UI 로 바뀌기 전까지 fallback.
 const FALLBACK_INDUSTRY_OPTIONS: { code: string; label: string }[] = [
@@ -78,6 +89,12 @@ const RegisterPage: React.FC = () => {
   // PPT slide 5-6: 로그인 → 회원가입 클릭 시 개인정보 수집·이용 동의서 먼저 뜨기
   const [consentOpen, setConsentOpen] = useState(true)
   const [consentRequired, setConsentGiven] = useState(false)
+
+  // [2026-04-30] 중복확인 상태
+  const [usernameCheck, setUsernameCheck] = useState<'idle' | 'available' | 'taken'>('idle')
+  const [usernameChecking, setUsernameChecking] = useState(false)
+  const [bizCheck, setBizCheck] = useState<'idle' | 'available' | 'taken'>('idle')
+  const [bizChecking, setBizChecking] = useState(false)
 
   // 관리자 편집 UI 연동: tb_code / tb_department 조회. 실패/비어 있을 시 fallback.
   const [industryOptions, setIndustryOptions] =
@@ -149,6 +166,8 @@ const RegisterPage: React.FC = () => {
     register,
     handleSubmit,
     control,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -157,6 +176,47 @@ const RegisterPage: React.FC = () => {
       contractDepartments: [],
     },
   })
+
+  // [2026-04-30] 아이디 중복확인
+  const handleCheckUsername = async () => {
+    const username = getValues('username')
+    if (!username || username.length < 4) return
+    setUsernameChecking(true)
+    try {
+      const res = await axiosInstance.get<{ data: { available: boolean } }>('/auth/check-username', { params: { username } })
+      setUsernameCheck(res.data.data.available ? 'available' : 'taken')
+    } catch {
+      setUsernameCheck('idle')
+    } finally {
+      setUsernameChecking(false)
+    }
+  }
+
+  // [2026-04-30] 사업자번호 중복확인
+  const handleCheckBizNumber = async () => {
+    const businessNumber = getValues('businessNumber')
+    if (!businessNumber || !/^\d{3}-\d{2}-\d{5}$/.test(businessNumber)) return
+    setBizChecking(true)
+    try {
+      const res = await axiosInstance.get<{ data: { available: boolean } }>('/auth/check-business-number', { params: { businessNumber } })
+      setBizCheck(res.data.data.available ? 'available' : 'taken')
+    } catch {
+      setBizCheck('idle')
+    } finally {
+      setBizChecking(false)
+    }
+  }
+
+  // [2026-04-30] 카카오 우편번호 검색
+  const handlePostcodeSearch = () => {
+    if (!window.daum?.Postcode) return
+    new window.daum.Postcode({
+      oncomplete: (data) => {
+        setValue('postalCode', data.zonecode)
+        setValue('address', data.roadAddress || data.jibunAddress)
+      },
+    }).open()
+  }
 
   const onSubmit = async (data: FormData) => {
     setError(null)
@@ -249,17 +309,37 @@ const RegisterPage: React.FC = () => {
                     <TableRow>
                       <TableCell sx={labelCellSx}>{required(t('register.username'))}</TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1}>
+                        <Stack direction="row" spacing={1} alignItems="flex-start">
                           <TextField
                             size="small"
                             fullWidth
                             {...register('username')}
-                            error={!!errors.username}
-                            helperText={errors.username?.message}
+                            error={!!errors.username || usernameCheck === 'taken'}
+                            helperText={
+                              errors.username?.message ??
+                              (usernameCheck === 'available' ? '사용 가능한 아이디입니다.' :
+                               usernameCheck === 'taken' ? '이미 사용 중인 아이디입니다.' : undefined)
+                            }
+                            onChange={(e) => { register('username').onChange(e); setUsernameCheck('idle') }}
                             autoComplete="username"
+                            InputProps={{
+                              endAdornment: usernameCheck !== 'idle' ? (
+                                <InputAdornment position="end">
+                                  {usernameCheck === 'available'
+                                    ? <CheckCircleIcon fontSize="small" color="success" />
+                                    : <CancelIcon fontSize="small" color="error" />}
+                                </InputAdornment>
+                              ) : undefined,
+                            }}
                           />
-                          <Button variant="outlined" size="small" sx={{ flexShrink: 0 }}>
-                            {t('register.checkDuplicate')}
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            sx={{ flexShrink: 0, mt: 0.25 }}
+                            onClick={handleCheckUsername}
+                            disabled={usernameChecking}
+                          >
+                            {usernameChecking ? <CircularProgress size={16} /> : t('register.checkDuplicate')}
                           </Button>
                         </Stack>
                       </TableCell>
@@ -342,17 +422,37 @@ const RegisterPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Stack spacing={1}>
-                          <Stack direction="row" spacing={1}>
+                          <Stack direction="row" spacing={1} alignItems="flex-start">
                             <TextField
                               size="small"
                               fullWidth
                               placeholder="000-00-00000"
                               {...register('businessNumber')}
-                              error={!!errors.businessNumber}
-                              helperText={errors.businessNumber?.message}
+                              error={!!errors.businessNumber || bizCheck === 'taken'}
+                              helperText={
+                                errors.businessNumber?.message ??
+                                (bizCheck === 'available' ? '사용 가능한 사업자번호입니다.' :
+                                 bizCheck === 'taken' ? '이미 등록된 사업자번호입니다.' : undefined)
+                              }
+                              onChange={(e) => { register('businessNumber').onChange(e); setBizCheck('idle') }}
+                              InputProps={{
+                                endAdornment: bizCheck !== 'idle' ? (
+                                  <InputAdornment position="end">
+                                    {bizCheck === 'available'
+                                      ? <CheckCircleIcon fontSize="small" color="success" />
+                                      : <CancelIcon fontSize="small" color="error" />}
+                                  </InputAdornment>
+                                ) : undefined,
+                              }}
                             />
-                            <Button variant="outlined" size="small" sx={{ flexShrink: 0 }}>
-                              {t('register.checkDuplicate')}
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              sx={{ flexShrink: 0, mt: 0.25 }}
+                              onClick={handleCheckBizNumber}
+                              disabled={bizChecking}
+                            >
+                              {bizChecking ? <CircularProgress size={16} /> : t('register.checkDuplicate')}
                             </Button>
                           </Stack>
                           <Button
@@ -393,8 +493,14 @@ const RegisterPage: React.FC = () => {
                               sx={{ width: 160 }}
                               placeholder={t('register.postalCode')}
                               {...register('postalCode')}
+                              inputProps={{ readOnly: true }}
                             />
-                            <Button variant="outlined" size="small" sx={{ flexShrink: 0 }}>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              sx={{ flexShrink: 0 }}
+                              onClick={handlePostcodeSearch}
+                            >
                               {t('register.findPostalCode')}
                             </Button>
                           </Stack>

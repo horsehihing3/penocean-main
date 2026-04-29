@@ -119,3 +119,13 @@ export interface SeaCrewIncidentListParams {
 }
 
 export type SeaCrewIncidentPage = PageResponse<SeaCrewIncident>
+
+// [2026-04-30] 연도별 집계 통계
+export interface SeaYearlyStats {
+  year: number
+  vesselCount: number
+  illnessTotal: number
+  injuryTotal: number
+  incidentTotal: number
+  incidentRate: number
+}
