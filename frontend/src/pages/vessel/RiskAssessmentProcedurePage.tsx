@@ -22,8 +22,8 @@ const RiskAssessmentProcedurePage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1000, mx: 'auto' }}>
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>
         {t('vessel.procedure.riskTitle')}
       </Typography>
 

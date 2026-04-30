@@ -52,7 +52,7 @@
   },
   "vessel": {
     "procedure": {
-      "accessTitle": "도급업체 안전보건관리 절차",
+      "accessTitle": "사업장 출입절차",
       "riskTitle": "위험성평가 절차"
     }
   },
@@ -136,7 +136,7 @@
     "vesselSite": "사업장(선박)안전보건 (업체용)",
     "vesselAccessProcedure": "사업장 출입절차",
     "vesselRiskProcedure": "위험성평가 절차",
-    "vesselAccessRequest": "출입신청",
+    "vesselAccessRequest": "사업장 출입신청",
     "vesselAccessPermit": "출입허가",
     "visitPermit": "방문허가서",
     "workerVoice": "근로자 의견",
@@ -251,7 +251,7 @@
     "empty": "가입 신청이 없습니다"
   },
   "accessRequest": {
-    "pageTitle": "출입신청",
+    "pageTitle": "사업장 출입신청",
     "permitPageTitle": "출입허가",
     "create": "신규 신청",
     "detailTitle": "출입신청 상세",

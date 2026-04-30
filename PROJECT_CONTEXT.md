@@ -59,6 +59,14 @@
 
 > 이전 완료 항목 전부 → `docs/ARCHIVE.md` 참조
 
+### [2026-04-30] UI 전반 개선
+- [x] **사이드바 메뉴 글자 크기 통일** — 1단계 16px(1rem), 2·3단계 14px(0.875rem)
+- [x] **사이드바 색상 개선** — 선택 메뉴 배경 `#1d6fcf`(밝은 파랑), 비선택 글자 `#cbd5e1`(밝은 회색)
+- [x] **출입신청 → 사업장 출입신청** — 메뉴명·화면 타이틀·ko.json pageTitle 모두 수정
+- [x] **작업유형 필수→선택 전환** — zod optional, UI required 제거, DB `work_type` NULL 허용(ALTER TABLE), Mapper jdbcType=NVARCHAR 추가
+- [x] **사업장 출입절차 화면 전면 재작성** — PPT 슬라이드 10 기준 플로우차트(7단계), 반응형 flex-wrap, 글자 1.3배, 절차서 등재 버튼(ADMIN 전용)
+- [x] **전체 페이지 좌상단 여백 통일** — maxWidth/mx:auto 제거, 외부 Box p:3→flex gap:2, 타이틀 mb 제거 (6개 페이지)
+
 ---
 
 ## 🐛 알려진 에러 & 해결책

@@ -172,9 +172,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
     sidebar: isDarkMode ? '#18181b' : '#1e293b',
     sidebarBrand: isDarkMode ? '#09090b' : '#0f172a',
     sidebarHover: isDarkMode ? '#27272a' : '#334155',
-    activeBackground: '#0052a5',
-    activeBorder: '#1e6ec0',
-    inactiveText: isDarkMode ? '#71717a' : '#9ca3af',
+    activeBackground: '#1d6fcf',
+    activeBorder: '#3b8fe0',
+    inactiveText: isDarkMode ? '#a1a1aa' : '#cbd5e1',
     subMenuBg: isDarkMode ? '#09090b' : '#0f172a',
   }
 
@@ -230,7 +230,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
             <ListItemText
               primary={t(item.textKey)}
               primaryTypographyProps={{
-                fontSize: '0.875rem',
+                fontSize: '1rem',
                 fontWeight: isActive ? 600 : 400,
               }}
             />
@@ -292,7 +292,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
                         <ListItemText
                           primary={`•  ${t(child.textKey)}`}
                           primaryTypographyProps={{
-                            fontSize: '0.8rem',
+                            fontSize: '0.875rem',
                             fontWeight: childActive ? 600 : 400,
                           }}
                         />
@@ -306,7 +306,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
                               borderRadius: '10px',
                               backgroundColor: 'error.main',
                               color: 'white',
-                              fontSize: '0.7rem',
+                              fontSize: '0.875rem',
                               fontWeight: 700,
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -348,7 +348,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
                                   <ListItemText
                                     primary={`-  ${t(gc.textKey)}`}
                                     primaryTypographyProps={{
-                                      fontSize: '0.75rem',
+                                      fontSize: '0.875rem',
                                       fontWeight: gcActive ? 600 : 400,
                                     }}
                                   />

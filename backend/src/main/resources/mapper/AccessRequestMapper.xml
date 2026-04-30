@@ -192,7 +192,7 @@
       no_risk_assessment, created_at, deleted
     ) VALUES (
       #{requestNo}, #{companyId}, #{vesselId},
-      #{portId,jdbcType=BIGINT}, #{workType}, #{workDescription},
+      #{portId,jdbcType=BIGINT}, #{workType,jdbcType=NVARCHAR}, #{workDescription},
       #{plannedStartDate}, #{plannedEndDate},
       <choose>
         <when test="workerCount != null">#{workerCount}</when>
@@ -222,7 +222,7 @@
     UPDATE tb_access_request
        SET vessel_id = #{vesselId},
            port_id   = #{portId},
-           work_type = #{workType},
+           work_type = #{workType,jdbcType=NVARCHAR},
            work_description = #{workDescription},
            planned_start_date = #{plannedStartDate},
            planned_end_date   = #{plannedEndDate},

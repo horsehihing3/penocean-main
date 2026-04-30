@@ -60,7 +60,7 @@ const schema = z.object({
   companyId: z.coerce.number().int().nullable().optional(),
   vesselId: z.coerce.number().int().positive({ message: 'required' }),
   portId: z.string().optional(),
-  workType: z.string().min(1, 'required'),
+  workType: z.string().optional(),
   workDescription: z.string().min(1, 'required'),
   plannedStartDate: z.string().min(1, 'required'),
   plannedEndDate: z.string().min(1, 'required'),
@@ -580,7 +580,6 @@ const AccessRequestCreatePage: React.FC = () => {
               {...register('workType')}
               label={t('accessRequest.workType')}
               fullWidth
-              required
               error={!!errors.workType}
               helperText={errText('workType')}
             />
