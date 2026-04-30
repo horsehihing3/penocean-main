@@ -17,11 +17,9 @@ import ApprovalPage from './pages/admin/ApprovalPage'
 import DailySafetyLogPage from './pages/admin/DailySafetyLogPage'
 import EvaluationItemPage from './pages/admin/EvaluationItemPage'
 import AccessProcedurePage from './pages/vessel/AccessProcedurePage'
-import RiskAssessmentProcedurePage from './pages/vessel/RiskAssessmentProcedurePage'
 import AccessRequestPage from './pages/vessel/AccessRequestPage'
 import AccessRequestCreatePage from './pages/vessel/AccessRequestCreatePage'
 import AccessRequestDetailPage from './pages/vessel/AccessRequestDetailPage'
-import VisitPermitPage from './pages/vessel/VisitPermitPage'
 import ContractDeptProcedurePage from './pages/contractor/ContractDeptProcedurePage'
 import EvaluationPage from './pages/contractor/EvaluationPage'
 import EvaluationCreatePage from './pages/contractor/EvaluationCreatePage'
@@ -72,7 +70,6 @@ function App() {
 
         {/* Vessel site */}
         <Route path="vessel/procedure/access" element={<AccessProcedurePage />} />
-        <Route path="vessel/procedure/risk-assessment" element={<RiskAssessmentProcedurePage />} />
         <Route path="vessel/access-request" element={<AccessRequestPage />} />
         <Route
           path="vessel/access-request/new"
@@ -92,7 +89,6 @@ function App() {
         />
         <Route path="vessel/access-request/:id" element={<AccessRequestDetailPage />} />
 
-        <Route path="vessel/visit-permit" element={<VisitPermitPage />} />
         <Route path="vessel/worker-voice" element={<WorkerVoicePage />} />
 
         {/* Contractor */}
@@ -104,6 +100,7 @@ function App() {
             </RoleRoute>
           }
         />
+        <Route path="contractor/half-year-eval" element={<ComingSoonPage />} />
         <Route
           path="contractor/evaluation"
           element={

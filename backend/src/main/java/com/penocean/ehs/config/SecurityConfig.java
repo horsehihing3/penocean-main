@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/files/**",
                                 "/public/**",
-                                "/form-templates/*/download"
+                                "/form-templates/*/download",
+                                "/procedure-docs/*/download"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

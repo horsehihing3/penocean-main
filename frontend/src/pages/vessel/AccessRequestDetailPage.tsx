@@ -48,6 +48,7 @@ import FindInPageIcon from '@mui/icons-material/FindInPage'
 import PrintIcon from '@mui/icons-material/Print'
 import EventIcon from '@mui/icons-material/Event'
 import { useConfirm } from '../../components/common/ConfirmDialogProvider'
+import VisitPermitDetailDialog from '../../components/vessel/VisitPermitDetailDialog'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -86,6 +87,7 @@ const AccessRequestDetailPage: React.FC = () => {
   const { user } = useAuth()
 
   const [tab, setTab] = useState(0)
+  const [permitDialogOpen, setPermitDialogOpen] = useState(false)
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: '',
@@ -404,9 +406,7 @@ const AccessRequestDetailPage: React.FC = () => {
               <Button
                 variant="outlined"
                 startIcon={<BadgeIcon />}
-                onClick={() =>
-                  navigate(`/vessel/visit-permit?accessRequestId=${detail.id}`)
-                }
+                onClick={() => setPermitDialogOpen(true)}
               >
                 {t('accessRequest.viewPermit')}
               </Button>
@@ -1062,6 +1062,15 @@ const AccessRequestDetailPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* 방문허가서 상세 팝업 */}
+      {permitDialogOpen && (
+        <VisitPermitDetailDialog
+          open={permitDialogOpen}
+          accessRequestId={numericId}
+          onClose={() => setPermitDialogOpen(false)}
+        />
+      )}
     </Box>
   )
 }

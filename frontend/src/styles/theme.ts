@@ -401,6 +401,32 @@ const createBaseTheme = (colors: typeof lightColors, mode: 'light' | 'dark'): Th
           },
         },
       },
+      MuiDataGrid: {
+        defaultProps: {
+          showCellVerticalBorder: true,
+          showColumnVerticalBorder: true,
+        },
+        styleOverrides: {
+          root: {
+            '& .MuiDataGrid-columnHeader': {
+              borderRight: `1px solid ${colors.border}`,
+            },
+            '& .MuiDataGrid-cell': {
+              borderRight: `1px solid ${colors.border}`,
+              borderBottom: `1px solid ${colors.border}`,
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              borderBottom: `1px solid ${colors.border}`,
+              backgroundColor: colors.tableHeader,
+            },
+            '& .MuiDataGrid-row': {
+              '&:hover': {
+                backgroundColor: `${colors.tableHover} !important`,
+              },
+            },
+          },
+        },
+      },
       MuiDrawer: {
         styleOverrides: {
           paper: {

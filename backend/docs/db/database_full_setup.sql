@@ -2061,6 +2061,26 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_tb_form_template_categ
     CREATE INDEX IX_tb_form_template_category_active ON tb_form_template(category, active);
 GO
 
+-- tb_procedure_doc [2026-04-30] 절차서 등재 기능
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'tb_procedure_doc')
+BEGIN
+    CREATE TABLE tb_procedure_doc (
+        id          BIGINT          IDENTITY(1,1) NOT NULL,
+        proc_type   NVARCHAR(50)    NOT NULL,
+        file_name   NVARCHAR(255)   NOT NULL,
+        file_path   NVARCHAR(500)   NOT NULL,
+        file_size   BIGINT          NULL,
+        mime_type   NVARCHAR(100)   NULL,
+        uploaded_by BIGINT          NULL,
+        created_at  DATETIME2       NOT NULL DEFAULT SYSUTCDATETIME(),
+        deleted     BIT             NOT NULL DEFAULT 0,
+        CONSTRAINT PK_tb_procedure_doc PRIMARY KEY CLUSTERED (id),
+        CONSTRAINT FK_procedure_doc_uploader FOREIGN KEY (uploaded_by) REFERENCES tb_user(id)
+    );
+    CREATE INDEX IX_tb_procedure_doc_proc_type ON tb_procedure_doc(proc_type, deleted, created_at DESC);
+END;
+GO
+
 -- tb_safety_rule
 IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'tb_safety_rule')
 BEGIN

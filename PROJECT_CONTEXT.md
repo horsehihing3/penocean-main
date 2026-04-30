@@ -67,6 +67,15 @@
 - [x] **사업장 출입절차 화면 전면 재작성** — PPT 슬라이드 10 기준 플로우차트(7단계), 반응형 flex-wrap, 글자 1.3배, 절차서 등재 버튼(ADMIN 전용)
 - [x] **전체 페이지 좌상단 여백 통일** — maxWidth/mx:auto 제거, 외부 Box p:3→flex gap:2, 타이틀 mb 제거 (6개 페이지)
 
+### [2026-04-30] 절차서·메뉴·그리드 개선
+- [x] **절차서 등재·다운로드 구현** — `tb_procedure_doc` 테이블(V26 Flyway), 백엔드 API(`/procedure-docs`), 프론트 실제 업로드·다운로드·삭제 (ADMIN 전용 등재/삭제, 전체 다운로드)
+- [x] **위험성평가 절차 메뉴 제거** — 사이드바·App.tsx 라우트 삭제
+- [x] **출입절차 절차서 카드 UI 정리** — 파일명 숨김, 중복 다운로드 아이콘 제거, 버튼 한 행 배치
+- [x] **방문허가서 상세 팝업 출입신청 통합** — `VisitPermitDetailDialog` 컴포넌트 분리, 출입신청 상세 "방문허가서 보기" 클릭 시 팝업 표시
+- [x] **방문허가서 메뉴·목록 제거** — 사이드바·App.tsx route·import 삭제
+- [x] **반기평가 메뉴 추가** — 사업장 안전보건 > 사업장 출입신청 아래, 클릭 시 준비중 화면
+- [x] **DataGrid 가로·세로 구획선** — 테마 전역 설정(`showCellVerticalBorder`, `showColumnVerticalBorder`, `borderRight/Bottom`) 10개 페이지 일괄 적용
+
 ---
 
 ## 🐛 알려진 에러 & 해결책
@@ -147,10 +156,9 @@ ANTHROPIC_API_KEY   # Claude Vision API 키 — 이미지 파서 활성화 시 �
 | 소개 | `/introduction/goal` | ✅ |
 | 소개 | `/introduction/certificate` | ✅ |
 | vessel | `/vessel/procedure/access` | ✅ |
-| vessel | `/vessel/procedure/risk-assessment` | ✅ |
 | vessel | `/vessel/access-request` (목록·생성·상세·수정) | ✅ |
-| vessel | `/vessel/visit-permit` | ✅ |
 | vessel | `/vessel/worker-voice` | ✅ |
+| contractor | `/contractor/half-year-eval` | ⏳ 준비중 화면 |
 | contractor | `/contractor/procedure` | ✅ |
 | contractor | `/contractor/evaluation` (목록·생성) | ✅ |
 | contractor | `/contractor/improvements` | ✅ |
