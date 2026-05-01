@@ -499,14 +499,38 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {detail.itemScores.map((s) => {
+                        {/* [2026-05-01] 구분(category) rowSpan 병합 */}
+                        {(() => {
+                          const scores = detail.itemScores
+                          const spans: (number | null)[] = new Array(scores.length).fill(null)
+                          let i = 0
+                          while (i < scores.length) {
+                            let j = i + 1
+                            while (j < scores.length && scores[j].itemCategory === scores[i].itemCategory) j++
+                            spans[i] = j - i
+                            i = j
+                          }
+                          return scores.map((s, idx) => {
                           const liveScore = editScores[s.itemId]?.score ?? s.score
                           const itemAttachments = detail.attachments.filter((a) => a.itemId === s.itemId)
                           return (
                             <TableRow key={s.itemId}>
-                              <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                                {s.itemCategory}
-                              </TableCell>
+                              {spans[idx] !== null && (
+                                <TableCell
+                                  rowSpan={spans[idx]!}
+                                  sx={{
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem',
+                                    verticalAlign: 'middle',
+                                    textAlign: 'center',
+                                    bgcolor: 'grey.50',
+                                    borderRight: '1px solid',
+                                    borderColor: 'divider',
+                                  }}
+                                >
+                                  {s.itemCategory}
+                                </TableCell>
+                              )}
                               <TableCell>{s.itemTitle}</TableCell>
                               <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
                                 {s.itemDescription ?? '-'}
@@ -549,7 +573,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                               </TableCell>
                             </TableRow>
                           )
-                        })}
+                        })})()}
                       </TableBody>
                     </Table>
                   </TableContainer>

@@ -83,6 +83,19 @@ const EvaluationCreatePage: React.FC = () => {
   })
   const items = itemsQuery.data ?? []
 
+  // [2026-05-01] 구분(category) 병합을 위한 rowSpan 계산
+  const categorySpans = useMemo(() => {
+    const spans: (number | null)[] = new Array(items.length).fill(null)
+    let i = 0
+    while (i < items.length) {
+      let j = i + 1
+      while (j < items.length && items[j].category === items[i].category) j++
+      spans[i] = j - i
+      i = j
+    }
+    return spans
+  }, [items])
+
   const [scores, setScores] = useState<Record<number, number>>({})
   const [comment, setComment] = useState('')
   // [2026-04-24] PPT 슬라이드 20: 평가항목별 첨부파일
@@ -300,8 +313,8 @@ const EvaluationCreatePage: React.FC = () => {
                 fullWidth
                 required
               >
-                <MenuItem value="H1">H1</MenuItem>
-                <MenuItem value="H2">H2</MenuItem>
+                <MenuItem value="H1">상반기</MenuItem>
+                <MenuItem value="H2">하반기</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={6} sm={3}>
@@ -381,11 +394,24 @@ const EvaluationCreatePage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {items.map((it) => (
+                  {items.map((it, idx) => (
                     <TableRow key={it.id}>
-                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                        {it.category}
-                      </TableCell>
+                      {categorySpans[idx] !== null && (
+                        <TableCell
+                          rowSpan={categorySpans[idx]!}
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            verticalAlign: 'middle',
+                            textAlign: 'center',
+                            bgcolor: 'grey.50',
+                            borderRight: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {it.category}
+                        </TableCell>
+                      )}
                       <TableCell>{it.title}</TableCell>
                       <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
                         {it.description ?? '-'}
