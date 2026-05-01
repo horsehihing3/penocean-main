@@ -176,23 +176,23 @@ const ContractDeptProcedurePage: React.FC = () => {
           <TableContainer>
             <Table size="small" sx={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
               <TableHead>
-                <TableRow sx={{ bgcolor: '#1a2e4a' }}>
-                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }}>
+                <TableRow>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, width: 70 }}>
                     구분<br />(단계)
                   </TableCell>
-                  <TableCell colSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>
+                  <TableCell colSpan={2} sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700 }}>
                     PANOCEAN (도급인)
                   </TableCell>
-                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, width: 110 }}>
                     협력사<br />(수급인)
                   </TableCell>
-                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700 }}>
                     비고
                   </TableCell>
                 </TableRow>
-                <TableRow sx={{ bgcolor: '#1a2e4a' }}>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>도급주관부서</TableCell>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>안전부서</TableCell>
+                <TableRow>
+                  <TableCell sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, width: 110 }}>도급주관부서</TableCell>
+                  <TableCell sx={{ ...cellSx, backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, width: 110 }}>안전부서</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
