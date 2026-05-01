@@ -73,11 +73,11 @@ const PROC_ROWS: {
   { main: '도급·용역·위탁 전 회의', safety: '', contractor: '', note: '', lastRow: true },
 ]
 
-const HDR = { backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, fontSize: '0.8rem',
+const HDR = { backgroundColor: '#1a2e4a', color: 'white', fontWeight: 700, fontSize: '0.9rem',
   border: '1px solid #ccc', textAlign: 'center' as const, p: '8px 6px', verticalAlign: 'middle' as const }
 
-const cellSx = { border: '1px solid #ccc', fontSize: '0.78rem', whiteSpace: 'pre-line' as const,
-  verticalAlign: 'middle' as const, textAlign: 'center' as const, p: '6px 8px' }
+const cellSx = { border: '1px solid #ccc', fontSize: '0.9rem', whiteSpace: 'pre-line' as const,
+  verticalAlign: 'middle' as const, textAlign: 'center' as const, p: '6px 8px', color: '#111' }
 
 const ContractDeptProcedurePage: React.FC = () => {
   const [procOpen, setProcOpen] = useState(false)
@@ -143,9 +143,9 @@ const ContractDeptProcedurePage: React.FC = () => {
                   <TableRow key={idx}>
                     {row.stage !== undefined && (
                       <TableCell rowSpan={row.stageSpan} sx={{
-                        border: '1px solid #ccc', fontWeight: 700, fontSize: '0.78rem',
+                        border: '1px solid #ccc', fontWeight: 700, fontSize: '0.9rem',
                         textAlign: 'center', whiteSpace: 'pre-line', verticalAlign: 'middle',
-                        backgroundColor: '#f0f4ff', width: 72,
+                        backgroundColor: '#f0f4ff', color: '#111', width: 72,
                       }}>
                         {row.stage}
                       </TableCell>
@@ -161,7 +161,7 @@ const ContractDeptProcedurePage: React.FC = () => {
                       </>
                     )}
 
-                    <TableCell sx={{ border: '1px solid #ccc', fontSize: '0.75rem', whiteSpace: 'pre-line', verticalAlign: 'middle', p: '6px 8px', color: '#333' }}>
+                    <TableCell sx={{ border: '1px solid #ccc', fontSize: '0.875rem', whiteSpace: 'pre-line', verticalAlign: 'middle', p: '6px 8px', color: '#111' }}>
                       {row.note}
                     </TableCell>
                   </TableRow>
