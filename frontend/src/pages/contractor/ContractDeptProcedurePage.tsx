@@ -61,15 +61,15 @@ const PROC_ROWS: {
   lastRow?: boolean
   mainColSpan?: number
 }[] = [
-  { stage: '사업설계\n단계', stageSpan: 3, main: '사업 설계', safety: '', contractor: '', note: '유해위험요인 사전 확인\n안전보건 정보 사전 제공' },
-  { main: '', safety: '사전 검토\n및 안내', contractor: '', note: '안전관련 사항 사전 검토\n(도급업무 안전보건관련 사항)' },
-  { main: '사업 품의\n및 시행', safety: '', contractor: '', note: '업체 선정시 업체평가 시행' },
-  { stage: '계약\n단계', stageSpan: 3, main: '계약서 작성', safety: '', contractor: '', note: '' },
-  { main: '', safety: '안전보건\n조항 검토', contractor: '현장실사\n(필요시)', note: '안전보건관련 계약 조항 검토\n현장 위험정보 제공(수급인)' },
+  { stage: '사업/설계/단계', stageSpan: 3, main: '사업 설계', safety: '', contractor: '', note: '유해위험요인 사전 확인\n안전보건 정보 사전 제공' },
+  { main: '', safety: '사전 검토 및 안내', contractor: '', note: '안전관련 사항 사전 검토\n(도급업무 안전보건관련 사항)' },
+  { main: '사업 품의 및 시행', safety: '', contractor: '', note: '업체 선정시 업체평가 시행' },
+  { stage: '계약/단계', stageSpan: 3, main: '계약서 작성', safety: '', contractor: '', note: '' },
+  { main: '', safety: '안전보건 조항 검토', contractor: '현장실사\n(필요시)', note: '안전보건관련 계약 조항 검토\n현장 위험정보 제공(수급인)' },
   { main: '계약 체결', safety: '', contractor: '', note: '안전관련 사항 사전 검토' },
-  { stage: '도급\n전단계', stageSpan: 4, main: '안전관리계획서\n접수', safety: '', contractor: '안전관리계획서\n제출', note: '' },
-  { main: '안전관리계획서\n검토', safety: '', contractor: '', note: '', mainColSpan: 2 },
-  { main: '안전관리계획서\n승인', safety: '', contractor: '', note: '' },
+  { stage: '도급/전단계', stageSpan: 4, main: '안전관리계획서 접수', safety: '', contractor: '안전관리계획서\n제출', note: '' },
+  { main: '안전관리계획서 검토', safety: '', contractor: '', note: '', mainColSpan: 2 },
+  { main: '안전관리계획서 승인', safety: '', contractor: '', note: '' },
   { main: '도급·용역·위탁 전 회의', safety: '', contractor: '', note: '', lastRow: true },
 ]
 
@@ -144,10 +144,12 @@ const ContractDeptProcedurePage: React.FC = () => {
                     {row.stage !== undefined && (
                       <TableCell rowSpan={row.stageSpan} sx={{
                         border: '1px solid #ccc', fontWeight: 700, fontSize: '0.9rem',
-                        textAlign: 'center', whiteSpace: 'pre-line', verticalAlign: 'middle',
+                        textAlign: 'center', verticalAlign: 'middle',
                         backgroundColor: '#f0f4ff', color: '#111', width: 72,
                       }}>
-                        {row.stage}
+                        {row.stage?.split('/').map((s, i, arr) => (
+                          <span key={i}>{s}{i < arr.length - 1 && <br />}</span>
+                        ))}
                       </TableCell>
                     )}
 
