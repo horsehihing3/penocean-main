@@ -176,20 +176,23 @@ const ContractDeptProcedurePage: React.FC = () => {
           <TableContainer>
             <Table size="small" sx={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
               <TableHead>
-                <TableRow sx={{ bgcolor: '#1e3a5f' }}>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }}>구분{'\n'}(단계)</TableCell>
-                  <TableCell colSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, textAlign: 'center' }}>
+                <TableRow sx={{ bgcolor: '#1a2e4a' }}>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }}>
+                    구분<br />(단계)
+                  </TableCell>
+                  <TableCell colSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>
                     PANOCEAN (도급인)
                   </TableCell>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>협력사{'\n'}(수급인)</TableCell>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>비고</TableCell>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>
+                    협력사<br />(수급인)
+                  </TableCell>
+                  <TableCell rowSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>
+                    비고
+                  </TableCell>
                 </TableRow>
-                <TableRow sx={{ bgcolor: '#2d5186' }}>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }} />
+                <TableRow sx={{ bgcolor: '#1a2e4a' }}>
                   <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>도급주관부서</TableCell>
                   <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>안전부서</TableCell>
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }} />
-                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
