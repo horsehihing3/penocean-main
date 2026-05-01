@@ -397,7 +397,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                 </Grid>
               </Grid>
 
-              {detail.rejectedReason && (
+              {detail.rejectedReason && detail.status === 'REJECTED' && (
                 <Alert severity="error">{detail.rejectedReason}</Alert>
               )}
 
