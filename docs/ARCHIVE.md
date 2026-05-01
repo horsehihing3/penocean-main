@@ -5,6 +5,33 @@
 
 ---
 
+## 2026-04-30 (UI·절차서·메뉴·그리드 개선 세션)
+
+- **사이드바 메뉴 글자 크기 통일** — 1단계 16px(1rem), 2·3단계 14px(0.875rem)
+- **사이드바 색상 개선** — 선택 메뉴 배경 `#1d6fcf`(밝은 파랑), 비선택 글자 `#cbd5e1`(밝은 회색)
+- **출입신청 → 사업장 출입신청** — 메뉴명·화면 타이틀·ko.json pageTitle 모두 수정
+- **작업유형 필수→선택 전환** — zod optional, UI required 제거, DB `work_type` NULL 허용(ALTER TABLE), Mapper jdbcType=NVARCHAR 추가
+- **사업장 출입절차 화면 전면 재작성** — PPT 슬라이드 10 기준 플로우차트(7단계), 반응형 flex-wrap, 글자 1.3배, 절차서 등재 버튼(ADMIN 전용)
+- **전체 페이지 좌상단 여백 통일** — maxWidth/mx:auto 제거, 외부 Box p:3→flex gap:2, 타이틀 mb 제거 (6개 페이지)
+- **절차서 등재·다운로드 구현** — `tb_procedure_doc` 테이블(V26 Flyway), 백엔드 API(`/procedure-docs`), 프론트 실제 업로드·다운로드·삭제 (ADMIN 전용 등재/삭제, 전체 다운로드)
+- **위험성평가 절차 메뉴 제거** — 사이드바·App.tsx 라우트 삭제
+- **출입절차 절차서 카드 UI 정리** — 파일명 숨김, 중복 다운로드 아이콘 제거, 버튼 한 행 배치
+- **방문허가서 상세 팝업 출입신청 통합** — `VisitPermitDetailDialog` 컴포넌트 분리, 출입신청 상세 "방문허가서 보기" 클릭 시 팝업 표시
+- **방문허가서 메뉴·목록 제거** — 사이드바·App.tsx route·import 삭제
+- **반기평가 메뉴 추가** — 사업장 안전보건 > 사업장 출입신청 아래, 클릭 시 준비중 화면
+- **DataGrid 가로·세로 구획선** — 테마 전역 설정(`showCellVerticalBorder`, `showColumnVerticalBorder`, `borderRight/Bottom`) 10개 페이지 일괄 적용
+
+### 아카이브 에러 (재발 가능성 낮음)
+
+| 에러 | 원인 | 해결 |
+|------|------|------|
+| admin 로그인 실패 (Bad credentials) | V3 시드 bcrypt 해시 불일치 | DB UPDATE로 올바른 해시 적용 완료 |
+| gradle-wrapper.jar 없음 | git clone 시 jar 파일 누락 | GitHub에서 직접 다운로드: `Invoke-WebRequest` 사용 |
+| tb_form_template.code NOT NULL 오류 | code 필드 제거 후 DB 컬럼 제약 잔존 | `DROP CONSTRAINT UQ_tb_form_template_code` 후 `ALTER COLUMN code NULL` |
+| ngrok MSIX 버전 panic | `disabled updater should never run` 런타임 패닉 | `C:\Users\user\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe` 사용 |
+
+---
+
 ## 2026-04-30 (이메일·회원가입 기능·해상 통계 세션)
 
 - **Gmail SMTP 이메일 발송 연결** — `application.yml` Gmail 설정, `application-local.yml` App Password 적용, `NotificationService.notifyRegistrationRequestToAdmins`에 `notifyTeam()` 추가로 관리자 이메일 알림 실 동작

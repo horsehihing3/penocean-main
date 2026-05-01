@@ -13,12 +13,16 @@
 - [ ] **보건파트 이미지 파서 활성화** — ANTHROPIC_API_KEY 발급 후 `application-local.yml`에 설정, `이미지(JPG) 선택` 버튼 실제 동작 전환 (현재 준비중 메시지)
 - [ ] **보건파트 추가 병원 PDF 파서** — 우리원/하나로/중앙/강북삼성 PDF 양식 확보 시 HealthCheckupParser 구현체 추가
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
-- [ ] **안전보건실적(해상) 화면 고객 의견 수렴 후 재개발** — SafetyPerformanceSeaPage PPT 기준 재설계 완료 상태로 대기. `/admin/sea-budget` 현재 준비중 화면, 고객 확인 후 전환
 - [ ] **이메일 팬오션 SMTP 전환** — 현재 Gmail App Password 임시 사용. 팬오션 IT팀에서 SMTP 서버/계정 정보 받은 후 `application-local.yml`만 수정
-- [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
 - [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
-- [ ] **사업장 메뉴 CONTRACT_DEPT 접근 범위 결정** — 출입신청 목록 조회 허용 여부 기획 확인 필요
 - [ ] **출입신청 첨부파일 다운로드 원본 파일명** — 서식함과 동일하게 `/access-requests/{id}/attachments/{attId}/download` 엔드포인트 추가 검토
+
+### ⛔ 착수 보류 — 외부 확인 필요
+> 아래 항목은 고객/기획 확인 전 착수 시 롤백 위험 있음
+
+- [ ] **안전보건실적(해상) 화면 고객 의견 수렴 후 재개발** — SafetyPerformanceSeaPage PPT 기준 재설계 완료 상태로 대기. `/admin/sea-budget` 현재 준비중 화면, 고객 확인 후 전환
+- [ ] **PPT vs 현재 메뉴 구조 불일치 정리** — `daily-safety-log`, `audit-inspection` 노출 여부 결정 (사용자 확인 필요)
+- [ ] **사업장 메뉴 CONTRACT_DEPT 접근 범위 결정** — 출입신청 목록 조회 허용 여부 기획 확인 필요
 
 ---
 
@@ -57,24 +61,7 @@
 
 ## ✅ 완료된 작업
 
-> 이전 완료 항목 전부 → `docs/ARCHIVE.md` 참조
-
-### [2026-04-30] UI 전반 개선
-- [x] **사이드바 메뉴 글자 크기 통일** — 1단계 16px(1rem), 2·3단계 14px(0.875rem)
-- [x] **사이드바 색상 개선** — 선택 메뉴 배경 `#1d6fcf`(밝은 파랑), 비선택 글자 `#cbd5e1`(밝은 회색)
-- [x] **출입신청 → 사업장 출입신청** — 메뉴명·화면 타이틀·ko.json pageTitle 모두 수정
-- [x] **작업유형 필수→선택 전환** — zod optional, UI required 제거, DB `work_type` NULL 허용(ALTER TABLE), Mapper jdbcType=NVARCHAR 추가
-- [x] **사업장 출입절차 화면 전면 재작성** — PPT 슬라이드 10 기준 플로우차트(7단계), 반응형 flex-wrap, 글자 1.3배, 절차서 등재 버튼(ADMIN 전용)
-- [x] **전체 페이지 좌상단 여백 통일** — maxWidth/mx:auto 제거, 외부 Box p:3→flex gap:2, 타이틀 mb 제거 (6개 페이지)
-
-### [2026-04-30] 절차서·메뉴·그리드 개선
-- [x] **절차서 등재·다운로드 구현** — `tb_procedure_doc` 테이블(V26 Flyway), 백엔드 API(`/procedure-docs`), 프론트 실제 업로드·다운로드·삭제 (ADMIN 전용 등재/삭제, 전체 다운로드)
-- [x] **위험성평가 절차 메뉴 제거** — 사이드바·App.tsx 라우트 삭제
-- [x] **출입절차 절차서 카드 UI 정리** — 파일명 숨김, 중복 다운로드 아이콘 제거, 버튼 한 행 배치
-- [x] **방문허가서 상세 팝업 출입신청 통합** — `VisitPermitDetailDialog` 컴포넌트 분리, 출입신청 상세 "방문허가서 보기" 클릭 시 팝업 표시
-- [x] **방문허가서 메뉴·목록 제거** — 사이드바·App.tsx route·import 삭제
-- [x] **반기평가 메뉴 추가** — 사업장 안전보건 > 사업장 출입신청 아래, 클릭 시 준비중 화면
-- [x] **DataGrid 가로·세로 구획선** — 테마 전역 설정(`showCellVerticalBorder`, `showColumnVerticalBorder`, `borderRight/Bottom`) 10개 페이지 일괄 적용
+> 모든 완료 항목 → `docs/ARCHIVE.md` 참조
 
 ---
 
@@ -84,12 +71,8 @@
 |------|------|------|
 | SQL Server null 파라미터 오류 | MyBatis가 null을 VARBINARY(0)으로 전송 | `application.yml` `jdbc-type-for-null: NULL` 설정 (이미 적용됨) |
 | JDBC DB 연결 실패 (HikariPool) | SQL Server TCP/IP 비활성화 | SQL Config Manager에서 TCP/IP 활성화, 포트 1433 고정 |
-| admin 로그인 실패 (Bad credentials) | V3 시드 bcrypt 해시 불일치 | DB UPDATE로 올바른 해시 적용 완료 |
-| gradle-wrapper.jar 없음 | git clone 시 jar 파일 누락 | GitHub에서 직접 다운로드: `Invoke-WebRequest` 사용 |
 | 백엔드 Mapper XML 변경 후 반영 안됨 | 캐시된 build/ 사용 | `./gradlew clean bootRun` 으로 강제 재빌드 |
-| tb_form_template.code NOT NULL 오류 | code 필드 제거 후 DB 컬럼 제약 잔존 | `DROP CONSTRAINT UQ_tb_form_template_code` 후 `ALTER COLUMN code NULL` |
 | MyBatis foreach null 파라미터 오류 | foreach 내 null은 `jdbc-type-for-null` 전역 설정 미적용 | 각 파라미터에 직접 `jdbcType=DATE/TIMESTAMP/NVARCHAR` 명시 |
-| ngrok MSIX 버전 panic | `disabled updater should never run` 런타임 패닉 | `C:\Users\user\Downloads\ngrok-v3-stable-windows-amd64\ngrok.exe` 사용 |
 | SafetyPerformanceSea 저장 시 varbinary→datetime2 변환 오류 | `posSmSyncedAt` null 전달 시 VARBINARY(0)으로 전송됨 | `SafetyPerformanceSeaMapper.xml` insert/update에 `jdbcType=TIMESTAMP/NVARCHAR/BIGINT` 명시 |
 
 ---

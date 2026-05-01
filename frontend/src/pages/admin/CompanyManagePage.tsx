@@ -85,12 +85,8 @@ const AttachmentDialog: React.FC<{
       첨부파일
       <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
     </DialogTitle>
-    <DialogContent sx={{ p: 1, textAlign: 'center', bgcolor: '#000' }}>
-      <img
-        src="/sample-attachment.png"
-        alt="첨부파일"
-        style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
-      />
+    <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+      <Typography color="text.secondary">첨부파일 미리보기 준비중입니다.</Typography>
     </DialogContent>
   </Dialog>
 )

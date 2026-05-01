@@ -93,6 +93,9 @@ frontend/src/api/axiosInstance.ts        # axios 공통 인스턴스
 1. "다음 작업 확인해줘" — PROJECT_CONTEXT.md는 자동 로드됨
 2. `git status` 로 현재 브랜치·변경 파일 확인
 
+**진행 중:**
+- 대화가 길어질 경우 → `/compact [현재까지 구현 내용 위주로 요약]` 실행
+
 **종료:**
 1. `PROJECT_CONTEXT.md` 업데이트 — 완료 `[x]`, 신규 이슈 추가
 2. 완료 항목 10개 이상 누적 시 → `docs/ARCHIVE.md` 로 이동 후 삭제
