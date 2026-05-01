@@ -59,6 +59,7 @@ const PROC_ROWS: {
   main: string; safety: string; contractor: string
   note: string
   lastRow?: boolean
+  mainColSpan?: number
 }[] = [
   { stage: '사업설계\n단계', stageSpan: 3, main: '사업 설계', safety: '', contractor: '', note: '유해위험요인 사전 확인\n안전보건 정보 사전 제공' },
   { main: '', safety: '사전 검토\n및 안내', contractor: '', note: '안전관련 사항 사전 검토\n(도급업무 안전보건관련 사항)' },
@@ -67,7 +68,7 @@ const PROC_ROWS: {
   { main: '', safety: '안전보건\n조항 검토', contractor: '현장실사\n(필요시)', note: '안전보건관련 계약 조항 검토\n현장 위험정보 제공(수급인)' },
   { main: '계약 체결', safety: '', contractor: '', note: '안전관련 사항 사전 검토' },
   { stage: '도급\n전단계', stageSpan: 4, main: '안전관리계획서\n접수', safety: '', contractor: '안전관리계획서\n제출', note: '' },
-  { main: '안전관리계획서\n검토', safety: '', contractor: '', note: '' },
+  { main: '안전관리계획서\n검토', safety: '', contractor: '', note: '', mainColSpan: 2 },
   { main: '안전관리계획서\n승인', safety: '', contractor: '', note: '' },
   { main: '도급·용역·위탁 전 회의', safety: '', contractor: '', note: '', lastRow: true },
 ]
@@ -154,8 +155,8 @@ const ContractDeptProcedurePage: React.FC = () => {
                       <TableCell colSpan={3} sx={cellSx}>{row.main}</TableCell>
                     ) : (
                       <>
-                        <TableCell sx={cellSx}>{row.main}</TableCell>
-                        <TableCell sx={cellSx}>{row.safety}</TableCell>
+                        <TableCell colSpan={row.mainColSpan ?? 1} sx={cellSx}>{row.main}</TableCell>
+                        {!row.mainColSpan && <TableCell sx={cellSx}>{row.safety}</TableCell>}
                         <TableCell sx={cellSx}>{row.contractor}</TableCell>
                       </>
                     )}
