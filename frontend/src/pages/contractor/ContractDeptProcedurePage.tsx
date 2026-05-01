@@ -67,7 +67,7 @@ const PROC_ROWS: {
   { stage: '계약/단계', stageSpan: 3, main: '계약서 작성', safety: '', contractor: '', note: '' },
   { main: '', safety: '안전보건 조항 검토', contractor: '현장실사\n(필요시)', note: '안전보건관련 계약 조항 검토\n현장 위험정보 제공(수급인)' },
   { main: '계약 체결', safety: '', contractor: '', note: '안전관련 사항 사전 검토' },
-  { stage: '도급/전단계', stageSpan: 4, main: '안전관리계획서 접수', safety: '', contractor: '안전관리계획서\n제출', note: '' },
+  { stage: '도급/전단계', stageSpan: 4, main: '안전관리계획서 접수', safety: '', contractor: '안전관리계획서/제출', note: '' },
   { main: '안전관리계획서 검토', safety: '', contractor: '', note: '', mainColSpan: 2 },
   { main: '안전관리계획서 승인', safety: '', contractor: '', note: '' },
   { main: '도급·용역·위탁 전 회의', safety: '', contractor: '', note: '', lastRow: true },
@@ -130,12 +130,12 @@ const ContractDeptProcedurePage: React.FC = () => {
                 <TableRow>
                   <TableCell rowSpan={2} sx={{ ...HDR, width: 72 }}>구분<br />(단계)</TableCell>
                   <TableCell colSpan={2} sx={{ ...HDR }}>PANOCEAN (도급인)</TableCell>
-                  <TableCell rowSpan={2} sx={{ ...HDR, width: 100 }}>협력사<br />(수급인)</TableCell>
+                  <TableCell rowSpan={2} sx={{ ...HDR, width: 110 }}>협력사<br />(수급인)</TableCell>
                   <TableCell rowSpan={2} sx={{ ...HDR }}>비고</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ ...HDR, width: 110 }}>도급주관부서</TableCell>
-                  <TableCell sx={{ ...HDR, width: 110 }}>안전부서</TableCell>
+                  <TableCell sx={{ ...HDR, width: 100 }}>도급주관부서</TableCell>
+                  <TableCell sx={{ ...HDR, width: 100 }}>안전부서</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -159,7 +159,11 @@ const ContractDeptProcedurePage: React.FC = () => {
                       <>
                         <TableCell colSpan={row.mainColSpan ?? 1} sx={cellSx}>{row.main}</TableCell>
                         {!row.mainColSpan && <TableCell sx={cellSx}>{row.safety}</TableCell>}
-                        <TableCell sx={cellSx}>{row.contractor}</TableCell>
+                        <TableCell sx={cellSx}>
+                          {row.contractor.includes('/') ? row.contractor.split('/').map((s, i, arr) => (
+                            <span key={i}>{s}{i < arr.length - 1 && <br />}</span>
+                          )) : row.contractor}
+                        </TableCell>
                       </>
                     )}
 
