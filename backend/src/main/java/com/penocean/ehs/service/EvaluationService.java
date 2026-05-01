@@ -10,6 +10,7 @@ import com.penocean.ehs.exception.ResourceNotFoundException;
 import com.penocean.ehs.exception.UnauthorizedException;
 import com.penocean.ehs.mapper.EvaluationAttachmentMapper;
 import com.penocean.ehs.mapper.EvaluationHistoryMapper;
+import com.penocean.ehs.mapper.EvaluationImprovementMapper;
 import com.penocean.ehs.mapper.EvaluationItemMapper;
 import com.penocean.ehs.mapper.EvaluationItemScoreMapper;
 import com.penocean.ehs.mapper.EvaluationMapper;
@@ -17,6 +18,7 @@ import com.penocean.ehs.mapper.UserMapper;
 import com.penocean.ehs.model.Evaluation;
 import com.penocean.ehs.model.EvaluationAttachment;
 import com.penocean.ehs.model.EvaluationHistory;
+import com.penocean.ehs.model.EvaluationImprovement;
 import com.penocean.ehs.model.EvaluationItem;
 import com.penocean.ehs.model.EvaluationItemScore;
 import com.penocean.ehs.model.User;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +48,7 @@ public class EvaluationService {
     private final EvaluationItemScoreMapper evaluationItemScoreMapper;
     private final EvaluationAttachmentMapper evaluationAttachmentMapper;
     private final EvaluationHistoryMapper evaluationHistoryMapper;
+    private final EvaluationImprovementMapper evaluationImprovementMapper;
     private final UserMapper userMapper;
     private final NotificationService notificationService;
 
@@ -237,6 +241,15 @@ public class EvaluationService {
                     throw new BadRequestException("반려 사유(reason)가 필요합니다.");
                 }
                 evaluationMapper.reject(id, caller.getId(), reason);
+                // [2026-05-01] 반려 시 개선요청 이력에도 레코드 생성
+                EvaluationImprovement imp = EvaluationImprovement.builder()
+                        .evaluationId(id)
+                        .requestedBy(caller.getId())
+                        .requestContent(reason)
+                        .responseDueDate(LocalDate.now().plusDays(14))
+                        .status("OPEN")
+                        .build();
+                evaluationImprovementMapper.insert(imp);
                 notifyCompanyContractors(entity.getCompanyId(),
                         "[팬오션] 협력업체 평가 반려",
                         String.format("평가 %s 가 반려되었습니다.%n사유: %s", entity.getEvaluationNo(), reason));

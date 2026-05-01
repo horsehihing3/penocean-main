@@ -421,7 +421,7 @@ const AdminEvaluationReviewPage: React.FC = () => {
                 <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 72 }}>평가결과</TableCell>
                 <TableCell colSpan={5} align="center" sx={{ fontWeight: 700 }}>평가결과 검토</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 72 }}>검토자</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>비고</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>상태</TableCell>
               </TableRow>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 54 }}>평가표</TableCell>
@@ -506,12 +506,12 @@ const AdminEvaluationReviewPage: React.FC = () => {
                           <Button size="small" variant="contained" color="success"
                             disabled={reviewMut.isPending}
                             onClick={() => reviewMut.mutate({ id: row.id, action: 'APPROVE' })}>
-                            검토완료
+                            검토
                           </Button>
                           <Button size="small" variant="outlined" color="warning"
                             disabled={reviewMut.isPending}
                             onClick={() => setRejectPopup(row)}>
-                            개선요청
+                            개선
                           </Button>
                         </Stack>
                       ) : row.status === 'REJECTED' ? (

@@ -275,11 +275,8 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
   const isEditable =
     status === 'DRAFT' ||
     (status === 'REJECTED' && (user?.role === 'ADMIN' || user?.role === 'CONTRACT_DEPT'))
-  const canReview =
-    status === 'SUBMITTED' && (user?.role === 'ADMIN' || user?.role === 'CONTRACT_DEPT')
-  const canAddImprovement =
-    (status === 'APPROVED' || status === 'REJECTED') &&
-    (user?.role === 'ADMIN' || user?.role === 'CONTRACT_DEPT')
+  const canReview = false
+  const canAddImprovement = false
 
   const formatDate = (iso: string) => {
     try {
@@ -850,7 +847,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
               >
                 {saveMut.isPending ? <CircularProgress size={20} /> : t('common.save')}
               </Button>
-              {status === 'DRAFT' && (
+              {(status === 'DRAFT' || status === 'REJECTED') && (
                 <Button
                   variant="contained"
                   startIcon={<SendIcon />}
@@ -862,6 +859,8 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                 >
                   {submitMut.isPending ? (
                     <CircularProgress size={20} />
+                  ) : status === 'REJECTED' ? (
+                    '재제출'
                   ) : (
                     t('common.submit')
                   )}
