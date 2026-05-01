@@ -83,7 +83,7 @@ const EvaluationCreatePage: React.FC = () => {
   })
   const items = itemsQuery.data ?? []
 
-  // [2026-05-01] 구분(category) 병합을 위한 rowSpan 계산
+  // [2026-05-01] 구분(category) 병합을 위한 rowSpan 계산 + 배점 합계
   const categorySpans = useMemo(() => {
     const spans: (number | null)[] = new Array(items.length).fill(null)
     let i = 0
@@ -94,6 +94,14 @@ const EvaluationCreatePage: React.FC = () => {
       i = j
     }
     return spans
+  }, [items])
+
+  const categoryTotals = useMemo(() => {
+    const totals: Record<string, number> = {}
+    items.forEach((it) => {
+      totals[it.category] = (totals[it.category] ?? 0) + it.maxScore
+    })
+    return totals
   }, [items])
 
   const [scores, setScores] = useState<Record<number, number>>({})
@@ -409,9 +417,9 @@ const EvaluationCreatePage: React.FC = () => {
                             borderColor: 'divider',
                           }}
                         >
-                          {it.category.length > 5 ? (
-                            <>{it.category.slice(0, 5)}<br />{it.category.slice(5)}</>
-                          ) : it.category}
+                          <span style={{ wordBreak: 'keep-all' }}>{it.category}</span>
+                          <br />
+                          ({categoryTotals[it.category] ?? 0})
                         </TableCell>
                       )}
                       <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{it.title}</TableCell>

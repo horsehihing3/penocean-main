@@ -499,7 +499,7 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {/* [2026-05-01] 구분(category) rowSpan 병합 */}
+                        {/* [2026-05-01] 구분(category) rowSpan 병합 + 배점 합계 */}
                         {(() => {
                           const scores = detail.itemScores
                           const spans: (number | null)[] = new Array(scores.length).fill(null)
@@ -510,6 +510,10 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                             spans[i] = j - i
                             i = j
                           }
+                          const catTotals: Record<string, number> = {}
+                          scores.forEach((s) => {
+                            catTotals[s.itemCategory] = (catTotals[s.itemCategory] ?? 0) + s.maxScore
+                          })
                           return scores.map((s, idx) => {
                           const liveScore = editScores[s.itemId]?.score ?? s.score
                           const itemAttachments = detail.attachments.filter((a) => a.itemId === s.itemId)
@@ -528,9 +532,9 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                                     borderColor: 'divider',
                                   }}
                                 >
-                                  {s.itemCategory.length > 5 ? (
-                                    <>{s.itemCategory.slice(0, 5)}<br />{s.itemCategory.slice(5)}</>
-                                  ) : s.itemCategory}
+                                  <span style={{ wordBreak: 'keep-all' }}>{s.itemCategory}</span>
+                                  <br />
+                                  ({catTotals[s.itemCategory] ?? 0})
                                 </TableCell>
                               )}
                               <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{s.itemTitle}</TableCell>
