@@ -9,6 +9,7 @@
 ## ⚡ 다음 세션 작업 (우선순위 순)
 
 ### 🟡 다음 작업
+- [ ] **업체평가 반려→재제출 절차 실 사용 검증** — CONTRACT_DEPT 반려수정 재제출 → ADMIN 재검토 전체 플로우 현장 확인
 - [ ] **보건파트 NHIS 파서 실제 PDF 테스트** — NhisHealthCheckupParser.java 동작 검증 (파일 업로드 → 수치 파싱 확인). 이름/검진일 파싱 정확도 검증 후 정규식 보완 필요
 - [ ] **보건파트 이미지 파서 활성화** — ANTHROPIC_API_KEY 발급 후 `application-local.yml`에 설정, `이미지(JPG) 선택` 버튼 실제 동작 전환 (현재 준비중 메시지)
 - [ ] **보건파트 추가 병원 PDF 파서** — 우리원/하나로/중앙/강북삼성 PDF 양식 확보 시 HealthCheckupParser 구현체 추가
