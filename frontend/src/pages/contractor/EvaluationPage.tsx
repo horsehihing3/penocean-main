@@ -66,7 +66,7 @@ const EvaluationPage: React.FC = () => {
         ? {
             businessNumber: false,
             submittedAt: false,
-            evaluationType: false,
+            evaluatorName: false,
           }
         : {},
     [isMobile]
@@ -101,18 +101,26 @@ const EvaluationPage: React.FC = () => {
 
   const canCreate = user?.role === 'ADMIN' || user?.role === 'CONTRACT_DEPT'
 
+  // [2026-05-01] 이미지 기준 컬럼 순서/명칭 정렬, H1→상반기/H2→하반기
+  const halfLabel = (h: string) => (h === 'H1' ? '상반기' : '하반기')
+
   const columns: GridColDef<EvaluationListItem>[] = [
     {
-      field: 'evaluationNo',
-      headerName: t('evaluation.evaluationNo'),
-      width: 160,
+      field: 'rowNo',
+      headerName: 'No',
+      width: 60,
+      sortable: false,
+      renderCell: (p) => {
+        const idx = (listQuery.data?.content ?? []).findIndex((r) => r.id === p.row.id)
+        return page * pageSize + idx + 1
+      },
     },
     {
       field: 'period',
-      headerName: t('evaluation.period'),
-      width: 120,
+      headerName: '평가 연도/반기',
+      width: 140,
       sortable: false,
-      valueGetter: (p) => `${p.row.periodYear} ${p.row.periodHalf}`,
+      valueGetter: (p) => `${p.row.periodYear}년 ${halfLabel(p.row.periodHalf)}`,
     },
     {
       field: 'companyName',
@@ -126,22 +134,26 @@ const EvaluationPage: React.FC = () => {
       width: 140,
     },
     {
+      field: 'submittedAt',
+      headerName: '평가일',
+      width: 110,
+      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
+    },
+    {
       field: 'score',
-      headerName: t('evaluation.score'),
-      width: 160,
+      headerName: t('evaluation.totalScore'),
+      width: 110,
       sortable: false,
       valueGetter: (p) => {
         const total = p.row.totalScore
         const max = p.row.maxTotalScore
-        const pct = p.row.scorePercentage
         if (total == null || max == null) return '-'
-        const pctStr = pct != null ? `${Number(pct).toFixed(1)}%` : '-'
-        return `${total}/${max} (${pctStr})`
+        return `${total} / ${max}`
       },
     },
     {
       field: 'qualified',
-      headerName: t('evaluation.qualifiedCol'),
+      headerName: '점검결과',
       width: 100,
       renderCell: (p) => (
         <Chip
@@ -155,7 +167,7 @@ const EvaluationPage: React.FC = () => {
     {
       field: 'attachmentCount',
       headerName: t('evaluation.attachments'),
-      width: 110,
+      width: 90,
       sortable: false,
       valueGetter: (p) => {
         const n = p.row.attachmentCount ?? 0
@@ -176,29 +188,11 @@ const EvaluationPage: React.FC = () => {
       ),
     },
     {
-      field: 'submittedAt',
-      headerName: t('evaluation.submittedAt'),
-      width: 130,
-      valueFormatter: (p) => (p.value ? formatDate(p.value as string) : ''),
-    },
-    {
-      field: 'actions',
-      headerName: t('approval.colActions'),
+      field: 'evaluatorName',
+      headerName: '검토자',
       width: 100,
       sortable: false,
-      filterable: false,
-      renderCell: (p) => (
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={(e) => {
-            e.stopPropagation()
-            setSelectedId(p.row.id)
-          }}
-        >
-          {t('approval.detail')}
-        </Button>
-      ),
+      valueGetter: (p) => p.row.evaluatorName ?? '',
     },
   ]
 
@@ -270,8 +264,8 @@ const EvaluationPage: React.FC = () => {
               }}
             >
               <MenuItem value="">{t('approval.filterAll')}</MenuItem>
-              <MenuItem value="H1">H1</MenuItem>
-              <MenuItem value="H2">H2</MenuItem>
+              <MenuItem value="H1">상반기</MenuItem>
+              <MenuItem value="H2">하반기</MenuItem>
             </Select>
           </FormControl>
 

@@ -142,7 +142,7 @@
     "workerVoice": "근로자 의견",
     "contractor": "협력업체 안전보건 (계약부서용)",
     "contractorProcedure": "협력업체 안전보건 절차",
-    "contractorEval": "업체평가",
+    "contractorEval": "업체평가 및 반기평가",
     "contractorAccident": "산재 List",
     "notice": "공지사항",
     "noticeBoard": "공지",
@@ -384,7 +384,7 @@
     "backHome": "대시보드로 이동"
   },
   "evaluation": {
-    "pageTitle": "협력업체 평가",
+    "pageTitle": "업체평가 및 반기평가",
     "create": "신규 평가",
     "detailTitle": "평가 상세",
     "step1": "기본 정보",
