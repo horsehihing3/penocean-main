@@ -1,27 +1,38 @@
-import { Box, Paper, Typography, Stack, Chip, Grid, Alert, Button } from '@mui/material'
+import { useState } from 'react'
+import {
+  Box,
+  Paper,
+  Typography,
+  Stack,
+  Chip,
+  Grid,
+  Alert,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+} from '@mui/material'
 import FlagIcon from '@mui/icons-material/Flag'
 import HandshakeIcon from '@mui/icons-material/Handshake'
 import WorkIcon from '@mui/icons-material/Work'
 import ReplayIcon from '@mui/icons-material/Replay'
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
+import CloseIcon from '@mui/icons-material/Close'
+import ArticleIcon from '@mui/icons-material/Article'
 
-// PPT slide 18: 계약부서용 협력업체 안전보건 절차 (업체선정 → 도급계약 기획 →
-// 업무 진행 → 업무 종료/재계약)
-const PHASES: {
-  icon: React.ReactNode
-  title: string
-  color: string
-  items: string[]
-}[] = [
+// PPT slide 18 — 오른쪽: 단계별 주요 활동
+const PHASES: { icon: React.ReactNode; title: string; color: string; items: string[] }[] = [
   {
     icon: <FlagIcon />,
     title: '업체선정 후 도급계약 기획',
     color: '#1d4ed8',
-    items: [
-      '① 안전보건 평가 (계약담당팀 시행)',
-      '② 위험성 평가 자료 요청',
-    ],
+    items: ['① 안전보건 평가 (계약담당팀 시행)', '② 위험성 평가 자료 요청'],
   },
   {
     icon: <HandshakeIcon />,
@@ -47,24 +58,52 @@ const PHASES: {
     icon: <ReplayIcon />,
     title: '업무 종료 / 재계약',
     color: '#b45309',
-    items: [
-      '① 재계약 시 평가 결과 등 반영하여 진행',
-    ],
+    items: ['① 재계약 시 평가 결과 등 반영하여 진행'],
   },
 ]
 
+// PPT slide 18 — 왼쪽: 협력업체 안전보건 절차 테이블
+const PROC_ROWS: {
+  stage?: string
+  stageSpan?: number
+  main: string
+  safety: string
+  contractor: string
+  note: string
+}[] = [
+  { stage: '사업설계\n단계', stageSpan: 3, main: '사업 설계', safety: '', contractor: '', note: '유해위험요인 사전 확인\n안전보건 정보 사전 제공' },
+  { main: '', safety: '사전 검토\n및 안내', contractor: '', note: '안전관련 사항 사전 검토\n(도급업무 안전보건관련 사항)' },
+  { main: '사업 품의\n및 시행', safety: '', contractor: '', note: '업체 선정시 업체평가 시행' },
+  { stage: '계약\n단계', stageSpan: 3, main: '계약서 작성', safety: '', contractor: '', note: '' },
+  { main: '', safety: '안전보건\n조항 검토', contractor: '현장실사\n(필요시)', note: '안전보건관련 계약 조항 검토\n현장 위험정보 제공(수급인)' },
+  { main: '계약 체결', safety: '', contractor: '', note: '안전관련 사항 사전 검토' },
+  { stage: '도급\n전단계', stageSpan: 4, main: '안전관리계획서\n접수', safety: '', contractor: '안전관리계획서\n제출', note: '' },
+  { main: '안전관리계획서\n검토', safety: '', contractor: '', note: '' },
+  { main: '안전관리계획서\n승인', safety: '', contractor: '', note: '' },
+  { main: '도급·용역·위탁\n전 회의', safety: '', contractor: '', note: '' },
+]
+
+const cellSx = {
+  fontSize: '0.78rem',
+  whiteSpace: 'pre-line',
+  verticalAlign: 'middle',
+  textAlign: 'center' as const,
+  border: '1px solid',
+  borderColor: 'divider',
+  p: '6px 8px',
+}
+
 const ContractDeptProcedurePage: React.FC = () => {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
+  const [procOpen, setProcOpen] = useState(false)
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h5" sx={{ fontWeight: 700 }}>
-        {t('contractor.procedure.title')}
+        협력업체 안전보건평가
       </Typography>
 
-      <Alert severity="info" sx={{ mb: 2 }}>
-        {t('contractor.procedure.intro')}
+      <Alert severity="info">
+        협력업체 선정부터 계약·업무 진행·재계약까지 4단계 안전보건 절차입니다.
       </Alert>
 
       <Grid container spacing={2}>
@@ -114,14 +153,67 @@ const ContractDeptProcedurePage: React.FC = () => {
         ))}
       </Grid>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 3 }}>
-        <Button variant="contained" onClick={() => navigate('/contractor/evaluation')}>
-          {t('contractor.procedure.goEval')}
-        </Button>
-        <Button variant="outlined" onClick={() => navigate('/contractor/evaluation/new')}>
-          {t('contractor.procedure.goEvalNew')}
+      {/* 하단 버튼 */}
+      <Stack direction="row" sx={{ mt: 1 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArticleIcon />}
+          onClick={() => setProcOpen(true)}
+        >
+          안전보건 절차
         </Button>
       </Stack>
+
+      {/* 안전보건 절차 팝업 */}
+      <Dialog open={procOpen} onClose={() => setProcOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700 }}>
+          협력업체 안전보건 절차
+          <IconButton size="small" onClick={() => setProcOpen(false)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 2 }}>
+          <TableContainer>
+            <Table size="small" sx={{ tableLayout: 'fixed', borderCollapse: 'collapse' }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: '#1e3a5f' }}>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }}>구분{'\n'}(단계)</TableCell>
+                  <TableCell colSpan={2} sx={{ ...cellSx, color: 'white', fontWeight: 700, textAlign: 'center' }}>
+                    PANOCEAN (도급인)
+                  </TableCell>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>협력사{'\n'}(수급인)</TableCell>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700 }}>비고</TableCell>
+                </TableRow>
+                <TableRow sx={{ bgcolor: '#2d5186' }}>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 70 }} />
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>도급주관부서</TableCell>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }}>안전부서</TableCell>
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700, width: 110 }} />
+                  <TableCell sx={{ ...cellSx, color: 'white', fontWeight: 700 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {PROC_ROWS.map((row, idx) => (
+                  <TableRow key={idx}>
+                    {row.stage !== undefined && (
+                      <TableCell
+                        rowSpan={row.stageSpan}
+                        sx={{ ...cellSx, fontWeight: 700, bgcolor: '#f0f4ff' }}
+                      >
+                        {row.stage}
+                      </TableCell>
+                    )}
+                    <TableCell sx={cellSx}>{row.main}</TableCell>
+                    <TableCell sx={cellSx}>{row.safety}</TableCell>
+                    <TableCell sx={cellSx}>{row.contractor}</TableCell>
+                    <TableCell sx={{ ...cellSx, textAlign: 'left' }}>{row.note}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+      </Dialog>
     </Box>
   )
 }
