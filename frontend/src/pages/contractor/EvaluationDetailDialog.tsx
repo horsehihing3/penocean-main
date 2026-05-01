@@ -531,8 +531,8 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                                   {s.itemCategory}
                                 </TableCell>
                               )}
-                              <TableCell>{s.itemTitle}</TableCell>
-                              <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                              <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{s.itemTitle}</TableCell>
+                              <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem', whiteSpace: 'normal', wordBreak: 'keep-all' }}>
                                 {s.itemDescription ?? '-'}
                               </TableCell>
                               <TableCell align="right">{s.maxScore}</TableCell>

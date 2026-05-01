@@ -412,8 +412,8 @@ const EvaluationCreatePage: React.FC = () => {
                           {it.category}
                         </TableCell>
                       )}
-                      <TableCell>{it.title}</TableCell>
-                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                      <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{it.title}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary', fontSize: '0.8rem', whiteSpace: 'normal', wordBreak: 'keep-all' }}>
                         {it.description ?? '-'}
                       </TableCell>
                       <TableCell align="right">{it.maxScore}</TableCell>
