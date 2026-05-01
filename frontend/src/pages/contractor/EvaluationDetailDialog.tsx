@@ -528,9 +528,9 @@ const EvaluationDetailDialog: React.FC<Props> = ({ evaluationId, open, onClose }
                                     borderColor: 'divider',
                                   }}
                                 >
-                                  {s.itemCategory.length > 5
-                                    ? s.itemCategory.slice(0, 5) + '\u200B' + s.itemCategory.slice(5)
-                                    : s.itemCategory}
+                                  {s.itemCategory.length > 5 ? (
+                                    <>{s.itemCategory.slice(0, 5)}<br />{s.itemCategory.slice(5)}</>
+                                  ) : s.itemCategory}
                                 </TableCell>
                               )}
                               <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{s.itemTitle}</TableCell>

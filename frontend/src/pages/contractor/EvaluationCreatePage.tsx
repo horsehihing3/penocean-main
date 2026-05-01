@@ -409,9 +409,9 @@ const EvaluationCreatePage: React.FC = () => {
                             borderColor: 'divider',
                           }}
                         >
-                          {it.category.length > 5
-                            ? it.category.slice(0, 5) + '\u200B' + it.category.slice(5)
-                            : it.category}
+                          {it.category.length > 5 ? (
+                            <>{it.category.slice(0, 5)}<br />{it.category.slice(5)}</>
+                          ) : it.category}
                         </TableCell>
                       )}
                       <TableCell sx={{ whiteSpace: 'normal', wordBreak: 'keep-all' }}>{it.title}</TableCell>
