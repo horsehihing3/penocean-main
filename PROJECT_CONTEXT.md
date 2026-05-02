@@ -9,6 +9,7 @@
 ## ⚡ 다음 세션 작업 (우선순위 순)
 
 ### 🟡 다음 작업
+- [ ] **비로그인 업로드 링크 모바일 실 테스트** — /?upload=TOKEN 패턴으로 ngrok 인터스티셜 우회 수정됨, 모바일에서 링크 재생성 후 동작 최종 확인 필요
 - [ ] **업체평가 반려→재제출 절차 실 사용 검증** — CONTRACT_DEPT 반려수정 재제출 → ADMIN 재검토 전체 플로우 현장 확인
 - [ ] **보건파트 NHIS 파서 실제 PDF 테스트** — NhisHealthCheckupParser.java 동작 검증 (파일 업로드 → 수치 파싱 확인). 이름/검진일 파싱 정확도 검증 후 정규식 보완 필요
 - [ ] **보건파트 이미지 파서 활성화** — ANTHROPIC_API_KEY 발급 후 `application-local.yml`에 설정, `이미지(JPG) 선택` 버튼 실제 동작 전환 (현재 준비중 메시지)
@@ -16,7 +17,7 @@
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
 - [ ] **이메일 팬오션 SMTP 전환** — 현재 Gmail App Password 임시 사용. 팬오션 IT팀에서 SMTP 서버/계정 정보 받은 후 `application-local.yml`만 수정
 - [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
-- [ ] **출입신청 첨부파일 다운로드 원본 파일명** — 서식함과 동일하게 `/access-requests/{id}/attachments/{attId}/download` 엔드포인트 추가 검토
+- [x] **출입신청 첨부파일 다운로드** — `GET /access-requests/{id}/attachments/{attId}/download` 구현 완료, 정보수집 팝업에 다운로드 버튼 추가
 
 ### ⛔ 착수 보류 — 외부 확인 필요
 > 아래 항목은 고객/기획 확인 전 착수 시 롤백 위험 있음
