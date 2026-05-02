@@ -29,4 +29,9 @@ public class AccessRequestListItem {
     private String status;
     private LocalDateTime submittedAt;
     private LocalDateTime createdAt;
+    // [2026-05-02] 비로그인 업로드 토큰 및 첨부파일 수
+    private String uploadToken;
+    private LocalDateTime tokenExpiresAt;
+    private Integer attachmentCount;      // 출입신청 시 업로드 (uploaded_by NOT NULL)
+    private Integer linkAttachmentCount;  // 토큰 링크로 업로드 (uploaded_by IS NULL)
 }

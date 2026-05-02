@@ -113,6 +113,7 @@ const menuItems: MenuItem[] = [
       },
       { textKey: 'nav.adminHealth', icon: <MedicalServicesIcon />, path: '/admin/health' },
       { textKey: 'nav.adminQrEducation', icon: <QrCode2Icon />, path: '/admin/qr-education' },
+      { textKey: 'nav.adminDevQnA', icon: <ArticleIcon />, path: '/admin/dev-qna' },
     ],
   },
 ]

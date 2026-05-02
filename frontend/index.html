@@ -17,12 +17,18 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- QR 파라미터 감지 → /qr/:token 으로 리다이렉트 (ngrok 인터스티셜 우회용) -->
+    <!-- QR/업로드 파라미터 감지 → 해당 경로로 리다이렉트 (ngrok 인터스티셜 우회용) -->
     <script>
       (function() {
-        var qr = new URLSearchParams(window.location.search).get('qr');
+        var params = new URLSearchParams(window.location.search);
+        var qr = params.get('qr');
         if (qr && /^[a-f0-9]{32}$/.test(qr)) {
           window.location.replace('/qr/' + qr);
+          return;
+        }
+        var upload = params.get('upload');
+        if (upload && /^[a-f0-9]{32}$/.test(upload)) {
+          window.location.replace('/upload/' + upload);
         }
       })();
     </script>

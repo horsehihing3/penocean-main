@@ -36,6 +36,9 @@ public class AccessRequest {
     private String safetyManagerName;
     private String safetyManagerTel;
     private String safetyManagerEmail;
+    // [2026-05-02] 비로그인 파일 업로드용 토큰
+    private String uploadToken;
+    private LocalDateTime tokenExpiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean deleted;

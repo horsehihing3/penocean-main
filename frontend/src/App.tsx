@@ -41,7 +41,9 @@ import LandBudgetPage from './pages/admin/LandBudgetPage'
 import SeaCrewStatsPage from './pages/admin/SeaCrewStatsPage'
 import AdminHealthPage from './pages/admin/AdminHealthPage'
 import AdminQrEducationPage from './pages/admin/AdminQrEducationPage'
+import DevQnAPage from './pages/admin/DevQnAPage'
 import QrEducationPage from './pages/qr/QrEducationPage'
+import UploadByTokenPage from './pages/UploadByTokenPage'
 
 function App() {
   return (
@@ -50,6 +52,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/qr/:token" element={<QrEducationPage />} />
+      <Route path="/upload/:token" element={<UploadByTokenPage />} />
 
       {/* Protected */}
       <Route
@@ -280,6 +283,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <AdminQrEducationPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/dev-qna"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <DevQnAPage />
             </RoleRoute>
           }
         />

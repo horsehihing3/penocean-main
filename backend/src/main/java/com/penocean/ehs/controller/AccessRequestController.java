@@ -38,6 +38,16 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.penocean.ehs.mapper.AccessAttachmentMapper;
+import com.penocean.ehs.model.AccessAttachment;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.PathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -52,6 +62,10 @@ public class AccessRequestController {
     private final FileStorageService fileStorageService;
     private final WorkerExcelService workerExcelService;
     private final UserMapper userMapper;
+    private final AccessAttachmentMapper accessAttachmentMapper;
+
+    @Value("${file.upload-dir:./uploads}")
+    private String uploadDir;
 
     @GetMapping
     @Operation(summary = "출입신청 목록")
@@ -246,6 +260,39 @@ public class AccessRequestController {
         User caller = resolveUser(userDetails);
         accessRequestService.removeAttachment(id, attachmentId, caller);
         return ResponseEntity.ok(ApiResponse.success("삭제되었습니다", null));
+    }
+
+    // [2026-05-02] 첨부파일 다운로드
+    @GetMapping("/{id}/attachments/{attachmentId}/download")
+    @Operation(summary = "첨부파일 다운로드")
+    public ResponseEntity<Resource> downloadAttachment(
+            @PathVariable Long id,
+            @PathVariable Long attachmentId) throws Exception {
+        AccessAttachment att = accessAttachmentMapper.findById(attachmentId);
+        if (att == null || !att.getAccessRequestId().equals(id)) {
+            throw new ResourceNotFoundException("Attachment", "id", attachmentId);
+        }
+        Path filePath = Paths.get(uploadDir).toAbsolutePath().resolve(att.getFilePath()).normalize();
+        Resource resource = new PathResource(filePath);
+        if (!resource.exists()) throw new ResourceNotFoundException("File", "path", att.getFilePath());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(att.getFileName(), StandardCharsets.UTF_8)
+                                .build().toString())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    @PostMapping("/{id}/upload-token")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('CONTRACT_DEPT')")
+    @Operation(summary = "비로그인 파일 업로드 토큰 생성 (30일 만료)")
+    public ResponseEntity<ApiResponse<Map<String, String>>> generateUploadToken(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User caller = resolveUser(userDetails);
+        String token = accessRequestService.generateUploadToken(id, caller);
+        return ResponseEntity.ok(ApiResponse.success("업로드 링크가 생성되었습니다", Map.of("token", token)));
     }
 
     @DeleteMapping("/{id}")

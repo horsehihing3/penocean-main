@@ -57,4 +57,11 @@ public interface AccessRequestMapper {
      * Caller formats AR-YYYYMMDD-NNNN with max+1.
      */
     Integer findMaxRequestNoSeq(@Param("dateYmd") String dateYmd);
+
+    // [2026-05-02] 비로그인 업로드 토큰
+    void saveUploadToken(@Param("id") Long id,
+                         @Param("uploadToken") String uploadToken,
+                         @Param("tokenExpiresAt") java.time.LocalDateTime tokenExpiresAt);
+
+    AccessRequest findByUploadToken(@Param("uploadToken") String uploadToken);
 }

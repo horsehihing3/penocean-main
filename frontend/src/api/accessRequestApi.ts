@@ -125,6 +125,13 @@ export const accessRequestApi = {
     )
   },
 
+  generateUploadToken: async (id: number): Promise<string> => {
+    const { data } = await axiosInstance.post<ApiResponse<{ token: string }>>(
+      `/access-requests/${id}/upload-token`
+    )
+    return data.data.token
+  },
+
   remove: async (id: number): Promise<void> => {
     await axiosInstance.delete<ApiResponse<void>>(`/access-requests/${id}`)
   },

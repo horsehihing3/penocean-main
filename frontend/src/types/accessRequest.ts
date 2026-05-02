@@ -35,6 +35,11 @@ export interface AccessRequestListItem {
   status: AccessRequestStatus
   submittedAt: string | null
   improvementRequestReason?: string | null
+  // [2026-05-02] 비로그인 업로드 토큰
+  uploadToken?: string | null
+  tokenExpiresAt?: string | null
+  attachmentCount?: number | null      // 출입신청 시 업로드
+  linkAttachmentCount?: number | null  // 토큰 링크 업로드
 }
 
 export interface AccessRequestWorker {
@@ -52,12 +57,13 @@ export interface AccessRequestWorker {
 
 export interface AccessRequestAttachment {
   id: number
-  attachmentType: AttachmentType
+  attachmentType: AttachmentType | string
   fileName: string
   filePath: string
   fileSize: number
   mimeType: string
   uploadedAt: string
+  uploadedBy: number | null  // null = 토큰 링크 업로드 (비로그인)
 }
 
 export interface AccessRequestReviewLog {

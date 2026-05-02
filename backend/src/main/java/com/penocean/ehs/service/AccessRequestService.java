@@ -483,6 +483,68 @@ public class AccessRequestService {
                 .build());
     }
 
+    // [2026-05-02] 비로그인 업로드 토큰 생성 (30일 만료)
+    @Transactional
+    public String generateUploadToken(Long requestId, User caller) {
+        if (!isAdminOrContractDept(caller)) {
+            throw new UnauthorizedException("링크 생성 권한이 없습니다.");
+        }
+        AccessRequest entity = loadEntity(requestId);
+        String token = java.util.UUID.randomUUID().toString().replace("-", "");
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(30);
+        accessRequestMapper.saveUploadToken(entity.getId(), token, expiresAt);
+        return token;
+    }
+
+    // [2026-05-02] 토큰으로 신청 정보 조회 (비로그인)
+    @Transactional(readOnly = true)
+    public com.penocean.ehs.dto.response.UploadTokenInfoResponse getInfoByToken(String token) {
+        AccessRequest entity = accessRequestMapper.findByUploadToken(token);
+        if (entity == null) {
+            throw new ResourceNotFoundException("UploadToken", "token", token);
+        }
+        if (entity.getTokenExpiresAt() != null && entity.getTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new com.penocean.ehs.exception.BadRequestException("만료된 링크입니다.");
+        }
+        // 선박명·업체명 조회용 상세 조회
+        com.penocean.ehs.dto.response.AccessRequestDetailResponse detail =
+                accessRequestMapper.findByIdWithDetails(entity.getId());
+        return com.penocean.ehs.dto.response.UploadTokenInfoResponse.builder()
+                .accessRequestId(entity.getId())
+                .requestNo(entity.getRequestNo())
+                .companyName(detail != null ? detail.getCompanyName() : null)
+                .vesselName(detail != null ? detail.getVesselName() : null)
+                .workType(entity.getWorkType())
+                .plannedStartDate(entity.getPlannedStartDate())
+                .plannedEndDate(entity.getPlannedEndDate())
+                .status(entity.getStatus())
+                .build();
+    }
+
+    // [2026-05-02] 비로그인 파일 업로드
+    @Transactional
+    public Long uploadByToken(String token, String attachmentType,
+                              String fileName, String filePath, Long fileSize, String mimeType) {
+        AccessRequest entity = accessRequestMapper.findByUploadToken(token);
+        if (entity == null) {
+            throw new ResourceNotFoundException("UploadToken", "token", token);
+        }
+        if (entity.getTokenExpiresAt() != null && entity.getTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new com.penocean.ehs.exception.BadRequestException("만료된 링크입니다.");
+        }
+        AccessAttachment att = AccessAttachment.builder()
+                .accessRequestId(entity.getId())
+                .attachmentType(attachmentType)
+                .fileName(fileName)
+                .filePath(filePath)
+                .fileSize(fileSize)
+                .mimeType(mimeType)
+                .uploadedBy(null)   // 비로그인 — uploaded_by NULL 허용
+                .build();
+        accessAttachmentMapper.insert(att);
+        return att.getId();
+    }
+
     private String generateRequestNo(LocalDate date) {
         String ymd = date.format(YMD);
         Integer max = accessRequestMapper.findMaxRequestNoSeq(ymd);

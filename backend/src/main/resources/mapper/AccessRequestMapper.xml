@@ -24,6 +24,8 @@
     <result property="safetyManagerTel" column="safety_manager_tel"/>
     <result property="safetyManagerEmail" column="safety_manager_email"/>
     <result property="noRiskAssessment" column="no_risk_assessment"/>
+    <result property="uploadToken" column="upload_token"/>
+    <result property="tokenExpiresAt" column="token_expires_at"/>
     <result property="createdAt" column="created_at"/>
     <result property="updatedAt" column="updated_at"/>
     <result property="deleted" column="deleted"/>
@@ -45,6 +47,10 @@
     <result property="status" column="status"/>
     <result property="submittedAt" column="submitted_at"/>
     <result property="createdAt" column="created_at"/>
+    <result property="uploadToken" column="upload_token"/>
+    <result property="tokenExpiresAt" column="token_expires_at"/>
+    <result property="attachmentCount" column="attachment_count"/>
+    <result property="linkAttachmentCount" column="link_attachment_count"/>
   </resultMap>
 
   <resultMap id="DetailResultMap" type="com.penocean.ehs.dto.response.AccessRequestDetailResponse">
@@ -164,7 +170,15 @@
         ar.worker_count,
         ar.status,
         ar.submitted_at,
-        ar.created_at
+        ar.created_at,
+        ar.upload_token,
+        ar.token_expires_at,
+        (SELECT COUNT(1) FROM tb_access_attachment aa
+          WHERE aa.access_request_id = ar.id AND aa.deleted = 0
+            AND aa.uploaded_by IS NOT NULL) AS attachment_count,
+        (SELECT COUNT(1) FROM tb_access_attachment aa
+          WHERE aa.access_request_id = ar.id AND aa.deleted = 0
+            AND aa.uploaded_by IS NULL) AS link_attachment_count
       FROM tb_access_request ar
       LEFT JOIN tb_company c  ON c.id  = ar.company_id  AND c.deleted = 0
       LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
@@ -291,6 +305,25 @@
     SELECT ISNULL(MAX(CAST(RIGHT(request_no, 4) AS INT)), 0)
       FROM tb_access_request
      WHERE request_no LIKE CONCAT('AR-', #{dateYmd}, '-%')
+  </select>
+
+  <!-- [2026-05-02] 비로그인 업로드 토큰 -->
+  <update id="saveUploadToken">
+    UPDATE tb_access_request
+       SET upload_token     = #{uploadToken},
+           token_expires_at = #{tokenExpiresAt,jdbcType=TIMESTAMP},
+           updated_at       = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <select id="findByUploadToken" resultMap="AccessRequestResultMap">
+    SELECT id, request_no, company_id, vessel_id, port_id, work_type, work_description,
+           planned_start_date, planned_end_date, worker_count, status,
+           submitted_by, submitted_at, reviewed_by, reviewed_at, improvement_request_reason,
+           safety_manager_name, safety_manager_tel, safety_manager_email,
+           no_risk_assessment, upload_token, token_expires_at, created_at, updated_at, deleted
+      FROM tb_access_request
+     WHERE upload_token = #{uploadToken} AND deleted = 0
   </select>
 
 </mapper>
