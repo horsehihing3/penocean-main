@@ -148,9 +148,9 @@ const AccessRequestCreatePage: React.FC = () => {
       workDescription: '',
       plannedStartDate: '',
       plannedEndDate: '',
-      safetyManagerName: '',
-      safetyManagerTel: '',
-      safetyManagerEmail: '',
+      safetyManagerName: (!isEditMode && user?.role === 'CONTRACTOR') ? (user?.name ?? '') : '',
+      safetyManagerTel: (!isEditMode && user?.role === 'CONTRACTOR') ? (user?.phone ?? '') : '',
+      safetyManagerEmail: (!isEditMode && user?.role === 'CONTRACTOR') ? (user?.email ?? '') : '',
       workers: [],
     },
   })
@@ -192,8 +192,10 @@ const AccessRequestCreatePage: React.FC = () => {
       const co = companies.find((c) => c.id === Number(watchedCompanyId))
       return co?.industryName ?? '-'
     }
+    // [2026-05-04] CONTRACTOR: user 프로필의 업종명 사용
+    if (user?.role === 'CONTRACTOR') return user?.industryName ?? '-'
     return '-'
-  }, [isEditMode, detail, isAdminOrDept, watchedCompanyId, companies])
+  }, [isEditMode, detail, isAdminOrDept, watchedCompanyId, companies, user])
 
   const watchedStart       = useWatch({ control, name: 'plannedStartDate' })
   const watchedEnd         = useWatch({ control, name: 'plannedEndDate' })
@@ -519,7 +521,7 @@ const AccessRequestCreatePage: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 label={t('accessRequest.companyNameLabel')}
-                value={detail?.companyName ?? user?.name ?? '-'}
+                value={detail?.companyName ?? user?.companyName ?? '-'}
                 fullWidth
                 InputProps={{ readOnly: true }}
                 sx={{ '& .MuiInputBase-input': { color: 'text.secondary' } }}

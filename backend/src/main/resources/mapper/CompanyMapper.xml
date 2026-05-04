@@ -84,6 +84,7 @@
         phone = #{phone},
         email = #{email},
         industry_code = #{industryCode},
+        industry_other = #{industryOther,jdbcType=NVARCHAR},
         status = #{status},
         contract_start_date = #{contractStartDate},
         contract_end_date = #{contractEndDate},

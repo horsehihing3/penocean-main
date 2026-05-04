@@ -1,7 +1,9 @@
 // [2026-04-24] PPT 슬라이드 22(정보수집) 기준으로 전면 재작성
 // [2026-04-25] 맨 우측 첨부파일 컬럼 추가 — 클릭 시 이미지 미리보기 다이얼로그
 // [2026-05-02] 비로그인 업로드 링크 생성 / 링크 첨부파일 컬럼 분리
+// [2026-05-04] 첨부파일 다운로드 JWT 인증 처리 (axios blob) / 첨부파일 컬럼 통합
 import { useState } from 'react'
+import axiosInstance from '../../api/axiosInstance'
 import {
   Alert,
   Box,
@@ -106,15 +108,20 @@ const AttachmentDialog: React.FC<{
   const all = detailQuery.data?.attachments ?? []
   // uploadedBy === null → 토큰 링크 업로드 (비로그인)
   // uploadedBy !== null → 출입신청 시 업로드 (로그인 사용자)
-  const linkAttachments = all.filter((a) => a.uploadedBy === null)
   const reqAttachments  = all.filter((a) => a.uploadedBy !== null)
+  const linkAttachments = all.filter((a) => a.uploadedBy === null)
 
-
-  const handleDownload = (requestId: number, attId: number, fileName: string) => {
+  const handleDownload = async (requestId: number, attId: number, fileName: string) => {
+    const response = await axiosInstance.get(
+      `/access-requests/${requestId}/attachments/${attId}/download`,
+      { responseType: 'blob' }
+    )
+    const url = URL.createObjectURL(response.data)
     const a = document.createElement('a')
-    a.href = `/api/access-requests/${requestId}/attachments/${attId}/download`
+    a.href = url
     a.download = fileName
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -303,11 +310,14 @@ const CompanyManagePage: React.FC = () => {
               sx={{ width: 160 }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>상태</InputLabel>
+              <InputLabel shrink>상태</InputLabel>
               <Select
                 label="상태"
                 value={statusInput}
+                displayEmpty
+                notched
                 onChange={(e) => setStatusInput(e.target.value as StatusFilter)}
+                renderValue={(v) => STATUS_OPTIONS.find((o) => o.value === v)?.label ?? '전체'}
               >
                 {STATUS_OPTIONS.map((o) => (
                   <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
@@ -349,23 +359,14 @@ const CompanyManagePage: React.FC = () => {
                 <TableCell sx={{ width: 190 }}>작업일정</TableCell>
                 <TableCell sx={{ width: 120 }}>작업상세</TableCell>
                 <TableCell align="right" sx={{ width: 90 }}>출입신청인원</TableCell>
-                <TableCell align="center" sx={{ width: 95 }}>
-                  <Tooltip title="출입신청 시 업로드한 파일">
-                    <span>첨부파일</span>
-                  </Tooltip>
-                </TableCell>
-                <TableCell align="center" sx={{ width: 105 }}>
-                  <Tooltip title="링크를 통해 제출된 파일 (승선 당일)">
-                    <span style={{ color: '#1976d2', fontWeight: 600 }}>링크 첨부파일</span>
-                  </Tooltip>
-                </TableCell>
+                <TableCell align="center" sx={{ width: 95 }}>첨부파일</TableCell>
                 <TableCell align="center" sx={{ width: 110 }}>업로드 링크</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {listQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -401,52 +402,32 @@ const CompanyManagePage: React.FC = () => {
                   <TableCell>{row.workType ?? '-'}</TableCell>
                   <TableCell align="right">{row.workerCount ?? '-'}</TableCell>
 
-                  {/* 출입신청 첨부파일 */}
-                  <TableCell align="center">
-                    <Tooltip title={(row.attachmentCount ?? 0) > 0 ? `${row.attachmentCount}건` : '파일 없음'}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          onClick={() => setAttachDialogRow(row)}
-                          color={(row.attachmentCount ?? 0) > 0 ? 'default' : 'default'}
-                          disabled={(row.attachmentCount ?? 0) === 0}
-                        >
-                          <AttachFileIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                    {(row.attachmentCount ?? 0) > 0 && (
-                      <Chip
-                        label={row.attachmentCount}
-                        size="small"
-                        sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }}
-                      />
-                    )}
-                  </TableCell>
-
-                  {/* 링크 첨부파일 */}
-                  <TableCell align="center">
-                    <Tooltip title={(row.linkAttachmentCount ?? 0) > 0 ? `${row.linkAttachmentCount}건` : '제출 없음'}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          onClick={() => setAttachDialogRow(row)}
-                          color={(row.linkAttachmentCount ?? 0) > 0 ? 'primary' : 'default'}
-                          disabled={(row.linkAttachmentCount ?? 0) === 0}
-                        >
-                          <CloudUploadIcon fontSize="small" />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                    {(row.linkAttachmentCount ?? 0) > 0 && (
-                      <Chip
-                        label={row.linkAttachmentCount}
-                        size="small"
-                        color="primary"
-                        sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }}
-                      />
-                    )}
-                  </TableCell>
+                  {/* 첨부파일 (출입신청 + 링크 제출 합산) */}
+                  {(() => {
+                    const total = (row.attachmentCount ?? 0) + (row.linkAttachmentCount ?? 0)
+                    return (
+                      <TableCell align="center">
+                        <Tooltip title={total > 0 ? `${total}건` : '파일 없음'}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => setAttachDialogRow(row)}
+                              disabled={total === 0}
+                            >
+                              <AttachFileIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        {total > 0 && (
+                          <Chip
+                            label={total}
+                            size="small"
+                            sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }}
+                          />
+                        )}
+                      </TableCell>
+                    )
+                  })()}
 
                   {/* 업로드 링크 */}
                   <TableCell align="center">

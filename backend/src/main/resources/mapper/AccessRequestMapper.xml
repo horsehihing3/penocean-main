@@ -58,6 +58,8 @@
     <result property="requestNo" column="request_no"/>
     <result property="companyId" column="company_id"/>
     <result property="companyName" column="company_name"/>
+    <result property="businessNumber" column="business_number"/>
+    <result property="industryOther" column="industry_other"/>
     <result property="vesselId" column="vessel_id"/>
     <result property="vesselName" column="vessel_name"/>
     <result property="portId" column="port_id"/>
@@ -73,6 +75,7 @@
     <result property="reviewedAt" column="reviewed_at"/>
     <result property="improvementRequestReason" column="improvement_request_reason"/>
     <result property="safetyManagerName" column="safety_manager_name"/>
+    <result property="safetyManagerTitle" column="safety_manager_title"/>
     <result property="safetyManagerTel" column="safety_manager_tel"/>
     <result property="safetyManagerEmail" column="safety_manager_email"/>
     <result property="noRiskAssessment" column="no_risk_assessment"/>
@@ -125,7 +128,9 @@
         ar.id,
         ar.request_no,
         ar.company_id,
-        c.name AS company_name,
+        c.name             AS company_name,
+        c.business_number  AS business_number,
+        c.industry_other   AS industry_other,
         ar.vessel_id,
         v.name AS vessel_name,
         ar.port_id,
@@ -141,16 +146,18 @@
         ar.reviewed_at,
         ar.improvement_request_reason,
         ar.safety_manager_name,
+        u.title            AS safety_manager_title,
         ar.safety_manager_tel,
         ar.safety_manager_email,
         ar.no_risk_assessment,
-        ic.name AS industry_name,
+        COALESCE(ic.name, c.industry_other) AS industry_name,
         ar.created_at,
         ar.updated_at
       FROM tb_access_request ar
       LEFT JOIN tb_company c  ON c.id  = ar.company_id AND c.deleted = 0
       LEFT JOIN tb_vessel  v  ON v.id  = ar.vessel_id
       LEFT JOIN tb_code    ic ON ic.group_code = 'INDUSTRY' AND ic.code = c.industry_code AND ic.active = 1
+      LEFT JOIN tb_user    u  ON u.id  = ar.submitted_by AND u.deleted = 0
      WHERE ar.id = #{id} AND ar.deleted = 0
   </select>
 
@@ -163,7 +170,7 @@
         ar.vessel_id,
         v.name  AS vessel_name,
         p.name  AS port_name,
-        ic.name AS industry_name,
+        COALESCE(ic.name, c.industry_other) AS industry_name,
         ar.work_type,
         ar.planned_start_date,
         ar.planned_end_date,

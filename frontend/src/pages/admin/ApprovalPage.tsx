@@ -151,6 +151,7 @@ const ApprovalPage: React.FC = () => {
       '업종': r.industryName ?? '-',
       '기타업종': r.industryOther ?? '-',
       '계약팀': r.contractDeptName ?? '-',
+      '업체명': r.companyName ?? '-',
       '사업자등록번호': r.businessNumber ?? '',
       '직책': r.title ?? '-',
       '성명': r.name ?? '',
@@ -199,11 +200,14 @@ const ApprovalPage: React.FC = () => {
               sx={{ width: 160 }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>{t('approval.filterStatus')}</InputLabel>
+              <InputLabel shrink>{t('approval.filterStatus')}</InputLabel>
               <Select
                 label={t('approval.filterStatus')}
                 value={status}
+                displayEmpty
+                notched
                 onChange={(e) => { setStatus(e.target.value as StatusFilter); setPage(0) }}
+                renderValue={(v) => v === '' ? t('approval.filterAll') : statusLabel(v as ApprovalStatus)}
               >
                 <MenuItem value="">{t('approval.filterAll')}</MenuItem>
                 <MenuItem value="PENDING">{t('approval.statusPending')}</MenuItem>
@@ -266,6 +270,7 @@ const ApprovalPage: React.FC = () => {
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>업종</TableCell>
                 {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>기타업종</TableCell>}
                 {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>계약팀</TableCell>}
+                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>업체명</TableCell>}
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>사업자 등록번호</TableCell>
                 <TableCell colSpan={4} align="center" sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>안전팀담당자</TableCell>
                 <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 140 }}>승인/거절</TableCell>
@@ -281,7 +286,7 @@ const ApprovalPage: React.FC = () => {
             <TableBody>
               {listQuery.isLoading && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <CircularProgress size={28} />
                   </TableCell>
                 </TableRow>
@@ -298,6 +303,7 @@ const ApprovalPage: React.FC = () => {
                   <TableCell>{row.industryName ?? '-'}</TableCell>
                   {!isMobile && <TableCell>{row.industryOther ?? '-'}</TableCell>}
                   {!isMobile && <TableCell>{row.contractDeptName ?? '-'}</TableCell>}
+                  {!isMobile && <TableCell>{row.companyName ?? '-'}</TableCell>}
                   <TableCell>{row.businessNumber}</TableCell>
                   <TableCell>{row.title ?? '-'}</TableCell>
                   <TableCell>{row.name}</TableCell>

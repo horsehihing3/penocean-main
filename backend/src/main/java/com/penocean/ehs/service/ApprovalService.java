@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -69,7 +70,11 @@ public class ApprovalService {
         }
         userMapper.reject(userId, approverUserId);
 
-        notificationService.notifyRegistrationRejected(userId, reason);
+        // [2026-05-04] 반려 사유 + 재가입 토큰 저장
+        String token = UUID.randomUUID().toString();
+        userMapper.updateRejectInfo(userId, reason, token);
+
+        notificationService.notifyRegistrationRejected(userId, reason, token);
         log.info("User rejected: userId={}, approverId={}, reason={}", userId, approverUserId, reason);
     }
 }

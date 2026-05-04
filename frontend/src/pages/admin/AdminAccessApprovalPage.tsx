@@ -40,6 +40,7 @@ import DownloadIcon from '@mui/icons-material/Download'
 import PrintIcon from '@mui/icons-material/Print'
 import TableChartIcon from '@mui/icons-material/TableChart'
 import axios from 'axios'
+import axiosInstance from '../../api/axiosInstance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { accessRequestApi } from '../../api/accessRequestApi'
 import type { AccessRequestStatus, AccessRequestListItem } from '../../types/accessRequest'
@@ -101,14 +102,17 @@ const CompanyPopup: React.FC<{ id: number; companyName: string; onClose: () => v
         {d && (
           <Table size="small">
             <TableBody>
-              <TableRow><TableCell sx={{ fontWeight: 600, width: 110 }}>업체명</TableCell><TableCell>{companyName}</TableCell></TableRow>
+              <TableRow><TableCell sx={{ fontWeight: 600, width: 120 }}>업체명</TableCell><TableCell>{companyName}</TableCell></TableRow>
+              <TableRow><TableCell sx={{ fontWeight: 600 }}>사업자등록번호</TableCell><TableCell>{d.businessNumber ?? '-'}</TableCell></TableRow>
               <TableRow><TableCell sx={{ fontWeight: 600 }}>업종</TableCell><TableCell>{d.industryName ?? '-'}</TableCell></TableRow>
+              <TableRow><TableCell sx={{ fontWeight: 600 }}>기타업종</TableCell><TableCell>{d.industryOther ?? '-'}</TableCell></TableRow>
               <TableRow>
                 <TableCell colSpan={2} sx={{ pt: 1.5, pb: 0.5 }}>
                   <Typography variant="caption" fontWeight={700} color="text.secondary">안전담당자</Typography>
                 </TableCell>
               </TableRow>
               <TableRow><TableCell sx={{ fontWeight: 600 }}>성명</TableCell><TableCell>{d.safetyManagerName ?? '-'}</TableCell></TableRow>
+              <TableRow><TableCell sx={{ fontWeight: 600 }}>직책</TableCell><TableCell>{d.safetyManagerTitle ?? '-'}</TableCell></TableRow>
               <TableRow><TableCell sx={{ fontWeight: 600 }}>Tel</TableCell><TableCell>{d.safetyManagerTel ?? '-'}</TableCell></TableRow>
               <TableRow><TableCell sx={{ fontWeight: 600 }}>E-Mail</TableCell><TableCell sx={{ wordBreak: 'break-all' }}>{d.safetyManagerEmail ?? '-'}</TableCell></TableRow>
             </TableBody>
@@ -192,6 +196,23 @@ const AttachmentPopup: React.FC<{ id: number; vesselName: string; onClose: () =>
     queryFn: () => accessRequestApi.detail(id),
   })
   const attachments = detailQuery.data?.attachments ?? []
+  const noRiskAssessment = detailQuery.data?.noRiskAssessment ?? false
+
+  // [2026-05-04] JWT 인증 포함 파일 열기 → 새 탭에서 PDF/이미지 표시 후 인쇄
+  const openFile = async (attId: number, mimeType?: string | null) => {
+    try {
+      const res = await axiosInstance.get(
+        `/access-requests/${id}/attachments/${attId}/download`,
+        { responseType: 'blob' }
+      )
+      const blob = new Blob([res.data], { type: mimeType ?? res.data.type ?? 'application/octet-stream' })
+      const url = URL.createObjectURL(blob)
+      const tab = window.open(url, '_blank')
+      if (tab) tab.focus()
+    } catch {
+      alert('파일을 열지 못했습니다.')
+    }
+  }
 
   // 고정 순서로 표시: 첨부파일 있으면 매핑, 없으면 빈 슬롯으로 표시
   const docList = FIXED_DOC_TYPES.map((type) => ({
@@ -211,32 +232,37 @@ const AttachmentPopup: React.FC<{ id: number; vesselName: string; onClose: () =>
       <DialogContent dividers>
         {detailQuery.isLoading && <CircularProgress size={24} />}
         <Stack spacing={1.5} sx={{ mt: 1 }}>
-          {docList.map(({ type, label, att }) => (
-            <Paper key={type} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box>
-                <Typography variant="body2" fontWeight={600}>{label}</Typography>
-                <Typography variant="caption" color={att ? 'text.secondary' : 'error'}>
-                  {att ? att.fileName : '미제출'}
-                </Typography>
-              </Box>
-              {att ? (
-                <Button size="small" variant="outlined"
-                  href={`/api/access-requests/${id}/attachments/${att.id}/download`} target="_blank">
-                  열기/인쇄
-                </Button>
-              ) : (
-                <Chip size="small" label="미제출" color="error" variant="outlined" />
-              )}
-            </Paper>
-          ))}
+          {docList.map(({ type, label, att }) => {
+            const isNoRisk = type === 'RISK_ASSESSMENT' && !att && noRiskAssessment
+            return (
+              <Paper key={type} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>{label}</Typography>
+                  <Typography variant="caption" color={att ? 'text.secondary' : isNoRisk ? 'text.disabled' : 'error'}>
+                    {att ? att.fileName : isNoRisk ? '위험성평가 없음' : '미제출'}
+                  </Typography>
+                </Box>
+                {att ? (
+                  <Button size="small" variant="outlined" startIcon={<PrintIcon />}
+                    onClick={() => openFile(att.id, att.mimeType)}>
+                    열기/인쇄
+                  </Button>
+                ) : isNoRisk ? (
+                  <Chip size="small" label="위험성평가 없음" sx={{ color: 'text.disabled', borderColor: 'text.disabled' }} variant="outlined" />
+                ) : (
+                  <Chip size="small" label="미제출" color="error" variant="outlined" />
+                )}
+              </Paper>
+            )
+          })}
           {others.map((att) => (
             <Paper key={att.id} variant="outlined" sx={{ p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
                 <Typography variant="body2" fontWeight={600}>{DOC_TYPE_LABELS[att.attachmentType] ?? att.attachmentType}</Typography>
                 <Typography variant="caption" color="text.secondary">{att.fileName}</Typography>
               </Box>
-              <Button size="small" variant="outlined"
-                href={`/api/access-requests/${id}/attachments/${att.id}/download`} target="_blank">
+              <Button size="small" variant="outlined" startIcon={<PrintIcon />}
+                onClick={() => openFile(att.id, att.mimeType)}>
                 열기/인쇄
               </Button>
             </Paper>
@@ -430,7 +456,7 @@ const AdminAccessApprovalPage: React.FC = () => {
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 46 }}>No.</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700 }}>선박명</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 110 }}>지역/항구</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 100 }}>회사</TableCell>
+                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 100 }}>업체명</TableCell>
                 <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 130 }}>신청일</TableCell>
                 <TableCell colSpan={2} align="center" sx={{ fontWeight: 700, borderBottom: 0 }}>작업일정</TableCell>
                 <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 58 }}>명단</TableCell>
@@ -503,20 +529,28 @@ const AdminAccessApprovalPage: React.FC = () => {
                         </IconButton>
                       </Tooltip>
                     </TableCell>
-                    <TableCell align="center"><StageCell checked={stage.검토중} /></TableCell>
-                    {/* 개선요청 — 항상 체크 표시, 클릭 시 사유 입력 팝업 */}
+                    <TableCell align="center">{!locked && <StageCell checked={stage.검토중} />}</TableCell>
+                    {/* 개선요청 — 검토완료/반려 시 숨김 */}
                     <TableCell align="center">
-                      <Tooltip title="개선요청 사유 입력">
-                        <IconButton size="small" color="warning" onClick={() => setImprovPopup(row)}>
-                          <CheckBoxIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                      {!locked && (
+                        <Tooltip title="개선요청 사유 입력">
+                          <IconButton size="small" color="warning" onClick={() => setImprovPopup(row)}>
+                            <CheckBoxIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </TableCell>
                     <TableCell align="center"><StageCell checked={stage.검토완료} /></TableCell>
                     <TableCell sx={{ fontSize: '0.78rem' }}>김환규</TableCell>
                     {/* 비고 */}
                     <TableCell>
-                      {row.status === 'IN_REVIEW' ? (
+                      {row.status === 'SUBMITTED' ? (
+                        <Button size="small" variant="outlined" color="primary"
+                          disabled={reviewMut.isPending}
+                          onClick={() => reviewMut.mutate({ id: row.id, action: 'START' })}>
+                          검토시작
+                        </Button>
+                      ) : row.status === 'IN_REVIEW' ? (
                         <Stack direction="column" spacing={0.5}>
                           <Button size="small" variant="contained" color="success"
                             disabled={reviewMut.isPending}

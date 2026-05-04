@@ -24,6 +24,8 @@ public class User {
     private Long companyId;           // FK -> tb_company.id (CONTRACTOR 한정)
     private Long departmentId;        // FK -> tb_department.id (CONTRACT_DEPT 한정)
     private String status;            // PENDING / APPROVED / REJECTED / INACTIVE
+    private String rejectionReason;   // 반려 사유
+    private String reapplyToken;      // 재가입 링크 토큰 (UUID)
     private LocalDateTime approvedAt;
     private Long approvedBy;
     private LocalDateTime lastLoginAt;

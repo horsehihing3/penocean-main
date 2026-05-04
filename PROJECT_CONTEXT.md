@@ -17,7 +17,6 @@
 - [ ] **해상직원 사건사고 프론트 페이지 구현** — 백엔드 SeaCrewIncidentController 존재, 프론트 미구현
 - [ ] **이메일 팬오션 SMTP 전환** — 현재 Gmail App Password 임시 사용. 팬오션 IT팀에서 SMTP 서버/계정 정보 받은 후 `application-local.yml`만 수정
 - [ ] **개선요청 이력·산업재해 백엔드 companyId 필터 확인** — CONTRACTOR가 다른 업체 데이터 조회 불가한지 검증
-- [x] **출입신청 첨부파일 다운로드** — `GET /access-requests/{id}/attachments/{attId}/download` 구현 완료, 정보수집 팝업에 다운로드 버튼 추가
 
 ### ⛔ 착수 보류 — 외부 확인 필요
 > 아래 항목은 고객/기획 확인 전 착수 시 롤백 위험 있음
@@ -64,6 +63,19 @@
 ## ✅ 완료된 작업
 
 > 모든 완료 항목 → `docs/ARCHIVE.md` 참조
+
+### [2026-05-04] 오늘 완료
+- [x] **반려 재가입 무한루프 수정** — index.html redirect 스크립트에 `/register` 경로 guard 추가
+- [x] **재가입 시 기타업종 미반영 수정** — `reapplyExistingUser()`에서 기존 company `industryOther` 업데이트, `CompanyMapper.xml` update에 `industry_other` 추가
+- [x] **출입신청 신규작성 회사명·업종·안전담당자 자동채움** — `UserResponse`에 `companyName`·`industryName` 추가, `/auth/me` 응답에서 company JOIN, 프론트 defaultValues에 user 정보 적용
+- [x] **출입신청 목록·방문허가 기타업종 표시** — `AccessRequestMapper.xml`, `VisitPermitMapper.xml`에 `COALESCE(ic.name, c.industry_other)` 적용
+- [x] **사업장 출입신청 허가 UI 개선**
+  - 테이블 헤더 "회사" → "업체명"
+  - 서류 팝업 위험성평가 없음 체크 시 회색 "위험성평가 없음" 표시 (빨간 미제출 → 회색)
+  - SUBMITTED 상태 "검토시작" 버튼 추가 (누락으로 상태 변경 불가했던 버그)
+  - 검토완료/반려 시 검토중·개선요청 체크박스 숨김
+- [x] **업체정보 팝업 필드 추가** — 사업자등록번호·기타업종·안전담당자 직책 (`AccessRequestDetailResponse` + SQL JOIN 추가)
+- [x] **서류 열기/인쇄 JWT 인증 수정** — `href` 직접 링크 → `axiosInstance` blob fetch 후 새 탭 열기
 
 ---
 
@@ -163,6 +175,7 @@ ANTHROPIC_API_KEY   # Claude Vision API 키 — 이미지 파서 활성화 시 �
 | admin | `/admin/safety-performance/sea` | ✅ (해상 안전보건실적 월간 편집) |
 | admin | `/admin/sea-budget` | ⏳ 준비중 화면 |
 | admin | `/admin/sea-crew-stats` | ✅ 실 동작 (해상직원 질병/부상 통계) |
+| admin | `/admin/access-approval` | ✅ (사업장 출입신청 허가) |
 
 ---
 

@@ -3,11 +3,14 @@ package com.penocean.ehs.service;
 import com.penocean.ehs.dto.request.LoginRequest;
 import com.penocean.ehs.dto.request.RegisterRequest;
 import com.penocean.ehs.dto.response.LoginResponse;
+import com.penocean.ehs.dto.response.ReapplyInfoResponse;
 import com.penocean.ehs.dto.response.UserResponse;
 import com.penocean.ehs.exception.BadRequestException;
 import com.penocean.ehs.exception.ResourceNotFoundException;
+import com.penocean.ehs.mapper.CodeMasterMapper;
 import com.penocean.ehs.mapper.CompanyMapper;
 import com.penocean.ehs.mapper.UserMapper;
+import com.penocean.ehs.model.CodeMaster;
 import com.penocean.ehs.model.Company;
 import com.penocean.ehs.model.User;
 import com.penocean.ehs.security.JwtTokenProvider;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -30,6 +34,7 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final CompanyMapper companyMapper;
+    private final CodeMasterMapper codeMasterMapper;
     private final JwtTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
@@ -110,7 +115,21 @@ public class AuthService {
         if (user == null) {
             throw new ResourceNotFoundException("User not found");
         }
-        return UserResponse.from(user);
+        UserResponse resp = UserResponse.from(user);
+        // [2026-05-04] 회사명·업종명 포함
+        if (user.getCompanyId() != null) {
+            Company company = companyMapper.findById(user.getCompanyId());
+            if (company != null) {
+                resp.setCompanyName(company.getName());
+                if (company.getIndustryOther() != null && !company.getIndustryOther().isBlank()) {
+                    resp.setIndustryName(company.getIndustryOther());
+                } else if (company.getIndustryCode() != null) {
+                    CodeMaster code = codeMasterMapper.findByGroupAndCode("INDUSTRY", company.getIndustryCode());
+                    resp.setIndustryName(code != null ? code.getName() : company.getIndustryCode());
+                }
+            }
+        }
+        return resp;
     }
 
     /**
@@ -130,6 +149,12 @@ public class AuthService {
 
         if (userMapper.existsByUsername(username) == 1) {
             throw new BadRequestException("이미 사용 중인 아이디입니다");
+        }
+
+        // [2026-05-04] REJECTED 상태 재가입: 기존 레코드 UPDATE
+        User rejectedUser = userMapper.findByUsername(username);
+        if (rejectedUser != null && "REJECTED".equalsIgnoreCase(rejectedUser.getStatus())) {
+            return reapplyExistingUser(rejectedUser, request);
         }
 
         // 1. Company upsert
@@ -214,5 +239,110 @@ public class AuthService {
     // [2026-04-30] 사업자번호 중복확인
     public boolean isBusinessNumberAvailable(String businessNumber) {
         return companyMapper.findByBusinessNumber(businessNumber) == null;
+    }
+
+    // [2026-05-04] 재가입 토큰으로 기존 신청 정보 조회
+    @Transactional(readOnly = true)
+    public ReapplyInfoResponse getReapplyInfo(String token) {
+        User user = userMapper.findByReapplyToken(token);
+        if (user == null) {
+            throw new BadRequestException("유효하지 않거나 만료된 재가입 링크입니다");
+        }
+        Company company = user.getCompanyId() != null
+                ? companyMapper.findById(user.getCompanyId()) : null;
+        List<String> industries = userMapper.findIndustriesByUserId(user.getId());
+        List<String> deptCodes  = userMapper.findDepartmentCodesByUserId(user.getId());
+
+        return ReapplyInfoResponse.builder()
+                .username(user.getUsername())
+                .companyName(company != null ? company.getName() : null)
+                .companyNameEn(company != null ? company.getNameEn() : null)
+                .businessNumber(company != null ? company.getBusinessNumber() : null)
+                .companyPhone(company != null ? company.getPhone() : null)
+                .postalCode(company != null ? company.getPostalCode() : null)
+                .address(company != null ? company.getAddress() : null)
+                .addressDetail(company != null ? company.getAddressDetail() : null)
+                .contactName(user.getName())
+                .contactTitle(user.getTitle())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .industryCodes(industries)
+                .industryOther(company != null ? company.getIndustryOther() : null)
+                .contractDepartments(deptCodes)
+                .rejectionReason(user.getRejectionReason())
+                .build();
+    }
+
+    // [2026-05-04] REJECTED 사용자 재가입 처리
+    @Transactional
+    private UserResponse reapplyExistingUser(User rejectedUser, RegisterRequest request) {
+        Long userId = rejectedUser.getId();
+
+        // 1. Company upsert
+        Company company = companyMapper.findByBusinessNumber(request.getBusinessNumber());
+        Long companyId;
+        if (company != null) {
+            companyId = company.getId();
+            // [2026-05-04] 재가입 시 기타업종 등 변경 가능 필드 업데이트
+            String primaryIndustryUpd = (request.getIndustryCodes() != null && !request.getIndustryCodes().isEmpty())
+                    ? request.getIndustryCodes().get(0) : company.getIndustryCode();
+            company.setIndustryCode(primaryIndustryUpd);
+            company.setIndustryOther(request.getIndustryOther());
+            companyMapper.update(company);
+        } else {
+            String primaryIndustry = request.getIndustryCodes().isEmpty()
+                    ? null : request.getIndustryCodes().get(0);
+            Company newCompany = Company.builder()
+                    .businessNumber(request.getBusinessNumber())
+                    .name(request.getCompanyName())
+                    .nameEn(request.getCompanyNameEn())
+                    .ceoName(request.getContactName())
+                    .postalCode(request.getPostalCode())
+                    .address(request.getAddress())
+                    .addressDetail(request.getAddressDetail())
+                    .phone(request.getCompanyPhone() != null
+                            ? request.getCompanyPhone() : request.getPhone())
+                    .email(request.getEmail())
+                    .industryCode(primaryIndustry)
+                    .industryOther(request.getIndustryOther())
+                    .businessLicenseFilePath(request.getBusinessLicenseFilePath())
+                    .status("ACTIVE")
+                    .contractStartDate(LocalDate.now())
+                    .contractEndDate(LocalDate.now().plusYears(2))
+                    .build();
+            companyMapper.insert(newCompany);
+            companyId = newCompany.getId();
+        }
+
+        // 2. 기존 user 레코드 PENDING 으로 리셋
+        userMapper.reapplyUpdate(userId,
+                passwordEncoder.encode(request.getPassword()),
+                request.getContactName(),
+                request.getContactTitle(),
+                request.getEmail(),
+                request.getPhone(),
+                companyId);
+
+        // 3. 업종·계약팀 재설정
+        userMapper.deleteUserIndustries(userId);
+        if (request.getIndustryCodes() != null) {
+            for (String code : request.getIndustryCodes()) {
+                if (code != null && !code.isBlank()) userMapper.insertUserIndustry(userId, code);
+            }
+        }
+        userMapper.deleteUserDepartments(userId);
+        if (request.getContractDepartments() != null) {
+            for (String deptCode : request.getContractDepartments()) {
+                if (deptCode == null || deptCode.isBlank()) continue;
+                Long deptId = userMapper.findDepartmentIdByCode(deptCode);
+                if (deptId != null) userMapper.insertUserDepartment(userId, deptId);
+            }
+        }
+
+        notificationService.notifyRegistrationRequestToAdmins(
+                request.getCompanyName(), request.getBusinessNumber());
+        log.info("Re-registration submitted: username={}", rejectedUser.getUsername());
+
+        return UserResponse.from(userMapper.findById(userId));
     }
 }

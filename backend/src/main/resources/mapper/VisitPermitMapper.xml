@@ -74,7 +74,7 @@
   <select id="findDetailById" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.company_id, c.name AS company_name, COALESCE(ic.name, c.industry_other) AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -89,7 +89,7 @@
   <select id="findByPermitNo" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.company_id, c.name AS company_name, COALESCE(ic.name, c.industry_other) AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -104,7 +104,7 @@
   <select id="findByAccessRequestId" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.company_id, c.name AS company_name, COALESCE(ic.name, c.industry_other) AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at
@@ -120,7 +120,7 @@
   <select id="findPage" resultMap="VisitPermitDetailMap">
     SELECT
         vp.id, vp.permit_no, vp.access_request_id, ar.request_no AS access_request_no,
-        vp.company_id, c.name AS company_name, ic.name AS industry_name,
+        vp.company_id, c.name AS company_name, COALESCE(ic.name, c.industry_other) AS industry_name,
         vp.vessel_id, v.name AS vessel_name,
         vp.valid_from, vp.valid_to, vp.qr_code_url, vp.issued_by, vp.issued_at,
         vp.revoked, vp.revoked_reason, vp.revoked_at

@@ -4,6 +4,7 @@ import com.penocean.ehs.common.ApiResponse;
 import com.penocean.ehs.dto.request.LoginRequest;
 import com.penocean.ehs.dto.request.RegisterRequest;
 import com.penocean.ehs.dto.response.LoginResponse;
+import com.penocean.ehs.dto.response.ReapplyInfoResponse;
 import com.penocean.ehs.dto.response.UserResponse;
 import com.penocean.ehs.exception.UnauthorizedException;
 import com.penocean.ehs.service.AuthService;
@@ -66,6 +67,14 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkBusinessNumber(@RequestParam String businessNumber) {
         boolean available = authService.isBusinessNumberAvailable(businessNumber);
         return ResponseEntity.ok(ApiResponse.success(Map.of("available", available)));
+    }
+
+    // [2026-05-04] 반려 재가입 정보 조회 (비로그인)
+    @GetMapping("/reapply-info")
+    @Operation(summary = "반려 재가입 정보 조회", description = "반려 이메일의 토큰으로 기존 신청 정보를 반환한다")
+    public ResponseEntity<ApiResponse<ReapplyInfoResponse>> reapplyInfo(@RequestParam String token) {
+        ReapplyInfoResponse info = authService.getReapplyInfo(token);
+        return ResponseEntity.ok(ApiResponse.success(info));
     }
 
     @GetMapping("/me")

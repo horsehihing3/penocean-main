@@ -21,6 +21,8 @@ public class UserResponse {
     private String phone;
     private String role;              // ADMIN / CONTRACTOR / CONTRACT_DEPT
     private Long companyId;
+    private String companyName;       // [2026-05-04] 회사명 (tb_company.name)
+    private String industryName;      // [2026-05-04] 업종명 (코드 라벨 또는 기타)
     private Long departmentId;
     private String status;
     private LocalDateTime lastLoginAt;

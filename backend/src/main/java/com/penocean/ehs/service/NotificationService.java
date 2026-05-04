@@ -112,15 +112,17 @@ public class NotificationService {
         notifyUser(userId, "EMAIL", subject, body);
     }
 
-    /** 가입 반려 → 협력업체 알림. reason 을 그대로 본문에 반영 (PPT slide 9) */
-    public void notifyRegistrationRejected(Long userId, String reason) {
+    /** 가입 반려 → 협력업체 알림. reason + 재가입 링크 포함 (PPT slide 9) */
+    public void notifyRegistrationRejected(Long userId, String reason, String reapplyToken) {
         String subject = "[PANocean] 안전보건포털 가입 신청 반려";
         StringBuilder body = new StringBuilder();
         body.append("PANocean 안전보건포털 가입신청이 반려되었습니다.");
         if (reason != null && !reason.isBlank()) {
-            body.append("\n반려사유: ").append(reason);
+            body.append("\n\n반려사유: ").append(reason);
         }
-        body.append(portalLinkLine()).append(footerLine());
+        body.append("\n\n아래 링크를 클릭하시면 기존 입력 내용을 불러와 재신청하실 수 있습니다.");
+        body.append("\n[재가입 신청] ").append(portalUrl).append("/?reapply=").append(reapplyToken);
+        body.append(footerLine());
         notifyUser(userId, "EMAIL", subject, body.toString());
     }
 

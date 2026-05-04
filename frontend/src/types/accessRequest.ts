@@ -78,9 +78,12 @@ export interface AccessRequestDetailResponse extends AccessRequestListItem {
   companyId: number
   vesselId: number
   portId?: number
+  businessNumber?: string | null    // [2026-05-04] 사업자등록번호
+  industryOther?: string | null     // [2026-05-04] 기타업종
   workDescription: string
   // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
   safetyManagerName?: string | null
+  safetyManagerTitle?: string | null  // [2026-05-04] 안전담당자 직책
   safetyManagerTel?: string | null
   safetyManagerEmail?: string | null
   noRiskAssessment?: boolean

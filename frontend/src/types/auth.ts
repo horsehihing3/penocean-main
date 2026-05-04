@@ -12,6 +12,8 @@ export interface User {
   phone?: string
   role: Role
   companyId?: number | null      // CONTRACTOR 한정
+  companyName?: string | null    // [2026-05-04] 회사명
+  industryName?: string | null   // [2026-05-04] 업종명
   departmentId?: number | null   // CONTRACT_DEPT 한정
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'INACTIVE'
   lastLoginAt?: string | null

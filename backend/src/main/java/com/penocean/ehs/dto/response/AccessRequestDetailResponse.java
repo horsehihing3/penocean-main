@@ -19,6 +19,8 @@ public class AccessRequestDetailResponse {
     private String requestNo;
     private Long companyId;
     private String companyName;
+    private String businessNumber;    // [2026-05-04] tb_company.business_number
+    private String industryOther;     // [2026-05-04] tb_company.industry_other
     private Long vesselId;
     private String vesselName;
     private Long portId;
@@ -35,6 +37,7 @@ public class AccessRequestDetailResponse {
     private String improvementRequestReason;
     // [2026-04-23] PPT 슬라이드 14: 안전담당자 정보
     private String safetyManagerName;
+    private String safetyManagerTitle;  // [2026-05-04] tb_user.title (submitted_by)
     private String safetyManagerTel;
     private String safetyManagerEmail;
     // [2026-04-29] 위험성평가표 없음 체크

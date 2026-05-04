@@ -61,7 +61,8 @@
       </if>
       <if test="keyword != null and keyword != ''">
         AND (
-             u.name LIKE '%' + #{keyword} + '%'
+             u.username LIKE '%' + #{keyword} + '%'
+          OR u.name LIKE '%' + #{keyword} + '%'
           OR u.email LIKE '%' + #{keyword} + '%'
           OR c.name LIKE '%' + #{keyword} + '%'
           OR c.business_number LIKE '%' + #{keyword} + '%'

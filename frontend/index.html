@@ -29,6 +29,11 @@
         var upload = params.get('upload');
         if (upload && /^[a-f0-9]{32}$/.test(upload)) {
           window.location.replace('/upload/' + upload);
+          return;
+        }
+        var reapply = params.get('reapply');
+        if (reapply && window.location.pathname !== '/register') {
+          window.location.replace('/register?reapply=' + encodeURIComponent(reapply));
         }
       })();
     </script>

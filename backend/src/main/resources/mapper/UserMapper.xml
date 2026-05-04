@@ -15,6 +15,8 @@
     <result property="companyId" column="company_id"/>
     <result property="departmentId" column="department_id"/>
     <result property="status" column="status"/>
+    <result property="rejectionReason" column="rejection_reason"/>
+    <result property="reapplyToken" column="reapply_token"/>
     <result property="approvedAt" column="approved_at"/>
     <result property="approvedBy" column="approved_by"/>
     <result property="lastLoginAt" column="last_login_at"/>
@@ -57,7 +59,8 @@
 
   <select id="existsByUsername" resultType="int">
     SELECT CASE WHEN EXISTS (
-      SELECT 1 FROM tb_user WHERE username = #{username} AND deleted = 0
+      SELECT 1 FROM tb_user
+      WHERE username = #{username} AND deleted = 0 AND status != 'REJECTED'
     ) THEN 1 ELSE 0 END
   </select>
 
@@ -165,5 +168,45 @@
     FROM tb_department
     WHERE code = #{code} AND deleted = 0
   </select>
+
+  <select id="findDepartmentCodesByUserId" resultType="string">
+    SELECT d.code
+    FROM tb_user_department ud
+    JOIN tb_department d ON d.id = ud.department_id AND d.deleted = 0
+    WHERE ud.user_id = #{userId}
+  </select>
+
+  <!-- [2026-05-04] 반려 재가입 -->
+  <select id="findByReapplyToken" resultMap="UserResultMap">
+    SELECT id, username, name, title, email, phone, company_id,
+           rejection_reason, reapply_token, status, deleted
+    FROM tb_user
+    WHERE reapply_token = #{token} AND status = 'REJECTED' AND deleted = 0
+  </select>
+
+  <update id="updateRejectInfo">
+    UPDATE tb_user
+    SET rejection_reason = #{reason,jdbcType=NVARCHAR},
+        reapply_token    = #{token,jdbcType=NVARCHAR},
+        updated_at       = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
+
+  <update id="reapplyUpdate">
+    UPDATE tb_user
+    SET password         = #{password},
+        name             = #{name},
+        title            = #{title,jdbcType=NVARCHAR},
+        email            = #{email},
+        phone            = #{phone},
+        company_id       = #{companyId},
+        status           = 'PENDING',
+        rejection_reason = NULL,
+        reapply_token    = NULL,
+        approved_at      = NULL,
+        approved_by      = NULL,
+        updated_at       = SYSUTCDATETIME()
+    WHERE id = #{id}
+  </update>
 
 </mapper>

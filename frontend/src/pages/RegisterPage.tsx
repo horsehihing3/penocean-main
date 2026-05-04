@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, Link as RouterLink } from 'react-router-dom'
+import axios from 'axios'
+import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -72,23 +73,28 @@ const FALLBACK_INDUSTRY_OPTIONS: { code: string; label: string }[] = [
 ]
 
 const FALLBACK_DEPT_OPTIONS: { code: string; label: string }[] = [
-  { code: 'OPS_LOGISTICS', label: '운항물류팀' },
-  { code: 'OPS_SUPPORT', label: '운항지원팀' },
-  { code: 'MARINE_ENV', label: '해사환경팀' },
-  { code: 'MARINE_MGMT', label: '해사관리팀' },
+  { code: 'SAFETY_MGMT', label: '안전경영팀' },
+  { code: 'PURCHASING',  label: '구매팀' },
+  { code: 'OPERATION',   label: '운영팀' },
+  { code: 'VESSEL_MGMT', label: '선박관리팀' },
+  { code: 'SALES',       label: '영업팀' },
 ]
 
 const RegisterPage: React.FC = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const reapplyToken = searchParams.get('reapply')
   const { register: registerRequest } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null)
 
   // PPT slide 5-6: 로그인 → 회원가입 클릭 시 개인정보 수집·이용 동의서 먼저 뜨기
-  const [consentOpen, setConsentOpen] = useState(true)
-  const [consentRequired, setConsentGiven] = useState(false)
+  // 재가입 링크 진입 시 동의서 건너뜀
+  const [consentOpen, setConsentOpen] = useState(!reapplyToken)
+  const [consentRequired, setConsentGiven] = useState(!!reapplyToken)
 
   // [2026-04-30] 중복확인 상태
   const [usernameCheck, setUsernameCheck] = useState<'idle' | 'available' | 'taken'>('idle')
@@ -118,6 +124,42 @@ const RegisterPage: React.FC = () => {
       }
     })()
   }, [])
+
+  // [2026-05-04] 반려 재가입 토큰이 있으면 기존 정보 pre-fill
+  useEffect(() => {
+    if (!reapplyToken) return
+    ;(async () => {
+      try {
+        const res = await axiosInstance.get<{ data: Record<string, unknown> }>('/auth/reapply-info', {
+          params: { token: reapplyToken },
+        })
+        const d = res.data.data
+        if (d.username)             setValue('username',             d.username as string)
+        if (d.companyName)          setValue('companyName',          d.companyName as string)
+        if (d.companyNameEn)        setValue('companyNameEn',        d.companyNameEn as string)
+        if (d.businessNumber)       setValue('businessNumber',       d.businessNumber as string)
+        if (d.companyPhone)         setValue('companyPhone',         d.companyPhone as string)
+        if (d.postalCode)           setValue('postalCode',           d.postalCode as string)
+        if (d.address)              setValue('address',              d.address as string)
+        if (d.addressDetail)        setValue('addressDetail',        d.addressDetail as string)
+        if (d.contactName)          setValue('contactName',          d.contactName as string)
+        if (d.contactTitle)         setValue('contactTitle',         d.contactTitle as string)
+        if (d.email)                setValue('email',                d.email as string)
+        if (d.phone)                setValue('phone',                d.phone as string)
+        if (d.industryOther)        setValue('industryOther',        d.industryOther as string)
+        if (Array.isArray(d.industryCodes) && d.industryCodes.length)
+          setValue('industryCodes', d.industryCodes as string[])
+        if (Array.isArray(d.contractDepartments) && d.contractDepartments.length)
+          setValue('contractDepartments', d.contractDepartments as string[])
+        if (d.rejectionReason)
+          setRejectionReason(d.rejectionReason as string)
+        // 아이디 중복확인은 REJECTED 상태라 통과 처리
+        setUsernameCheck('available')
+      } catch {
+        setError('재가입 링크가 유효하지 않거나 만료되었습니다.')
+      }
+    })()
+  }, [reapplyToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const schema = z
     .object({
@@ -232,8 +274,11 @@ const RegisterPage: React.FC = () => {
       setSuccess(t('register.submitSuccessApproval'))
       setTimeout(() => navigate('/login', { replace: true }), 2500)
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : t('register.submitError')
-      setError(message)
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message ?? t('register.submitError'))
+      } else {
+        setError(err instanceof Error ? err.message : t('register.submitError'))
+      }
     } finally {
       setIsLoading(false)
     }
@@ -298,6 +343,13 @@ const RegisterPage: React.FC = () => {
             {success && (
               <Alert severity="success" sx={{ mb: 2 }}>
                 {success}
+              </Alert>
+            )}
+
+            {/* [2026-05-04] 반려 재가입: 반려사유 표시 */}
+            {rejectionReason && (
+              <Alert severity="error" sx={{ mb: 2, fontWeight: 500 }}>
+                <strong>반려사유:</strong> {rejectionReason}
               </Alert>
             )}
 
@@ -535,6 +587,11 @@ const RegisterPage: React.FC = () => {
                                 value={field.value}
                                 onChange={(e) => field.onChange(e.target.value)}
                                 input={<OutlinedInput label={t('register.industryPlaceholder')} />}
+                                MenuProps={{
+                                  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+                                  transformOrigin: { vertical: 'top', horizontal: 'left' },
+                                  disablePortal: true,
+                                }}
                                 renderValue={(selected) => (
                                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {(selected as string[]).map((code) => {
@@ -586,6 +643,11 @@ const RegisterPage: React.FC = () => {
                                 value={field.value}
                                 onChange={(e) => field.onChange(e.target.value)}
                                 input={<OutlinedInput label={t('register.deptPlaceholder')} />}
+                                MenuProps={{
+                                  anchorOrigin: { vertical: 'bottom', horizontal: 'left' },
+                                  transformOrigin: { vertical: 'top', horizontal: 'left' },
+                                  disablePortal: true,
+                                }}
                                 renderValue={(selected) => (
                                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {(selected as string[]).map((code) => {
