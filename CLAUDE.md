@@ -22,6 +22,20 @@
 
 ---
 
+## 참조 문서 (세션 시작 시 자동 로드)
+
+@PROJECT_CONTEXT.md
+
+| 파일 | 내용 |
+|------|------|
+| `PROJECT_CONTEXT.md` | 현재 TODO · 완료 이력 · 진척도 · 이슈 |
+| `backend/docs/db/ERD.md` | 테이블 관계도 |
+| `backend/docs/db/database-setup.md` | DB 초기 설정·계정 생성 가이드 |
+| `backend/src/main/resources/application.yml` | 전체 환경변수 목록 |
+| `팬오션 안전보건Dx_최종안.pptx` | **원본 기획서** |
+
+---
+
 ## 명령어
 
 ```bash
@@ -84,32 +98,52 @@ frontend/src/api/axiosInstance.ts        # axios 공통 인스턴스
 - 프론트 컴포넌트 파일명 PascalCase (`AccessRequestPage.tsx`)
 - 신규 페이지 추가 시 `App.tsx` RoleRoute 가드 필수
 - 코드 변경 시 날짜 주석: `// [YYYY-MM-DD] 변경 이유`
+- **신규 소스 파일 첫 줄: 한국어 역할 주석 필수**
+  - TS/JS: `// 협력업체 평가 목록을 관리하는 페이지 컴포넌트`
+  - Java: `// 출입신청 관련 REST API 엔드포인트`
+  - config 파일(`*.config.ts`, `package.json` 등) 제외
+
+---
+
+## 변경 원칙
+
+- **외과적 수정** — 요청한 것만 변경. 인접 코드·포맷·주석 개선 금지. 모든 변경 줄은 사용자 요청으로 직접 추적 가능해야 함.
+- **내 변경으로 생긴 미사용 import·변수만 정리** — 기존 dead code는 발견 시 언급만 하고 건드리지 않음.
+- **에러는 반드시 읽어라** — 스택 트레이스 전체를 읽고 원인 확인 후 수정. 패턴 추측으로 다중 파일 수정 금지.
+- **완료 전 빌드 확인** — 코드 수정 후 `./gradlew build -x test` 또는 `npm run build` 성공 확인 필수.
+- **논리 단위 커밋** — 세션 종료까지 기다리지 말고, 하나의 기능·수정 완료 시 즉시 커밋.
+
+---
+
+## 한국어 출력 규칙
+
+- 문장 끝 `:` 사용 금지. 마침표(`.`), 물음표(`?`), 느낌표(`!`)로 끝낼 것.
+- 콜론은 코드·key-value·레이블 내부에서만 허용.
 
 ---
 
 ## 세션 루틴
 
-**시작:**
-1. "다음 작업 확인해줘" — PROJECT_CONTEXT.md는 자동 로드됨
-2. `git status` 로 현재 브랜치·변경 파일 확인
+**시작.**
+1. "다음 작업 확인해줘" — PROJECT_CONTEXT.md는 자동 로드됨.
+2. `git status` 로 현재 브랜치·변경 파일 확인.
 
-**진행 중:**
-- 대화가 길어질 경우 → `/compact [현재까지 구현 내용 위주로 요약]` 실행
+**진행 중.**
+- 대화가 길어질 경우 → `/compact [현재까지 구현 내용 위주로 요약]` 실행.
+- 논리적으로 완결된 변경이 생기면 즉시 커밋 (세션 종료 전까지 기다리지 않음).
 
-**종료:**
-1. `PROJECT_CONTEXT.md` 업데이트 — 완료 `[x]`, 신규 이슈 추가
-2. 완료 항목 10개 이상 누적 시 → `docs/ARCHIVE.md` 로 이동 후 삭제
-3. `git add . && git commit -m "{feat|fix|refactor|docs|chore}: {요약}"`
+**종료.**
+1. `PROJECT_CONTEXT.md` 업데이트 — 완료 `[x]`, 신규 이슈 추가.
+2. 완료 항목 10개 이상 누적 시 → `docs/ARCHIVE.md` 로 이동 후 삭제.
+3. `git add . && git commit -m "{feat|fix|refactor|docs|chore}: {요약}"`.
 
 > **VS Code 환경 주의:** VS Code 터미널/창을 닫으면 세션이 자동 소멸됩니다.
-> `/clear`는 현재 세션 컨텍스트만 초기화할 뿐 — **실질적 세션 저장은 PROJECT_CONTEXT.md 업데이트 + git commit** 입니다.
+> 실질적 세션 저장은 **PROJECT_CONTEXT.md 업데이트 + git commit** 입니다.
 > 새 세션에서 "다음 작업 확인해줘"로 바로 이어받을 수 있습니다.
 
 ---
 
 ## 병렬 세션 가이드
-
-토큰 소진 시 계정 전환 또는 탭 분리로 작업을 이어갈 수 있습니다.
 
 | 탭 | 역할 | 작업 예시 |
 |----|------|----------|
@@ -119,17 +153,3 @@ frontend/src/api/axiosInstance.ts        # axios 공통 인스턴스
 - 계정 전환: `claude logout → claude login` (로컬 파일·git 이력 영향 없음)
 - 탭 간 컨텍스트 공유는 `PROJECT_CONTEXT.md` + `git status`로 동기화
 - 동일 파일을 두 탭에서 동시 수정하면 충돌 위험 — 역할 분리 권장
-
----
-
-## 참조 문서
-
-@PROJECT_CONTEXT.md
-
-| 파일 | 내용 |
-|------|------|
-| `PROJECT_CONTEXT.md` | 현재 TODO · 완료 이력 · 진척도 · 이슈 (위에서 자동 로드) |
-| `backend/docs/db/ERD.md` | 테이블 관계도 |
-| `backend/docs/db/database-setup.md` | DB 초기 설정·계정 생성 가이드 |
-| `backend/src/main/resources/application.yml` | 전체 환경변수 목록 |
-| `팬오션 안전보건Dx_최종안.pptx` | **원본 기획서** |
