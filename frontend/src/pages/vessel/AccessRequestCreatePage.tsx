@@ -21,6 +21,7 @@ import {
   Snackbar,
   Stack,
   Table,
+  TableContainer,
   TableBody,
   TableCell,
   TableHead,
@@ -41,6 +42,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import SearchIcon from '@mui/icons-material/Search'
 import SchoolIcon from '@mui/icons-material/School'
 import { useTranslation } from 'react-i18next'
+import { useConfirm } from '../../components/common/ConfirmDialogProvider'
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -84,6 +86,7 @@ type SnackbarState = { open: boolean; message: string; severity: 'success' | 'er
 
 const AccessRequestCreatePage: React.FC = () => {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { id: idParam } = useParams<{ id?: string }>()
@@ -699,127 +702,129 @@ const AccessRequestCreatePage: React.FC = () => {
           <Typography variant="body2" color="text.secondary">{t('common.noData')}</Typography>
         ) : (
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 760 }}>
-              <TableHead>
-                <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell width={36} align="center">No.</TableCell>
-                  <TableCell>{t('accessRequest.worker.name')}<span style={{ color: 'red' }}> *</span></TableCell>
-                  <TableCell>{t('accessRequest.worker.role')}</TableCell>
-                  <TableCell>{t('accessRequest.worker.birth')}</TableCell>
-                  <TableCell>{t('accessRequest.worker.phone')}</TableCell>
-                  <TableCell align="center">{t('accessRequest.worker.eduDate')}</TableCell>
-                  <TableCell align="center">{t('accessRequest.worker.eduStatus')}</TableCell>
-                  <TableCell align="center">{t('accessRequest.worker.certBtn')}</TableCell>
-                  <TableCell width={40} />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {fields.map((f, idx) => {
-                  const certUrl = isEditMode ? (detail?.workers?.[idx]?.safetyEduCertificateUrl ?? null) : null
+            <TableContainer>
+              <Table size="small" sx={{ minWidth: 760 }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
+                    <TableCell width={36} align="center">No.</TableCell>
+                    <TableCell>{t('accessRequest.worker.name')}<span style={{ color: 'red' }}> *</span></TableCell>
+                    <TableCell>{t('accessRequest.worker.role')}</TableCell>
+                    <TableCell>{t('accessRequest.worker.birth')}</TableCell>
+                    <TableCell>{t('accessRequest.worker.phone')}</TableCell>
+                    <TableCell align="center">{t('accessRequest.worker.eduDate')}</TableCell>
+                    <TableCell align="center">{t('accessRequest.worker.eduStatus')}</TableCell>
+                    <TableCell align="center">{t('accessRequest.worker.certBtn')}</TableCell>
+                    <TableCell width={40} />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {fields.map((f, idx) => {
+                    const certUrl = isEditMode ? (detail?.workers?.[idx]?.safetyEduCertificateUrl ?? null) : null
 
-                  return (
-                    <TableRow key={f.id} hover>
-                      <TableCell align="center">
-                        <Typography variant="caption">{idx + 1}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          {...register(`workers.${idx}.workerName`)}
-                          size="small"
-                          required
-                          error={!!errors.workers?.[idx]?.workerName}
-                          helperText={errText(`workers.${idx}.workerName`)}
-                          sx={{ minWidth: 100 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          {...register(`workers.${idx}.workerRole`)}
-                          size="small"
-                          sx={{ minWidth: 100 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          {...register(`workers.${idx}.workerBirth`)}
-                          size="small"
-                          placeholder="YYMMDD"
-                          sx={{ minWidth: 100 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          {...register(`workers.${idx}.workerPhone`)}
-                          size="small"
-                          sx={{ minWidth: 110 }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Controller
-                          name={`workers.${idx}.safetyEduCompletedAt`}
-                          control={control}
-                          render={({ field }) => (
-                            <AppDatePicker
-                              label=""
-                              value={field.value || null}
-                              onChange={(iso) => {
-                                field.onChange(iso ?? '')
-                                setValue(`workers.${idx}.safetyEduCompleted`, !!iso)
-                              }}
-                              size="small"
-                              fullWidth={false}
-                            />
+                    return (
+                      <TableRow key={f.id} hover>
+                        <TableCell align="center">
+                          <Typography variant="caption">{idx + 1}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            {...register(`workers.${idx}.workerName`)}
+                            size="small"
+                            required
+                            error={!!errors.workers?.[idx]?.workerName}
+                            helperText={errText(`workers.${idx}.workerName`)}
+                            sx={{ minWidth: 100 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            {...register(`workers.${idx}.workerRole`)}
+                            size="small"
+                            sx={{ minWidth: 100 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            {...register(`workers.${idx}.workerBirth`)}
+                            size="small"
+                            placeholder="YYMMDD"
+                            sx={{ minWidth: 100 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            {...register(`workers.${idx}.workerPhone`)}
+                            size="small"
+                            sx={{ minWidth: 110 }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Controller
+                            name={`workers.${idx}.safetyEduCompletedAt`}
+                            control={control}
+                            render={({ field }) => (
+                              <AppDatePicker
+                                label=""
+                                value={field.value || null}
+                                onChange={(iso) => {
+                                  field.onChange(iso ?? '')
+                                  setValue(`workers.${idx}.safetyEduCompleted`, !!iso)
+                                }}
+                                size="small"
+                                fullWidth={false}
+                              />
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Controller
+                            name={`workers.${idx}.safetyEduCompleted`}
+                            control={control}
+                            render={({ field }) => {
+                              const dateVal = watch(`workers.${idx}.safetyEduCompletedAt`) ?? ''
+                              const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateVal) && !isNaN(Date.parse(dateVal))
+                              // 날짜가 유효하면 이수 강제
+                              const effectiveValue = isValidDate ? true : field.value
+                              return (
+                                <FormControl size="small" sx={{ minWidth: 80 }}>
+                                  <Select
+                                    value={effectiveValue ? 'Y' : 'N'}
+                                    onChange={(e) => field.onChange(e.target.value === 'Y')}
+                                    disabled={isValidDate}
+                                  >
+                                    <MenuItem value="N">{t('accessRequest.worker.eduStatusPending')}</MenuItem>
+                                    <MenuItem value="Y">{t('accessRequest.worker.eduStatusCompleted')}</MenuItem>
+                                  </Select>
+                                </FormControl>
+                              )
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          {certUrl ? (
+                            <Tooltip title={t('accessRequest.worker.certBtn')}>
+                              <IconButton
+                                size="small"
+                                onClick={() => window.open(certUrl, '_blank')}
+                              >
+                                <PrintIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          ) : (
+                            <Typography variant="caption" color="text.disabled">-</Typography>
                           )}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Controller
-                          name={`workers.${idx}.safetyEduCompleted`}
-                          control={control}
-                          render={({ field }) => {
-                            const dateVal = watch(`workers.${idx}.safetyEduCompletedAt`) ?? ''
-                            const isValidDate = /^\d{4}-\d{2}-\d{2}$/.test(dateVal) && !isNaN(Date.parse(dateVal))
-                            // 날짜가 유효하면 이수 강제
-                            const effectiveValue = isValidDate ? true : field.value
-                            return (
-                              <FormControl size="small" sx={{ minWidth: 80 }}>
-                                <Select
-                                  value={effectiveValue ? 'Y' : 'N'}
-                                  onChange={(e) => field.onChange(e.target.value === 'Y')}
-                                  disabled={isValidDate}
-                                >
-                                  <MenuItem value="N">{t('accessRequest.worker.eduStatusPending')}</MenuItem>
-                                  <MenuItem value="Y">{t('accessRequest.worker.eduStatusCompleted')}</MenuItem>
-                                </Select>
-                              </FormControl>
-                            )
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {certUrl ? (
-                          <Tooltip title={t('accessRequest.worker.certBtn')}>
-                            <IconButton
-                              size="small"
-                              onClick={() => window.open(certUrl, '_blank')}
-                            >
-                              <PrintIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        ) : (
-                          <Typography variant="caption" color="text.disabled">-</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => remove(idx)}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small" onClick={() => remove(idx)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
         )}
       </Paper>
@@ -1017,8 +1022,16 @@ const AccessRequestCreatePage: React.FC = () => {
               variant="outlined"
               color="error"
               startIcon={<DeleteIcon />}
-              onClick={() => {
-                if (window.confirm(t('common.confirmTitle') + '?')) deleteMut.mutate()
+              // [2026-08-03] window.confirm → 프로젝트 커스텀 confirm 으로 교체
+              onClick={async () => {
+                const ok = await confirm({
+                  title: t('common.delete'),
+                  message: t('accessRequest.pageTitle') + ' 을(를) 삭제하시겠습니까?',
+                  description: '삭제한 신청서는 복구할 수 없습니다.',
+                  severity: 'error',
+                  confirmText: t('common.delete'),
+                })
+                if (ok) deleteMut.mutate()
               }}
               disabled={isBusy}
             >

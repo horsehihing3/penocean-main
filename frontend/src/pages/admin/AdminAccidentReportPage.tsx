@@ -109,7 +109,7 @@ const AdminAccidentReportPage: React.FC = () => {
       </Typography>
 
       {/* 검색 */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
           <TextField
             size="small"
@@ -133,7 +133,7 @@ const AdminAccidentReportPage: React.FC = () => {
             조회
           </Button>
         </Stack>
-      </Paper>
+      </Box>
 
       {listQuery.isError && (
         <Alert severity="error">데이터를 불러오는 중 오류가 발생했습니다.</Alert>
@@ -241,11 +241,11 @@ const AdminAccidentReportPage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700 }}>연도</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>해당업체 재해율</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>동종·동규모 평균 재해율</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>대비 (Gap)</TableCell>
+              <TableRow>
+                <TableCell>연도</TableCell>
+                <TableCell align="right">해당업체 재해율</TableCell>
+                <TableCell align="right">동종·동규모 평균 재해율</TableCell>
+                <TableCell align="right">대비 (Gap)</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

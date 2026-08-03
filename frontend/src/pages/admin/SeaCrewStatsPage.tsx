@@ -18,7 +18,6 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  Divider,
   CircularProgress,
   Skeleton,
 } from '@mui/material'
@@ -153,6 +152,7 @@ const SeaCrewStatsPage: React.FC = () => {
       </Paper>
 
       {/* Section 2: 연도별 누적 통계 */}
+      {/* [2026-08-03] 1번 섹션과 동일하게 Paper 박스로 감쌈 */}
       <Paper variant="outlined" sx={{ p: 2.5 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
           2. 연도별 누적 통계 요약 (최종 보고용)
@@ -161,13 +161,16 @@ const SeaCrewStatsPage: React.FC = () => {
         {statsQuery.isLoading ? (
           <Skeleton variant="rectangular" height={120} />
         ) : (
-          <TableContainer>
+          <TableContainer
+            // Paper 내부라 테마가 자체 테두리를 제거하므로 표 외곽선을 직접 지정
+            sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}
+          >
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ bgcolor: 'grey.100' }}>
-                  <TableCell sx={{ fontWeight: 700 }}>구분 (항목)</TableCell>
+                <TableRow>
+                  <TableCell>구분 (항목)</TableCell>
                   {stats.map((s) => (
-                    <TableCell key={s.year} align="center" sx={{ fontWeight: 700 }}>
+                    <TableCell key={s.year} align="center">
                       {s.year === THIS_YEAR ? `${s.year}년(현재)` : `${s.year}년`}
                     </TableCell>
                   ))}
@@ -209,26 +212,32 @@ const SeaCrewStatsPage: React.FC = () => {
           </TableContainer>
         )}
 
-        <Divider sx={{ my: 2 }} />
-
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={1}>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              hidden
-              onChange={handleFilePick}
-            />
-            <Button
-              variant="outlined"
-              startIcon={importMut.isPending ? <CircularProgress size={16} /> : <UploadIcon />}
-              disabled={importMut.isPending}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              엑셀 업로드
-            </Button>
-          </Stack>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ sm: 'center' }}
+          spacing={1}
+          sx={{ mt: 2 }}
+          flexWrap="wrap"
+          useFlexGap
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            hidden
+            onChange={handleFilePick}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={importMut.isPending ? <CircularProgress size={16} /> : <UploadIcon />}
+            disabled={importMut.isPending}
+            onClick={() => fileInputRef.current?.click()}
+            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+          >
+            엑셀 업로드
+          </Button>
           <Typography variant="caption" color="text.secondary">
             ※ 엑셀 업로드 시 해상 안전보건실적이 갱신되며 통계가 자동 반영됩니다.
           </Typography>

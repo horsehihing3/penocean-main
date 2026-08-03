@@ -2,28 +2,27 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
-  Paper,
   Stack,
   Typography,
-  TextField,
   MenuItem,
   FormControl,
-  InputLabel,
   Select,
   Button,
+  IconButton,
   Chip,
   Alert,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
 } from '@mui/x-data-grid'
-import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
+import ListSearchBar from '../../components/common/ListSearchBar'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -201,6 +200,15 @@ const EvaluationPage: React.FC = () => {
     setPage(0)
   }
 
+  // [2026-08-03] 목록 필터 초기화 (새로고침 버튼)
+  const resetFilters = () => {
+    setKeywordInput('')
+    setPeriodHalf('')
+    setPeriodYear('')
+    setStatus('')
+    setPage(0)
+  }
+
   const handleRowClick = (params: GridRowParams<EvaluationListItem>) => {
     setSelectedId(params.row.id)
   }
@@ -228,16 +236,15 @@ const EvaluationPage: React.FC = () => {
       </Stack>
 
       {/* Filter bar */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
           alignItems={{ xs: 'stretch', md: 'center' }}
         >
           <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>{t('evaluation.periodYear')}</InputLabel>
             <Select
-              label={t('evaluation.periodYear')}
+              displayEmpty
               value={periodYear}
               onChange={(e) => {
                 setPeriodYear(e.target.value === '' ? '' : Number(e.target.value))
@@ -254,9 +261,8 @@ const EvaluationPage: React.FC = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>{t('evaluation.periodHalf')}</InputLabel>
             <Select
-              label={t('evaluation.periodHalf')}
+              displayEmpty
               value={periodHalf}
               onChange={(e) => {
                 setPeriodHalf(e.target.value as PeriodFilter)
@@ -270,9 +276,8 @@ const EvaluationPage: React.FC = () => {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('approval.filterStatus')}</InputLabel>
             <Select
-              label={t('approval.filterStatus')}
+              displayEmpty
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as StatusFilter)
@@ -287,63 +292,39 @@ const EvaluationPage: React.FC = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
+          <ListSearchBar
             placeholder={`${t('evaluation.company')} / ${t('evaluation.businessNumber')}`}
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1, minWidth: 160 }}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            sx={{ width: { xs: '100%', sm: 300 } }}
           />
 
-          <Button variant="contained" startIcon={<SearchIcon />} onClick={applyKeyword}>
-            {t('common.search')}
-          </Button>
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* DataGrid */}
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        showRowNumber={false}
+        emptyMessage={t('approval.empty')}
+      />
 
       <EvaluationDetailDialog
         evaluationId={selectedId}

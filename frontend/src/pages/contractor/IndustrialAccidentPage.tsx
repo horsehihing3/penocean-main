@@ -26,7 +26,6 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
@@ -35,6 +34,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
 import AppDatePicker from '../../components/common/AppDatePicker'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
@@ -183,6 +184,17 @@ const IndustrialAccidentPage: React.FC = () => {
   const typeLabel = (v: AccidentType) => t(`accident.types.${v}`)
   const severityLabel = (v: AccidentSeverity) => t(`accident.severity.${v}`)
 
+
+  // [2026-08-03] 목록 필터 초기화 (새로고침 버튼)
+  const resetFilters = () => {
+    setAccidentType('')
+    setBusinessNumber('')
+    setDateFrom('')
+    setDateTo('')
+    setSeverity('')
+    setPage(0)
+  }
+
   const columns: GridColDef<IndustrialAccidentListItem>[] = [
     {
       field: 'accidentNo',
@@ -296,7 +308,7 @@ const IndustrialAccidentPage: React.FC = () => {
         )}
       </Stack>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
@@ -310,9 +322,8 @@ const IndustrialAccidentPage: React.FC = () => {
             sx={{ minWidth: 150 }}
           />
           <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>{t('accident.severityCol')}</InputLabel>
             <Select
-              label={t('accident.severityCol')}
+              displayEmpty
               value={severity}
               onChange={(e) => {
                 setSeverity(e.target.value as AccidentSeverity | '')
@@ -328,9 +339,8 @@ const IndustrialAccidentPage: React.FC = () => {
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('accident.accidentType')}</InputLabel>
             <Select
-              label={t('accident.accidentType')}
+              displayEmpty
               value={accidentType}
               onChange={(e) => {
                 setAccidentType(e.target.value as AccidentType | '')
@@ -364,47 +374,29 @@ const IndustrialAccidentPage: React.FC = () => {
           >
             {t('common.search')}
           </Button>
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        emptyMessage={t('approval.empty')}
+      />
 
       {/* Detail dialog */}
       <Dialog

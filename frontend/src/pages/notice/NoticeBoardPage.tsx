@@ -27,15 +27,18 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableRow,
   TableHead,
+  Pagination,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import SearchIcon from '@mui/icons-material/Search'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import AddIcon from '@mui/icons-material/Add'
 import AppDatePicker from '../../components/common/AppDatePicker'
+import ListSearchBar from '../../components/common/ListSearchBar'
 import { useConfirm } from '../../components/common/ConfirmDialogProvider'
 import PushPinIcon from '@mui/icons-material/PushPin'
 import { useTranslation } from 'react-i18next'
@@ -192,6 +195,13 @@ const NoticeBoardPage: React.FC = () => {
     setPage(0)
   }
 
+  const resetFilters = () => {
+    setCategory('')
+    setKeywordInput('')
+    setKeyword('')
+    setPage(0)
+  }
+
   const sortedList = useMemo(() => {
     const items = listQuery.data?.content ?? []
     const pinned = items.filter((i) => i.pinned)
@@ -226,30 +236,21 @@ const NoticeBoardPage: React.FC = () => {
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           {t('notice.pageTitle')}
         </Typography>
-        {isAdmin && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-            {t('notice.write')}
-          </Button>
-        )}
       </Stack>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', md: 'center' }}
-        >
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('notice.categoryLabel')}</InputLabel>
+      {/* Filters - PC */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
-              label={t('notice.categoryLabel')}
               value={category}
+              displayEmpty
               onChange={(e) => {
                 setCategory(e.target.value as NoticeCategory | '')
                 setPage(0)
               }}
             >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
+              <MenuItem value="">{t('notice.categoryLabel')}</MenuItem>
               {CATEGORIES.map((c) => (
                 <MenuItem key={c} value={c}>
                   {categoryLabel(c)}
@@ -257,178 +258,212 @@ const NoticeBoardPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
+          <ListSearchBar
             placeholder={t('notice.searchPlaceholder')}
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1, minWidth: 160 }}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            sx={{ width: 300 }}
           />
-          <Button variant="contained" startIcon={<SearchIcon />} onClick={applyKeyword}>
-            {t('common.search')}
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        {isAdmin && (
+          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={openCreate}>
+            {t('notice.write')}
           </Button>
-        </Stack>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
         )}
-        {listQuery.isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : isMobile ? (
-          // 모바일: 카드 리스트 (한글 세로 밀림 방지)
-          <Stack divider={<Divider />}>
-            {sortedList.length === 0 && (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  {t('approval.empty')}
-                </Typography>
-              </Box>
-            )}
-            {sortedList.map((item) => (
-              <Box
-                key={item.id}
-                onClick={() => setSelectedId(item.id)}
-                sx={{
-                  p: 1.5,
-                  cursor: 'pointer',
-                  backgroundColor: item.pinned ? 'action.hover' : undefined,
-                  '&:hover': { backgroundColor: 'action.hover' },
-                }}
-              >
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
-                  <Chip
-                    size="small"
-                    label={categoryLabel(item.category)}
-                    color={categoryColor(item.category)}
-                    sx={{ fontWeight: 600 }}
-                  />
-                  {item.pinned && <PushPinIcon sx={{ fontSize: 14, color: 'warning.main' }} />}
-                </Stack>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontWeight: item.pinned ? 700 : 500,
-                    wordBreak: 'keep-all',
-                    overflowWrap: 'break-word',
-                    mb: 0.5,
-                  }}
-                >
-                  {item.title}
-                </Typography>
-                <Stack direction="row" spacing={1.5} flexWrap="wrap">
-                  <Typography variant="caption" color="text.secondary">
-                    {item.authorUserName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {formatDate(item.publishedAt)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('notice.viewCount')} {item.viewCount}
-                  </Typography>
-                </Stack>
-              </Box>
+      </Box>
+
+      {/* Filters - Mobile */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+        <FormControl size="small" fullWidth>
+          <Select
+            value={category}
+            displayEmpty
+            onChange={(e) => {
+              setCategory(e.target.value as NoticeCategory | '')
+              setPage(0)
+            }}
+          >
+            <MenuItem value="">{t('notice.categoryLabel')}</MenuItem>
+            {CATEGORIES.map((c) => (
+              <MenuItem key={c} value={c}>
+                {categoryLabel(c)}
+              </MenuItem>
             ))}
-          </Stack>
-        ) : (
-          <Table size="small" sx={{ minWidth: 640 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 100, whiteSpace: 'nowrap' }}>
-                  {t('notice.categoryLabel')}
-                </TableCell>
-                <TableCell>{t('notice.title')}</TableCell>
-                <TableCell sx={{ width: 120, whiteSpace: 'nowrap' }}>
-                  {t('notice.author')}
-                </TableCell>
-                <TableCell sx={{ width: 110, whiteSpace: 'nowrap' }}>
-                  {t('notice.publishedAt')}
-                </TableCell>
-                <TableCell sx={{ width: 70, whiteSpace: 'nowrap' }} align="right">
-                  {t('notice.viewCount')}
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedList.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {t('approval.empty')}
-                    </Typography>
+          </Select>
+        </FormControl>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <ListSearchBar
+            placeholder={t('notice.searchPlaceholder')}
+            value={keywordInput}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            fullWidth
+          />
+          <IconButton onClick={resetFilters} size="small" sx={{ flexShrink: 0 }}>
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        {isAdmin && (
+          <Button variant="contained" size="small" fullWidth startIcon={<AddIcon />} onClick={openCreate}>
+            {t('notice.write')}
+          </Button>
+        )}
+      </Box>
+
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      {listQuery.isLoading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          {/* Table - PC */}
+          <TableContainer
+            component={Paper}
+            sx={{ display: { xs: 'none', md: 'block' }, border: 1, borderColor: 'divider', overflowX: 'auto' }}
+          >
+            <Table
+              size="small"
+              sx={{
+                minWidth: 750,
+                '& .MuiTableCell-root': {
+                  borderColor: (th: any) => (th.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'divider'),
+                },
+              }}
+            >
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'grey.100', color: 'text.primary' }}>
+                  <TableCell sx={{ fontWeight: 'bold', width: 60, borderRight: 1, borderColor: 'divider' }} align="center">
+                    {t('common.rowNo')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: 100, borderRight: 1, borderColor: 'divider' }} align="center">
+                    {t('notice.categoryLabel')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', borderRight: 1, borderColor: 'divider' }} align="center">
+                    {t('notice.title')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: 120, borderRight: 1, borderColor: 'divider' }} align="center">
+                    {t('notice.author')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: 70, borderRight: 1, borderColor: 'divider' }} align="center">
+                    {t('notice.viewCount')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', width: 160 }} align="center">
+                    {t('notice.publishedAt')}
                   </TableCell>
                 </TableRow>
-              )}
-              {sortedList.map((item) => (
-                <TableRow
+              </TableHead>
+              <TableBody>
+                {sortedList.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary">{t('approval.empty')}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedList.map((item, idx) => (
+                    <TableRow
+                      key={item.id}
+                      hover
+                      onClick={() => setSelectedId(item.id)}
+                      sx={{ cursor: 'pointer', backgroundColor: item.pinned ? 'action.hover' : undefined }}
+                    >
+                      <TableCell align="center" sx={{ borderRight: 1, borderColor: 'divider' }}>
+                        {item.pinned ? (
+                          <PushPinIcon sx={{ fontSize: 16, color: 'warning.main', verticalAlign: 'middle' }} />
+                        ) : (
+                          page * pageSize + idx + 1
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ borderRight: 1, borderColor: 'divider' }}>
+                        <Chip
+                          label={categoryLabel(item.category)}
+                          color={categoryColor(item.category)}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell sx={{ borderRight: 1, borderColor: 'divider', wordBreak: 'keep-all' }}>
+                        <Typography variant="body2" sx={{ fontWeight: item.pinned ? 700 : 400 }}>
+                          {item.title}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center" sx={{ borderRight: 1, borderColor: 'divider' }}>
+                        {item.authorUserName}
+                      </TableCell>
+                      <TableCell align="center" sx={{ borderRight: 1, borderColor: 'divider' }}>
+                        {item.viewCount}
+                      </TableCell>
+                      <TableCell align="center">{formatDate(item.publishedAt)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Mobile Card List */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+            {sortedList.length === 0 ? (
+              <Paper sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">{t('approval.empty')}</Typography>
+              </Paper>
+            ) : (
+              sortedList.map((item) => (
+                <Paper
                   key={item.id}
-                  hover
-                  sx={{
-                    cursor: 'pointer',
-                    backgroundColor: item.pinned ? 'action.hover' : undefined,
-                  }}
+                  sx={{ p: 2, cursor: 'pointer', border: 1, borderColor: 'divider' }}
                   onClick={() => setSelectedId(item.id)}
                 >
-                  <TableCell>
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
                     <Chip
-                      size="small"
                       label={categoryLabel(item.category)}
                       color={categoryColor(item.category)}
-                      sx={{ fontWeight: 600 }}
+                      size="small"
                     />
-                  </TableCell>
-                  <TableCell sx={{ wordBreak: 'keep-all' }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      {item.pinned && (
-                        <PushPinIcon sx={{ fontSize: 14, color: 'warning.main' }} />
-                      )}
-                      <Typography variant="body2" sx={{ fontWeight: item.pinned ? 700 : 400 }}>
-                        {item.title}
+                    {item.pinned && <PushPinIcon sx={{ fontSize: 16, color: 'warning.main' }} />}
+                  </Box>
+                  <Typography fontWeight="bold" sx={{ mb: 1, wordBreak: 'keep-all' }}>
+                    {item.title}
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Typography variant="body2" sx={{ bgcolor: 'grey.200', px: 1, py: 0.25, borderRadius: 0.5, minWidth: 50 }}>
+                        {t('notice.author')}
                       </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.authorUserName}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(item.publishedAt)}</TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                    {item.viewCount}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Paper>
+                      <Typography variant="body2">{item.authorUserName}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Typography variant="body2" sx={{ bgcolor: 'grey.200', px: 1, py: 0.25, borderRadius: 0.5, minWidth: 50 }}>
+                        {t('notice.publishedAt')}
+                      </Typography>
+                      <Typography variant="body2">{formatDate(item.publishedAt)}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Typography variant="body2" sx={{ bgcolor: 'grey.200', px: 1, py: 0.25, borderRadius: 0.5, minWidth: 50 }}>
+                        {t('notice.viewCount')}
+                      </Typography>
+                      <Typography variant="body2">{item.viewCount}</Typography>
+                    </Box>
+                  </Box>
+                </Paper>
+              ))
+            )}
+          </Box>
 
-      {/* Pagination (simple) */}
-      {listQuery.data && listQuery.data.totalPages > 1 && (
-        <Stack direction="row" justifyContent="center" spacing={1}>
-          <Button
-            size="small"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            {t('common.prev')}
-          </Button>
-          <Typography variant="body2" sx={{ alignSelf: 'center' }}>
-            {page + 1} / {listQuery.data.totalPages}
-          </Typography>
-          <Button
-            size="small"
-            disabled={page + 1 >= listQuery.data.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t('common.next')}
-          </Button>
-        </Stack>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={listQuery.data?.totalPages || 1}
+              page={page + 1}
+              onChange={(_, newPage) => setPage(newPage - 1)}
+              color="primary"
+            />
+          </Box>
+        </>
       )}
 
       {/* Detail Dialog */}

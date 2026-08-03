@@ -24,7 +24,7 @@ import {
   Divider,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import DownloadIcon from '@mui/icons-material/Download'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import SaveIcon from '@mui/icons-material/Save'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import UploadIcon from '@mui/icons-material/Upload'
@@ -247,7 +247,8 @@ const SafetyPerformanceSeaPage: React.FC = () => {
       </Paper>
 
       {/* 데이터 테이블 */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      {/* [2026-08-03] 목록 디자인 적용 — 제목을 Paper 밖으로, TableContainer 가 테두리 담당 */}
+      <Box>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
           <Box sx={{ width: 4, height: 20, bgcolor: 'primary.main', borderRadius: 1 }} />
           <Typography variant="subtitle1" fontWeight={700}>
@@ -258,22 +259,22 @@ const SafetyPerformanceSeaPage: React.FC = () => {
         </Stack>
 
         {!queried ? (
-          <Box sx={{ py: 6, textAlign: 'center' }}>
+          <Paper variant="outlined" sx={{ py: 6, textAlign: 'center' }}>
             <Typography color="text.secondary">선박과 연도를 선택한 후 [조회] 버튼을 눌러주세요.</Typography>
-          </Box>
+          </Paper>
         ) : (
-          <TableContainer>
+          <TableContainer component={Paper}>
             <Table size="small" sx={{ minWidth: 900 }}>
               <TableHead>
-                <TableRow sx={{ bgcolor: 'grey.100' }}>
-                  <TableCell sx={{ fontWeight: 700, minWidth: 120 }}>구분 (항목)</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: 60, textAlign: 'center' }}>단위</TableCell>
+                <TableRow>
+                  <TableCell sx={{ minWidth: 120 }}>구분 (항목)</TableCell>
+                  <TableCell sx={{ width: 60, textAlign: 'center' }}>단위</TableCell>
                   {MONTHS.map((m) => (
-                    <TableCell key={m} align="center" sx={{ fontWeight: 700, minWidth: 72 }}>
+                    <TableCell key={m} align="center" sx={{ minWidth: 72 }}>
                       {m}월
                     </TableCell>
                   ))}
-                  <TableCell align="center" sx={{ fontWeight: 700, minWidth: 80, color: 'primary.main' }}>
+                  <TableCell align="center" sx={{ minWidth: 80, color: 'primary.main' }}>
                     합계
                   </TableCell>
                 </TableRow>
@@ -282,7 +283,7 @@ const SafetyPerformanceSeaPage: React.FC = () => {
                 {ROW_DEFS.map((row) => (
                   <TableRow key={row.key} hover>
                     <TableCell sx={{ fontWeight: 600 }}>{row.label}</TableCell>
-                    <TableCell align="center" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
+                    <TableCell align="center" sx={{ color: 'text.secondary' }}>
                       {row.unit}
                     </TableCell>
                     {MONTHS.map((m) => (
@@ -302,7 +303,7 @@ const SafetyPerformanceSeaPage: React.FC = () => {
                     ))}
                     <TableCell
                       align="center"
-                      sx={{ fontWeight: 700, color: 'primary.main', fontSize: '0.95rem' }}
+                      sx={{ fontWeight: 700, color: 'primary.main' }}
                     >
                       {rowTotal(row.key).toLocaleString()}
                     </TableCell>
@@ -335,7 +336,7 @@ const SafetyPerformanceSeaPage: React.FC = () => {
                 </Button>
                 <Button
                   variant="outlined"
-                  startIcon={<DownloadIcon />}
+                  startIcon={<FileDownloadIcon />}
                   onClick={() => setSnack({ open: true, message: '엑셀 다운로드는 준비 중입니다.', severity: 'info' })}
                 >
                   엑셀 다운로드
@@ -364,7 +365,7 @@ const SafetyPerformanceSeaPage: React.FC = () => {
             </Stack>
           </>
         )}
-      </Paper>
+      </Box>
 
       <Snackbar
         open={snack.open}

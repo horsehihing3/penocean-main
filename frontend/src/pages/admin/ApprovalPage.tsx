@@ -28,7 +28,7 @@ import {
   TableRow,
   TableCell,
   TableContainer,
-  TablePagination,
+  Pagination,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
@@ -37,6 +37,7 @@ import BlockIcon from '@mui/icons-material/Block'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import * as XLSX from 'xlsx'
 import { useTranslation } from 'react-i18next'
+import { useConfirm } from '../../components/common/ConfirmDialogProvider'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { approvalApi } from '../../api/approvalApi'
@@ -56,6 +57,7 @@ const statusChipColor = (s: ApprovalStatus): 'warning' | 'success' | 'error' | '
 
 const ApprovalPage: React.FC = () => {
   const { t } = useTranslation()
+  const confirm = useConfirm()
   const qc = useQueryClient()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
@@ -74,7 +76,7 @@ const ApprovalPage: React.FC = () => {
   const [dateTo, setDateTo] = useState('')
 
   const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const pageSize = 20
 
   // 거절 사유 팝업
   const [rejectTarget, setRejectTarget] = useState<ApprovalListItem | null>(null)
@@ -170,6 +172,73 @@ const ApprovalPage: React.FC = () => {
   const rows = listQuery.data?.content ?? []
   const total = listQuery.data?.total ?? 0
 
+  // [2026-08-03] 승인 전 커스텀 confirm — 되돌릴 수 없는 처리라 오클릭 방지
+  const handleApproveClick = async (row: (typeof rows)[number]) => {
+    const ok = await confirm({
+      title: '가입 승인',
+      message: `${row.companyName ?? '-'} (${row.businessNumber}) 의 가입을 승인하시겠습니까?`,
+      description: '승인 시 협력업체에 안내 이메일이 발송되며 포털 이용이 즉시 가능해집니다.',
+      severity: 'success',
+      confirmText: '승인',
+    })
+    if (ok) approveMut.mutate(row.userId)
+  }
+
+  // [2026-08-03] 거절 확정 전 커스텀 confirm — 사유 입력 후 최종 확인
+  const handleRejectSubmit = async () => {
+    if (!rejectTarget) return
+    const ok = await confirm({
+      title: '가입 거절',
+      message: `${rejectTarget.companyName ?? '-'} (${rejectTarget.businessNumber}) 의 가입을 거절하시겠습니까?`,
+      description: rejectReason.trim()
+        ? '입력한 거절 사유가 협력업체 이메일로 발송됩니다.'
+        : '거절 사유 없이 처리됩니다.',
+      severity: 'error',
+      confirmText: '거절',
+    })
+    if (ok) {
+      rejectMut.mutate({
+        userId: rejectTarget.userId,
+        reason: rejectReason.trim() || undefined,
+      })
+    }
+  }
+
+  // [2026-08-03] PC 테이블·모바일 카드 양쪽에서 재사용하는 승인/거절 액션
+  const renderApprovalActions = (row: (typeof rows)[number]) =>
+    row.status === 'PENDING' ? (
+      <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ flexWrap: 'nowrap' }}>
+        <Button
+          size="small"
+          variant="contained"
+          color="success"
+          startIcon={approveMut.isPending ? <CircularProgress size={12} /> : <CheckIcon />}
+          disabled={approveMut.isPending}
+          onClick={() => handleApproveClick(row)}
+          // [2026-08-03] 좁은 셀에서 "승 인" 세로 줄바꿈 방지
+          sx={{ px: 1, whiteSpace: 'nowrap', flexShrink: 0 }}
+        >
+          승인
+        </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          color="error"
+          startIcon={<BlockIcon />}
+          onClick={() => { setRejectTarget(row); setRejectReason('') }}
+          sx={{ px: 1, whiteSpace: 'nowrap', flexShrink: 0 }}
+        >
+          거절
+        </Button>
+      </Stack>
+    ) : (
+      <Chip
+        size="small"
+        label={statusLabel(row.status as ApprovalStatus)}
+        color={statusChipColor(row.status as ApprovalStatus)}
+      />
+    )
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h5" sx={{ fontWeight: 700 }}>
@@ -177,7 +246,7 @@ const ApprovalPage: React.FC = () => {
       </Typography>
 
       {/* ── 검색 조건 — PPT 슬라이드 22 ── */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack spacing={1.5}>
           {/* 1행: 신청일 + 상태 */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
@@ -219,7 +288,14 @@ const ApprovalPage: React.FC = () => {
           </Stack>
 
           {/* 2행: 협력업체명 + 사업자등록번호 + 버튼 */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          {/* [2026-08-03] flex:1 로 행 전체를 채우던 검색 입력을 고정 폭으로 변경 */}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            alignItems={{ sm: 'center' }}
+            flexWrap="wrap"
+            useFlexGap
+          >
             <TextField
               size="small"
               label="협력업체명"
@@ -227,7 +303,7 @@ const ApprovalPage: React.FC = () => {
               value={companyNameInput}
               onChange={(e) => setCompanyNameInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              sx={{ flex: 1 }}
+              sx={{ width: { xs: '100%', sm: 220 } }}
             />
             <TextField
               size="small"
@@ -236,128 +312,157 @@ const ApprovalPage: React.FC = () => {
               value={bizNoInput}
               onChange={(e) => setBizNoInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              sx={{ flex: 1 }}
+              sx={{ width: { xs: '100%', sm: 180 } }}
             />
             <Button
-              variant="outlined"
-              startIcon={<FileDownloadIcon />}
-              onClick={handleExcelExport}
-              disabled={!rows.length}
-            >
-              Excel
-            </Button>
-            <Button
               variant="contained"
+              size="small"
               startIcon={<SearchIcon />}
               onClick={handleSearch}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
             >
               {t('common.search')}
             </Button>
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FileDownloadIcon />}
+              onClick={handleExcelExport}
+              disabled={!rows.length}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              Excel
+            </Button>
           </Stack>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* ── 목록 — PPT 슬라이드 22 컬럼: 업종|기타업종|계약팀|사업자등록번호|[안전팀담당자: 직책|성명|Tel|E-Mail]|승인/거절 ── */}
-      <Paper variant="outlined">
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>{t('approval.loadError')}</Alert>
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      {/* Table - PC */}
+      <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' } }}>
+        <Table size="small" sx={{ minWidth: 1000 }}>
+          <TableHead>
+            {/* 1행: 그룹 헤더 */}
+            <TableRow>
+              <TableCell rowSpan={2} align="center">업종</TableCell>
+              <TableCell rowSpan={2} align="center">기타업종</TableCell>
+              <TableCell rowSpan={2} align="center">계약팀</TableCell>
+              <TableCell rowSpan={2} align="center">업체명</TableCell>
+              <TableCell rowSpan={2} align="center">사업자 등록번호</TableCell>
+              <TableCell colSpan={4} align="center">안전팀담당자</TableCell>
+              {/* [2026-08-03] 헤더 2행의 E-Mail 이 :last-child 가 되어 테마 규칙에 우측 보더가
+                  지워지므로, rowSpan 된 이 셀의 왼쪽 보더로 구분선을 그림 */}
+              <TableCell
+                rowSpan={2}
+                align="center"
+                sx={{
+                  width: 180,
+                  minWidth: 180,
+                  borderLeft: (th: any) =>
+                    `1px solid ${th.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : th.palette.divider}`,
+                }}
+              >
+                승인/거절
+              </TableCell>
+            </TableRow>
+            {/* 2행: 안전팀담당자 세부 */}
+            <TableRow>
+              <TableCell align="center">직책</TableCell>
+              <TableCell align="center">성명</TableCell>
+              <TableCell align="center">Tel</TableCell>
+              <TableCell align="center">E-Mail</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {listQuery.isLoading && (
+              <TableRow>
+                <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
+              </TableRow>
+            )}
+            {!listQuery.isLoading && rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                  <Typography color="text.secondary">{t('approval.empty')}</Typography>
+                </TableCell>
+              </TableRow>
+            )}
+            {rows.map((row) => (
+              <TableRow key={row.userId} hover>
+                <TableCell align="center">{row.industryName ?? '-'}</TableCell>
+                <TableCell align="center">{row.industryOther ?? '-'}</TableCell>
+                <TableCell align="center">{row.contractDeptName ?? '-'}</TableCell>
+                <TableCell align="center">{row.companyName ?? '-'}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>{row.businessNumber}</TableCell>
+                <TableCell align="center">{row.title ?? '-'}</TableCell>
+                <TableCell align="center">{row.name}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>{row.phone}</TableCell>
+                <TableCell align="center">{row.email}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
+                  {renderApprovalActions(row)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Mobile Card List */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+        {listQuery.isLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
         )}
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              {/* 1행: 그룹 헤더 */}
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>업종</TableCell>
-                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>기타업종</TableCell>}
-                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>계약팀</TableCell>}
-                {!isMobile && <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>업체명</TableCell>}
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>사업자 등록번호</TableCell>
-                <TableCell colSpan={4} align="center" sx={{ fontWeight: 700, borderRight: '1px solid', borderColor: 'divider' }}>안전팀담당자</TableCell>
-                <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 140 }}>승인/거절</TableCell>
-              </TableRow>
-              {/* 2행: 안전팀담당자 세부 */}
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>직책</TableCell>
-                <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>성명</TableCell>
-                {!isMobile && <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem' }}>Tel</TableCell>}
-                {!isMobile && <TableCell sx={{ fontWeight: 600, fontSize: '0.8rem', borderRight: '1px solid', borderColor: 'divider' }}>E-Mail</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listQuery.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
-              )}
-              {!listQuery.isLoading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    {t('approval.empty')}
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((row) => (
-                <TableRow key={row.userId} hover>
-                  <TableCell>{row.industryName ?? '-'}</TableCell>
-                  {!isMobile && <TableCell>{row.industryOther ?? '-'}</TableCell>}
-                  {!isMobile && <TableCell>{row.contractDeptName ?? '-'}</TableCell>}
-                  {!isMobile && <TableCell>{row.companyName ?? '-'}</TableCell>}
-                  <TableCell>{row.businessNumber}</TableCell>
-                  <TableCell>{row.title ?? '-'}</TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  {!isMobile && <TableCell>{row.phone}</TableCell>}
-                  {!isMobile && <TableCell>{row.email}</TableCell>}
-                  <TableCell align="center">
-                    {row.status === 'PENDING' ? (
-                      <Stack direction="row" spacing={0.5} justifyContent="center">
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="success"
-                          startIcon={approveMut.isPending ? <CircularProgress size={12} /> : <CheckIcon />}
-                          disabled={approveMut.isPending}
-                          onClick={() => approveMut.mutate(row.userId)}
-                          sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
-                        >
-                          승인
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          startIcon={<BlockIcon />}
-                          onClick={() => { setRejectTarget(row); setRejectReason('') }}
-                          sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
-                        >
-                          거절
-                        </Button>
-                      </Stack>
-                    ) : (
-                      <Chip
-                        size="small"
-                        label={statusLabel(row.status as ApprovalStatus)}
-                        color={statusChipColor(row.status as ApprovalStatus)}
-                        sx={{ fontWeight: 600 }}
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
+        {!listQuery.isLoading && rows.length === 0 && (
+          <Paper sx={{ p: 3, textAlign: 'center' }}>
+            <Typography color="text.secondary">{t('approval.empty')}</Typography>
+          </Paper>
+        )}
+        {rows.map((row) => (
+          <Paper key={row.userId} sx={{ p: 2, border: 1, borderColor: 'divider' }}>
+            <Typography fontWeight="bold" sx={{ mb: 1, wordBreak: 'keep-all' }}>
+              {row.companyName ?? '-'}
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
+              {([
+                ['업종', row.industryName ?? '-'],
+                ['기타업종', row.industryOther ?? '-'],
+                ['계약팀', row.contractDeptName ?? '-'],
+                ['사업자번호', row.businessNumber],
+                ['직책', row.title ?? '-'],
+                ['성명', row.name],
+                ['Tel', row.phone],
+                ['E-Mail', row.email],
+              ] as [string, string][]).map(([label, value]) => (
+                <Box key={label} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ bgcolor: 'grey.200', px: 1, py: 0.25, borderRadius: 0.5, minWidth: 76, flexShrink: 0 }}
+                  >
+                    {label}
+                  </Typography>
+                  <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{value}</Typography>
+                </Box>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={pageSize}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
+            </Box>
+            {renderApprovalActions(row)}
+          </Paper>
+        ))}
+      </Box>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Pagination
+          count={Math.max(1, Math.ceil(total / pageSize))}
+          page={page + 1}
+          onChange={(_, newPage) => setPage(newPage - 1)}
+          color="primary"
         />
-      </Paper>
+      </Box>
 
       {/* ── 거절 사유 팝업 — PPT 슬라이드 22 note: "거절을 누르면 사유를 쓸 수 있는 팝업" ── */}
       <Dialog
@@ -396,12 +501,7 @@ const ApprovalPage: React.FC = () => {
             variant="contained"
             color="error"
             disabled={rejectMut.isPending}
-            onClick={() =>
-              rejectMut.mutate({
-                userId: rejectTarget!.userId,
-                reason: rejectReason.trim() || undefined,
-              })
-            }
+            onClick={handleRejectSubmit}
           >
             {rejectMut.isPending ? <CircularProgress size={20} /> : t('common.confirm')}
           </Button>

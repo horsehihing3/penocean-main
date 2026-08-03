@@ -13,6 +13,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useThemeMode } from '../../context/ThemeContext'
 import LanguageSwitcher from './LanguageSwitcher'
 import ThemeToggle from './ThemeToggle'
 
@@ -20,7 +21,11 @@ const Header: React.FC = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { isDarkMode } = useThemeMode()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+
+  // [2026-08-03] 상단 AppBar 배경 흰색 전환 — 아이콘 색상 배경 대비에 맞춤
+  const iconColor = isDarkMode ? '#fafafa' : '#1f2937'
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -43,8 +48,8 @@ const Header: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <LanguageSwitcher />
-        <ThemeToggle />
+        <LanguageSwitcher color={iconColor} />
+        <ThemeToggle color={iconColor} />
 
         <IconButton onClick={handleMenuOpen} size="small">
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>

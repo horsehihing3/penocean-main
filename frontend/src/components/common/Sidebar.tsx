@@ -349,6 +349,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onMenuClick, collapsed = false }) => 
                                     primaryTypographyProps={{
                                       fontSize: '0.875rem',
                                       fontWeight: gcActive ? 600 : 400,
+                                      // [2026-08-03] 두 줄로 넘어갈 때 하이픈 아래가 아니라
+                                      // 텍스트 시작 위치에 맞춰지도록 행잉 인덴트 적용
+                                      sx: { pl: '16px', textIndent: '-16px' },
                                     }}
                                   />
                                 </ListItemButton>

@@ -29,6 +29,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { format } from 'date-fns'
+import { useConfirm } from '../../components/common/ConfirmDialogProvider'
 
 // ─── 메뉴 트리 (Sidebar 구조와 동일하게 유지) ───────────────────────────────
 interface MenuNode {
@@ -142,6 +143,7 @@ const emptyForm = {
 
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
 const DevQnAPage: React.FC = () => {
+  const confirm = useConfirm()
   const [items, setItems] = useState<QnaItem[]>(loadItems)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<QnaItem | null>(null)
@@ -200,8 +202,16 @@ const DevQnAPage: React.FC = () => {
     setDialogOpen(false)
   }
 
-  const handleDelete = (id: number) => {
-    if (!window.confirm('삭제하시겠습니까?')) return
+  // [2026-08-03] window.confirm → 프로젝트 커스텀 confirm 으로 교체
+  const handleDelete = async (id: number) => {
+    const ok = await confirm({
+      title: '질문 삭제',
+      message: '이 질문을 삭제하시겠습니까?',
+      description: '삭제한 질문은 복구할 수 없습니다.',
+      severity: 'error',
+      confirmText: '삭제',
+    })
+    if (!ok) return
     setItems((prev) => prev.filter((it) => it.id !== id))
     if (detailItem?.id === id) setDetailItem(null)
   }
@@ -235,14 +245,14 @@ const DevQnAPage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 60 }}>번호</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 200 }}>상위메뉴</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 200 }}>하위메뉴</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>질문</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>답변</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 100 }}>등록일</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 80 }} align="center">관리</TableCell>
+              <TableRow>
+                <TableCell sx={{ width: 60 }}>번호</TableCell>
+                <TableCell sx={{ width: 200 }}>상위메뉴</TableCell>
+                <TableCell sx={{ width: 200 }}>하위메뉴</TableCell>
+                <TableCell>질문</TableCell>
+                <TableCell>답변</TableCell>
+                <TableCell sx={{ width: 100 }}>등록일</TableCell>
+                <TableCell sx={{ width: 80 }} align="center">관리</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

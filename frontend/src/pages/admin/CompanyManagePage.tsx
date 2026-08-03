@@ -18,21 +18,15 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
+import type { GridColDef } from '@mui/x-data-grid'
+import ListTable from '../../components/common/ListTable'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import CloseIcon from '@mui/icons-material/Close'
@@ -222,7 +216,7 @@ const CompanyManagePage: React.FC = () => {
   const [dateTo, setDateTo] = useState('')
 
   const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const pageSize = 20
 
   const [attachDialogRow, setAttachDialogRow] = useState<AccessRequestListItem | null>(null)
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -281,6 +275,76 @@ const CompanyManagePage: React.FC = () => {
   const rows = listQuery.data?.content ?? []
   const total = listQuery.data?.totalElements ?? 0
 
+  // [2026-08-03] 공용 ListTable 목록 디자인 적용 — PC 테이블 + 모바일 카드 공통화
+  const columns: GridColDef<AccessRequestListItem>[] = [
+    {
+      field: 'status',
+      headerName: '상태',
+      width: 90,
+      renderCell: (p) => (
+        <Chip
+          size="small"
+          label={docStatusLabel(p.row.status)}
+          color={docStatusColor(p.row.status)}
+        />
+      ),
+    },
+    { field: 'siteType', headerName: '구분', width: 70, valueGetter: () => '선박' },
+    { field: 'industryName', headerName: '업종', width: 100, valueGetter: (p) => p.row.industryName ?? '-' },
+    { field: 'vesselName', headerName: '방문사업장/선박', minWidth: 140 },
+    { field: 'portName', headerName: '지역/항구', width: 90, valueGetter: (p) => p.row.portName ?? '-' },
+    {
+      field: 'schedule',
+      headerName: '작업일정',
+      width: 190,
+      valueGetter: (p) => formatDateRange(
+        p.row.plannedStartDate as unknown as string,
+        p.row.plannedEndDate as unknown as string,
+      ),
+    },
+    { field: 'workType', headerName: '작업상세', width: 120, valueGetter: (p) => p.row.workType ?? '-' },
+    { field: 'workerCount', headerName: '출입신청인원', width: 90, valueGetter: (p) => p.row.workerCount ?? '-' },
+    {
+      field: 'attachments',
+      headerName: '첨부파일',
+      width: 95,
+      renderCell: (p) => {
+        const cnt = (p.row.attachmentCount ?? 0) + (p.row.linkAttachmentCount ?? 0)
+        return (
+          <>
+            <Tooltip title={cnt > 0 ? `${cnt}건` : '파일 없음'}>
+              <span>
+                <IconButton size="small" onClick={() => setAttachDialogRow(p.row)} disabled={cnt === 0}>
+                  <AttachFileIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            {cnt > 0 && <Chip label={cnt} size="small" sx={{ ml: 0.5, height: 18 }} />}
+          </>
+        )
+      },
+    },
+    {
+      field: 'uploadToken',
+      headerName: '업로드 링크',
+      width: 110,
+      renderCell: (p) => (
+        <Tooltip title={p.row.uploadToken ? '링크 복사' : '링크 생성'}>
+          <span>
+            <IconButton
+              size="small"
+              color={p.row.uploadToken ? 'success' : 'default'}
+              disabled={generateTokenMut.isPending}
+              onClick={() => handleCopyLink(p.row)}
+            >
+              {p.row.uploadToken ? <ContentCopyIcon fontSize="small" /> : <LinkIcon fontSize="small" />}
+            </IconButton>
+          </span>
+        </Tooltip>
+      ),
+    },
+  ]
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="h5" sx={{ fontWeight: 700 }}>
@@ -288,7 +352,7 @@ const CompanyManagePage: React.FC = () => {
       </Typography>
 
       {/* 검색 조건 */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack spacing={1.5}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
             <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>작업일정</Typography>
@@ -325,142 +389,49 @@ const CompanyManagePage: React.FC = () => {
               </Select>
             </FormControl>
           </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          {/* [2026-08-03] flex:1 로 행 전체를 채우던 검색 입력을 고정 폭으로 변경 (가입신청 화면과 동일 기준) */}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1.5}
+            alignItems={{ sm: 'center' }}
+            flexWrap="wrap"
+            useFlexGap
+          >
             <TextField
               size="small"
-              label="방문사업장/선박·업체명 검색"
+              label="방문사업장/선박·업체명"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              sx={{ flex: 1 }}
+              sx={{ width: { xs: '100%', sm: 260 } }}
             />
-            <Button variant="contained" startIcon={<SearchIcon />} onClick={handleSearch}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<SearchIcon />}
+              onClick={handleSearch}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
               검색
             </Button>
           </Stack>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* 목록 */}
-      <Paper variant="outlined">
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>목록을 불러오지 못했습니다.</Alert>
-        )}
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 48 }}>No.</TableCell>
-                <TableCell sx={{ width: 90 }}>상태</TableCell>
-                <TableCell sx={{ width: 70 }}>구분</TableCell>
-                <TableCell sx={{ width: 100 }}>업종</TableCell>
-                <TableCell>방문사업장/선박</TableCell>
-                <TableCell sx={{ width: 90 }}>지역/항구</TableCell>
-                <TableCell sx={{ width: 190 }}>작업일정</TableCell>
-                <TableCell sx={{ width: 120 }}>작업상세</TableCell>
-                <TableCell align="right" sx={{ width: 90 }}>출입신청인원</TableCell>
-                <TableCell align="center" sx={{ width: 95 }}>첨부파일</TableCell>
-                <TableCell align="center" sx={{ width: 110 }}>업로드 링크</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {listQuery.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
-              )}
-              {!listQuery.isLoading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    조회된 데이터가 없습니다.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((row, idx) => (
-                <TableRow key={row.id} hover>
-                  <TableCell>{page * pageSize + idx + 1}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={docStatusLabel(row.status)}
-                      color={docStatusColor(row.status)}
-                      sx={{ fontWeight: 600, fontSize: '0.72rem' }}
-                    />
-                  </TableCell>
-                  <TableCell>선박</TableCell>
-                  <TableCell>{row.industryName ?? '-'}</TableCell>
-                  <TableCell>{row.vesselName}</TableCell>
-                  <TableCell>{row.portName ?? '-'}</TableCell>
-                  <TableCell sx={{ fontSize: '0.78rem' }}>
-                    {formatDateRange(
-                      row.plannedStartDate as unknown as string,
-                      row.plannedEndDate as unknown as string,
-                    )}
-                  </TableCell>
-                  <TableCell>{row.workType ?? '-'}</TableCell>
-                  <TableCell align="right">{row.workerCount ?? '-'}</TableCell>
+      {listQuery.isError && <Alert severity="error">목록을 불러오지 못했습니다.</Alert>}
 
-                  {/* 첨부파일 (출입신청 + 링크 제출 합산) */}
-                  {(() => {
-                    const total = (row.attachmentCount ?? 0) + (row.linkAttachmentCount ?? 0)
-                    return (
-                      <TableCell align="center">
-                        <Tooltip title={total > 0 ? `${total}건` : '파일 없음'}>
-                          <span>
-                            <IconButton
-                              size="small"
-                              onClick={() => setAttachDialogRow(row)}
-                              disabled={total === 0}
-                            >
-                              <AttachFileIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                        {total > 0 && (
-                          <Chip
-                            label={total}
-                            size="small"
-                            sx={{ ml: 0.5, height: 18, fontSize: '0.7rem' }}
-                          />
-                        )}
-                      </TableCell>
-                    )
-                  })()}
-
-                  {/* 업로드 링크 */}
-                  <TableCell align="center">
-                    <Tooltip title={row.uploadToken ? '링크 복사' : '링크 생성'}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          color={row.uploadToken ? 'success' : 'default'}
-                          disabled={generateTokenMut.isPending}
-                          onClick={() => handleCopyLink(row)}
-                        >
-                          {row.uploadToken
-                            ? <ContentCopyIcon fontSize="small" />
-                            : <LinkIcon fontSize="small" />}
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          rowsPerPage={pageSize}
-          rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
-        />
-      </Paper>
+      <ListTable
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        loading={listQuery.isLoading}
+        rowCount={total}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => setPage(m.page)}
+        emptyMessage="조회된 데이터가 없습니다."
+        minWidth={1100}
+      />
 
       {/* 첨부파일 다이얼로그 */}
       <Dialog

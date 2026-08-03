@@ -24,7 +24,6 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
@@ -33,6 +32,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
 import AppDatePicker from '../../components/common/AppDatePicker'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
@@ -178,6 +179,16 @@ const AuditInspectionPage: React.FC = () => {
   const typeLabel = (v: AuditInspectionType) => t(`audit.types.${v}`)
   const statusLabel = (v: AuditInspectionStatus) => t(`audit.status.${v}`)
 
+
+  // [2026-08-03] 목록 필터 초기화 (새로고침 버튼)
+  const resetFilters = () => {
+    setDateFrom('')
+    setDateTo('')
+    setInspectionType('')
+    setStatus('')
+    setPage(0)
+  }
+
   const columns: GridColDef<AuditInspectionListItem>[] = [
     {
       field: 'inspectionDate',
@@ -276,16 +287,15 @@ const AuditInspectionPage: React.FC = () => {
         </Button>
       </Stack>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
           alignItems={{ xs: 'stretch', md: 'center' }}
         >
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('audit.type')}</InputLabel>
             <Select
-              label={t('audit.type')}
+              displayEmpty
               value={inspectionType}
               onChange={(e) => {
                 setInspectionType(e.target.value as AuditInspectionType | '')
@@ -301,9 +311,8 @@ const AuditInspectionPage: React.FC = () => {
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('approval.filterStatus')}</InputLabel>
             <Select
-              label={t('approval.filterStatus')}
+              displayEmpty
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as AuditInspectionStatus | '')
@@ -333,47 +342,29 @@ const AuditInspectionPage: React.FC = () => {
           <Button variant="contained" startIcon={<SearchIcon />} onClick={() => setPage(0)}>
             {t('common.search')}
           </Button>
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        emptyMessage={t('approval.empty')}
+      />
 
       {/* Detail Dialog */}
       <Dialog

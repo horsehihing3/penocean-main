@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import {
   Box,
   Paper,
@@ -212,13 +212,13 @@ const EvaluationItemPage: React.FC = () => {
         <TableContainer>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.category')}</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 130 }}>{t('evaluationItem.title')}</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>{t('evaluationItem.description')}</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: 200 }}>첨부파일</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.maxScore')}</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, width: 64 }}>{t('evaluationItem.active')}</TableCell>
+              <TableRow>
+                <TableCell sx={{ width: 130 }}>{t('evaluationItem.category')}</TableCell>
+                <TableCell sx={{ width: 130 }}>{t('evaluationItem.title')}</TableCell>
+                <TableCell>{t('evaluationItem.description')}</TableCell>
+                <TableCell sx={{ width: 200 }}>첨부파일</TableCell>
+                <TableCell align="right" sx={{ width: 64 }}>{t('evaluationItem.maxScore')}</TableCell>
+                <TableCell align="center" sx={{ width: 64 }}>{t('evaluationItem.active')}</TableCell>
                 <TableCell sx={{ width: 100 }} />
               </TableRow>
             </TableHead>
@@ -243,28 +243,29 @@ const EvaluationItemPage: React.FC = () => {
                 const prevCategory = idx > 0 ? items[idx - 1].category : null
                 const isNewCategory = item.category !== prevCategory
                 return (
-                  <>
+                  <Fragment key={item.id}>
                     {isNewCategory && (
-                      <TableRow key={`cat-${item.category}`} sx={{ bgcolor: 'primary.50' }}>
-                        <TableCell colSpan={7} sx={{ py: 0.5, fontWeight: 700, fontSize: '0.8rem', color: 'primary.dark', pl: 2 }}>
+                      <TableRow sx={{ bgcolor: 'primary.50' }}>
+                        {/* [2026-08-03] py:0.5 로 눌려 있던 분류 구분행 높이를 일반 행 수준으로 확대 */}
+                        <TableCell colSpan={7} sx={{ py: 1.25, fontWeight: 700, color: 'primary.dark', pl: 2 }}>
                           {item.category}
                         </TableCell>
                       </TableRow>
                     )}
-                    <TableRow key={item.id} hover>
-                      <TableCell sx={{ pl: 3, fontSize: '0.82rem', color: 'text.secondary' }}>
+                    <TableRow hover>
+                      <TableCell sx={{ pl: 3, color: 'text.secondary' }}>
                         {item.category}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{item.title}</Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                        <Typography variant="body2" color="text.secondary">
                           {item.description ?? '-'}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                        <Typography variant="body2" color="text.secondary">
                           {item.referenceDoc ?? '-'}
                         </Typography>
                       </TableCell>
@@ -295,7 +296,7 @@ const EvaluationItemPage: React.FC = () => {
                         </Stack>
                       </TableCell>
                     </TableRow>
-                  </>
+                  </Fragment>
                 )
               })}
             </TableBody>

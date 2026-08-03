@@ -1,5 +1,5 @@
 // [2026-04-27] 관리자 QR 안전교육 이수 관리 페이지
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../../api/axiosInstance'
 import { QRCodeSVG } from 'qrcode.react'
@@ -98,7 +98,7 @@ export default function AdminQrEducationPage() {
       <TableContainer component={Paper} elevation={1}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
+            <TableRow>
               <TableCell>제목</TableCell>
               <TableCell>상태</TableCell>
               <TableCell align="center">이수 건수</TableCell>
@@ -114,9 +114,10 @@ export default function AdminQrEducationPage() {
             {!isLoading && list.length === 0 && (
               <TableRow><TableCell colSpan={6} align="center" sx={{ color: 'text.secondary' }}>생성된 QR코드가 없습니다.</TableCell></TableRow>
             )}
+            {/* [2026-08-03] map 최상위가 fragment 라 key 가 필요 — 내부 TableRow 에 있던 key 를 끌어올림 */}
             {list.map(item => (
-              <>
-                <TableRow key={item.id} hover>
+              <Fragment key={item.id}>
+                <TableRow hover>
                   <TableCell>{item.title}</TableCell>
                   <TableCell>
                     <Chip label={item.isActive ? '활성' : '비활성'} color={item.isActive ? 'success' : 'default'} size="small" />
@@ -153,7 +154,7 @@ export default function AdminQrEducationPage() {
                 </TableRow>
                 {/* 이수 기록 펼치기 */}
                 {expandedRecords === item.id && (
-                  <TableRow key={`records-${item.id}`}>
+                  <TableRow>
                     <TableCell colSpan={6} sx={{ p: 0 }}>
                       <Collapse in={true}>
                         <Box sx={{ bgcolor: '#f9fafb', px: 3, py: 2 }}>
@@ -161,35 +162,37 @@ export default function AdminQrEducationPage() {
                           {records.length === 0 ? (
                             <Typography variant="body2" color="text.secondary">이수 기록이 없습니다.</Typography>
                           ) : (
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>성함</TableCell>
-                                  <TableCell>선박명</TableCell>
-                                  <TableCell>작업일자</TableCell>
-                                  <TableCell>전화번호</TableCell>
-                                  <TableCell>이수일시</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {records.map(r => (
-                                  <TableRow key={r.id}>
-                                    <TableCell>{r.workerName}</TableCell>
-                                    <TableCell>{r.vesselName}</TableCell>
-                                    <TableCell>{r.workDate}</TableCell>
-                                    <TableCell>{r.phone || '-'}</TableCell>
-                                    <TableCell>{r.completedAt?.slice(0, 16).replace('T', ' ')}</TableCell>
+                            <TableContainer>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>성함</TableCell>
+                                    <TableCell>선박명</TableCell>
+                                    <TableCell>작업일자</TableCell>
+                                    <TableCell>전화번호</TableCell>
+                                    <TableCell>이수일시</TableCell>
                                   </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
+                                </TableHead>
+                                <TableBody>
+                                  {records.map(r => (
+                                    <TableRow key={r.id}>
+                                      <TableCell>{r.workerName}</TableCell>
+                                      <TableCell>{r.vesselName}</TableCell>
+                                      <TableCell>{r.workDate}</TableCell>
+                                      <TableCell>{r.phone || '-'}</TableCell>
+                                      <TableCell>{r.completedAt?.slice(0, 16).replace('T', ' ')}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
                           )}
                         </Box>
                       </Collapse>
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>

@@ -28,7 +28,6 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
@@ -36,6 +35,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import QrCodeIcon from '@mui/icons-material/QrCode2'
 import BlockIcon from '@mui/icons-material/Block'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -273,44 +273,23 @@ const VisitPermitPage: React.FC = () => {
         {t('visitPermit.pageTitle')}
       </Typography>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        emptyMessage={t('approval.empty')}
+      />
 
       {/* Detail Dialog */}
       <Dialog

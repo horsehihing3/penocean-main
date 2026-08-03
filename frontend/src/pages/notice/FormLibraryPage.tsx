@@ -18,21 +18,25 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Pagination,
   Chip,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import SearchIcon from '@mui/icons-material/Search'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import AddIcon from '@mui/icons-material/Add'
 import DownloadIcon from '@mui/icons-material/Download'
 import DescriptionIcon from '@mui/icons-material/Description'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { useTranslation } from 'react-i18next'
+import ListSearchBar from '../../components/common/ListSearchBar'
 import { useConfirm } from '../../components/common/ConfirmDialogProvider'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
@@ -122,6 +126,19 @@ const FormLibraryPage: React.FC = () => {
     setPage(0)
   }
 
+  // [2026-08-03] PC 테이블·모바일 카드 양쪽에서 호출 — 다운로드 URL 조립 일원화
+  const handleDownload = (id: number) => {
+    window.open(`${import.meta.env.VITE_API_URL || '/api'}/form-templates/${id}/download`, '_blank')
+    qc.invalidateQueries({ queryKey: ['form-templates'] })
+  }
+
+  const resetFilters = () => {
+    setCategory('')
+    setKeywordInput('')
+    setKeyword('')
+    setPage(0)
+  }
+
   const submitCreate = () => {
     if (!form.title.trim() || !file) {
       setSnackbar({ open: true, message: t('errors.required'), severity: 'error' })
@@ -143,34 +160,21 @@ const FormLibraryPage: React.FC = () => {
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           {t('form.pageTitle')}
         </Typography>
-        {isAdmin && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setCreateOpen(true)}
-          >
-            {t('form.addForm')}
-          </Button>
-        )}
       </Stack>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          alignItems={{ xs: 'stretch', md: 'center' }}
-        >
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>{t('form.category')}</InputLabel>
+      {/* Filters - PC */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
             <Select
-              label={t('form.category')}
               value={category}
+              displayEmpty
               onChange={(e) => {
                 setCategory(e.target.value)
                 setPage(0)
               }}
             >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
+              <MenuItem value="">{t('form.category')}</MenuItem>
               {CATEGORIES.map((c) => (
                 <MenuItem key={c} value={c}>
                   {c}
@@ -178,22 +182,61 @@ const FormLibraryPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
+          <ListSearchBar
             placeholder={t('form.searchPlaceholder')}
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1, minWidth: 160 }}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            sx={{ width: 300 }}
           />
-          <Button variant="contained" startIcon={<SearchIcon />} onClick={applyKeyword}>
-            {t('common.search')}
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        {isAdmin && (
+          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+            {t('form.addForm')}
           </Button>
-        </Stack>
-      </Paper>
+        )}
+      </Box>
+
+      {/* Filters - Mobile */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+        <FormControl size="small" fullWidth>
+          <Select
+            value={category}
+            displayEmpty
+            onChange={(e) => {
+              setCategory(e.target.value)
+              setPage(0)
+            }}
+          >
+            <MenuItem value="">{t('form.category')}</MenuItem>
+            {CATEGORIES.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <ListSearchBar
+            placeholder={t('form.searchPlaceholder')}
+            value={keywordInput}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            fullWidth
+          />
+          <IconButton onClick={resetFilters} size="small" sx={{ flexShrink: 0 }}>
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        {isAdmin && (
+          <Button variant="contained" size="small" fullWidth startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
+            {t('form.addForm')}
+          </Button>
+        )}
+      </Box>
 
       {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
 
@@ -201,100 +244,159 @@ const FormLibraryPage: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : items.length === 0 ? (
-        <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">{t('approval.empty')}</Typography>
-        </Paper>
       ) : (
-        <Grid container spacing={2}>
-          {items.map((it) => (
-            <Grid key={it.id} item xs={12} sm={6} md={4} lg={3}>
-              <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <CardContent sx={{ flex: 1 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                    <DescriptionIcon color="primary" />
+        <>
+          {/* Table - PC */}
+          <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' } }}>
+            <Table size="small" sx={{ minWidth: 750 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell align="center" sx={{ width: 60 }}>{t('common.rowNo')}</TableCell>
+                  <TableCell align="center" sx={{ width: 90 }}>{t('form.category')}</TableCell>
+                  <TableCell align="center">{t('form.title')}</TableCell>
+                  <TableCell align="center" sx={{ width: 70 }}>{t('form.version')}</TableCell>
+                  <TableCell align="center" sx={{ width: 90 }}>{t('form.downloadCount')}</TableCell>
+                  <TableCell align="center" sx={{ width: 140 }}>{t('common.manage')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {items.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                      <Typography color="text.secondary">{t('approval.empty')}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  items.map((it, idx) => (
+                    <TableRow key={it.id} hover>
+                      <TableCell align="center">{page * pageSize + idx + 1}</TableCell>
+                      <TableCell align="center">
+                        <Chip size="small" label={it.category} />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <DescriptionIcon color="primary" fontSize="small" />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {it.title}
+                            </Typography>
+                            {it.description && (
+                              <Typography variant="caption" color="text.secondary">
+                                {it.description}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="center">v{it.version}</TableCell>
+                      <TableCell align="center">{it.downloadCount}</TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            handleDownload(it.id)
+                          }}
+                        >
+                          <DownloadIcon fontSize="small" />
+                        </IconButton>
+                        {isAdmin && (
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={async () => {
+                              if (await confirm({
+                                title: t('common.delete'),
+                                message: t('form.deleteConfirm'),
+                                severity: 'error',
+                                confirmText: t('common.delete'),
+                              })) {
+                                deleteMut.mutate(it.id)
+                              }
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Mobile Card List */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+            {items.length === 0 ? (
+              <Paper sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">{t('approval.empty')}</Typography>
+              </Paper>
+            ) : (
+              items.map((it) => (
+                <Paper key={it.id} sx={{ p: 2, border: 1, borderColor: 'divider' }}>
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
                     <Chip size="small" label={it.category} />
                     <Chip size="small" label={`v${it.version}`} variant="outlined" />
-                  </Stack>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  </Box>
+                  <Typography fontWeight="bold" sx={{ mb: 1, wordBreak: 'keep-all' }}>
                     {it.title}
                   </Typography>
                   {it.description && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        mt: 1,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       {it.description}
                     </Typography>
                   )}
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    {t('form.downloadCount')}: {it.downloadCount}
-                  </Typography>
-                </CardContent>
-                <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => {
-                      window.open(`${import.meta.env.VITE_API_URL || '/api'}/form-templates/${it.id}/download`, '_blank')
-                      qc.invalidateQueries({ queryKey: ['form-templates'] })
-                    }}
-                  >
-                    {t('form.download')}
-                  </Button>
-                  {isAdmin && (
-                    <IconButton
+                  <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
+                    <Typography variant="body2" sx={{ bgcolor: 'grey.200', px: 1, py: 0.25, borderRadius: 0.5, minWidth: 50 }}>
+                      {t('form.downloadCount')}
+                    </Typography>
+                    <Typography variant="body2">{it.downloadCount}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
                       size="small"
-                      color="error"
-                      onClick={async () => {
-                        if (await confirm({
-                          title: t('common.delete'),
-                          message: t('form.deleteConfirm'),
-                          severity: 'error',
-                          confirmText: t('common.delete'),
-                        })) {
-                          deleteMut.mutate(it.id)
-                        }
+                      variant="contained"
+                      startIcon={<DownloadIcon />}
+                      onClick={() => {
+                        handleDownload(it.id)
                       }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+                      {t('form.download')}
+                    </Button>
+                    {isAdmin && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={async () => {
+                          if (await confirm({
+                            title: t('common.delete'),
+                            message: t('form.deleteConfirm'),
+                            severity: 'error',
+                            confirmText: t('common.delete'),
+                          })) {
+                            deleteMut.mutate(it.id)
+                          }
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Paper>
+              ))
+            )}
+          </Box>
 
-      {listQuery.data && listQuery.data.totalPages > 1 && (
-        <Stack direction="row" justifyContent="center" spacing={1}>
-          <Button
-            size="small"
-            disabled={page === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            {t('common.prev')}
-          </Button>
-          <Typography variant="body2" sx={{ alignSelf: 'center' }}>
-            {page + 1} / {listQuery.data.totalPages}
-          </Typography>
-          <Button
-            size="small"
-            disabled={page + 1 >= listQuery.data.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            {t('common.next')}
-          </Button>
-        </Stack>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Pagination
+              count={listQuery.data?.totalPages || 1}
+              page={page + 1}
+              onChange={(_, newPage) => setPage(newPage - 1)}
+              color="primary"
+            />
+          </Box>
+        </>
       )}
 
       {/* Create Dialog */}

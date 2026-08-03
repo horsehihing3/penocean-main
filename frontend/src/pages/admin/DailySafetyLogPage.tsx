@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
   Box,
-  Paper,
   Stack,
   Typography,
   Button,
@@ -24,13 +23,14 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridColumnVisibilityModel,
 } from '@mui/x-data-grid'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
 import AppDatePicker from '../../components/common/AppDatePicker'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -129,6 +129,14 @@ const DailySafetyLogPage: React.FC = () => {
     }
   }
 
+
+  // [2026-08-03] 목록 필터 초기화 (새로고침 버튼)
+  const resetFilters = () => {
+    setDateFrom('')
+    setDateTo('')
+    setPage(0)
+  }
+
   const columns: GridColDef<DailySafetyLogResponse>[] = [
     {
       field: 'logDate',
@@ -193,7 +201,7 @@ const DailySafetyLogPage: React.FC = () => {
         </Button>
       </Stack>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={2}
@@ -217,42 +225,29 @@ const DailySafetyLogPage: React.FC = () => {
             }}
             minIsoDate={dateFrom || null}
           />
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{ border: 0, flex: 1 }}
-        />
-      </Paper>
+        showRowNumber={false}
+        emptyMessage={t('approval.empty')}
+      />
 
       {/* Create dialog */}
       <Dialog

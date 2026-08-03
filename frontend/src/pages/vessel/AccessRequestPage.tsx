@@ -4,32 +4,31 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Box,
-  Paper,
   Stack,
   Typography,
-  TextField,
   MenuItem,
   FormControl,
-  InputLabel,
   Select,
   Button,
+  IconButton,
   Chip,
   Alert,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
 } from '@mui/x-data-grid'
-import SearchIcon from '@mui/icons-material/Search'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import AddIcon from '@mui/icons-material/Add'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import PrintIcon from '@mui/icons-material/Print'
 import * as XLSX from 'xlsx'
 import AppDatePicker from '../../components/common/AppDatePicker'
+import ListSearchBar from '../../components/common/ListSearchBar'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -187,6 +186,15 @@ const AccessRequestPage: React.FC = () => {
     setPage(0)
   }
 
+  const resetFilters = () => {
+    setStatus(isPermitView ? 'APPROVED' : '')
+    setKeywordInput('')
+    setKeyword('')
+    setDateFrom('')
+    setDateTo('')
+    setPage(0)
+  }
+
   // PPT 슬라이드 13: Excel 다운로드
   const handleExcelExport = () => {
     const rows = listQuery.data?.content ?? []
@@ -261,23 +269,24 @@ const AccessRequestPage: React.FC = () => {
       </Stack>
 
       {/* 필터 영역 */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
+          spacing={1.5}
           alignItems={{ xs: 'stretch', md: 'center' }}
+          flexWrap="wrap"
+          useFlexGap
         >
           <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>{t('approval.filterStatus')}</InputLabel>
             <Select
-              label={t('approval.filterStatus')}
+              displayEmpty
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as StatusFilter)
                 setPage(0)
               }}
             >
-              <MenuItem value="">{t('approval.filterAll')}</MenuItem>
+              <MenuItem value="">{t('approval.filterStatus')}</MenuItem>
               <MenuItem value="DRAFT">{t('accessRequest.status.DRAFT')}</MenuItem>
               <MenuItem value="SUBMITTED">{t('accessRequest.status.SUBMITTED')}</MenuItem>
               <MenuItem value="IN_REVIEW">{t('accessRequest.status.IN_REVIEW')}</MenuItem>
@@ -289,16 +298,12 @@ const AccessRequestPage: React.FC = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
+          <ListSearchBar
             placeholder={t('accessRequest.vesselSite') + ' / ' + t('accessRequest.company')}
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1, minWidth: 160 }}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            sx={{ width: { xs: '100%', sm: 300 } }}
           />
 
           <AppDatePicker
@@ -320,55 +325,30 @@ const AccessRequestPage: React.FC = () => {
             minIsoDate={dateFrom || null}
           />
 
-          <Button
-            variant="contained"
-            startIcon={<SearchIcon />}
-            onClick={applyKeyword}
-          >
-            {t('common.search')}
-          </Button>
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
-      {/* DataGrid */}
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        showRowNumber={false}
+        emptyMessage={t('approval.empty')}
+      />
     </Box>
   )
 }

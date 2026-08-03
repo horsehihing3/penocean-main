@@ -5,6 +5,8 @@
     "tagline": "협력업체 안전보건 DX 포털"
   },
   "common": {
+    "rowNo": "번호",
+    "manage": "관리",
     "save": "저장",
     "cancel": "취소",
     "delete": "삭제",

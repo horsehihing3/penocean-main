@@ -17,7 +17,8 @@ import {
   Alert,
   Chip,
 } from '@mui/material'
-import { DataGrid, GridColDef, GridRowParams } from '@mui/x-data-grid'
+import { GridColDef, GridRowParams } from '@mui/x-data-grid'
+import ListTable from '../../components/common/ListTable'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/DeleteOutline'
 import EditIcon from '@mui/icons-material/Edit'
@@ -278,31 +279,25 @@ const CodeMasterPage: React.FC = () => {
           </Button>
         </Stack>
 
-        <Box sx={{ height: 540, width: '100%' }}>
-          {tab !== 'DEPARTMENT' ? (
-            <DataGrid
-              rows={industriesQuery.data ?? []}
-              columns={industryColumns}
-              getRowId={(r) => r.id}
-              loading={industriesQuery.isLoading}
-              pageSizeOptions={[20, 50, 100]}
-              initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
-              disableRowSelectionOnClick
-              onRowDoubleClick={(p: GridRowParams<CodeMaster>) => openEditIndustry(p.row)}
-            />
-          ) : (
-            <DataGrid
-              rows={departmentsQuery.data ?? []}
-              columns={departmentColumns}
-              getRowId={(r) => r.id}
-              loading={departmentsQuery.isLoading}
-              pageSizeOptions={[20, 50, 100]}
-              initialState={{ pagination: { paginationModel: { pageSize: 20 } } }}
-              disableRowSelectionOnClick
-              onRowDoubleClick={(p: GridRowParams<Department>) => openEditDepartment(p.row)}
-            />
-          )}
-        </Box>
+        {tab !== 'DEPARTMENT' ? (
+          <ListTable
+            rows={industriesQuery.data ?? []}
+            columns={industryColumns}
+            getRowId={(r) => r.id}
+            loading={industriesQuery.isLoading}
+            onRowDoubleClick={(p: GridRowParams<CodeMaster>) => openEditIndustry(p.row)}
+            emptyMessage={t('approval.empty')}
+          />
+        ) : (
+          <ListTable
+            rows={departmentsQuery.data ?? []}
+            columns={departmentColumns}
+            getRowId={(r) => r.id}
+            loading={departmentsQuery.isLoading}
+            onRowDoubleClick={(p: GridRowParams<Department>) => openEditDepartment(p.row)}
+            emptyMessage={t('approval.empty')}
+          />
+        )}
       </Paper>
 
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>

@@ -8,10 +8,11 @@ import {
   IconButton, Alert, Tabs, Tab, FormControl, Select, MenuItem,
   Snackbar, CircularProgress, InputAdornment, Switch, FormControlLabel, Divider,
 } from '@mui/material'
+import ListSearchBar from '../../components/common/ListSearchBar'
 import LockIcon from '@mui/icons-material/Lock'
 import CloseIcon from '@mui/icons-material/Close'
-import SearchIcon from '@mui/icons-material/Search'
-import DownloadIcon from '@mui/icons-material/Download'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import UploadIcon from '@mui/icons-material/Upload'
 import EmailIcon from '@mui/icons-material/Email'
 import EditNoteIcon from '@mui/icons-material/EditNote'
@@ -604,70 +605,93 @@ const AdminHealthPage: React.FC = () => {
         </Stack>
       </Paper>
 
-      {/* 목록 */}
-      <Paper variant="outlined">
-        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between"
-          sx={{ px: 2, pt: 1.5, pb: 1 }} spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            총 {filtered.length}건의 데이터 {loading && '(불러오는 중...)'}
-            {pendingUnsaved.length > 0 && (
-              <Chip size="small" label={`미저장 ${pendingUnsaved.length}건`} color="warning" sx={{ ml: 1, fontWeight: 700 }} />
-            )}
-          </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <Select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
-                <MenuItem value="전체">전체 보기</MenuItem>
-                <MenuItem value="추적관리">추적관리</MenuItem>
-                <MenuItem value="정상">정상</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              size="small"
-              placeholder="성명, 부서명 또는 병원명 입력"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && setSearchKw(keyword)}
-              sx={{ minWidth: 200 }}
-            />
-            <Button variant="contained" size="small" startIcon={<SearchIcon />}
-              onClick={() => setSearchKw(keyword)}>검색</Button>
-          </Stack>
-        </Stack>
+      {/* [2026-08-03] 목록 — 필터를 Paper 밖으로 빼고 공용 목록 스타일 적용 */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
+              <MenuItem value="전체">전체 보기</MenuItem>
+              <MenuItem value="추적관리">추적관리</MenuItem>
+              <MenuItem value="정상">정상</MenuItem>
+            </Select>
+          </FormControl>
+          <ListSearchBar
+            placeholder="성명, 부서명 또는 병원명 입력"
+            value={keyword}
+            onChange={setKeyword}
+            onSearch={() => setSearchKw(keyword)}
+            sx={{ width: { xs: '100%', sm: 300 } }}
+          />
+          <IconButton size="small" onClick={() => { setKeyword(''); setSearchKw(''); setFilter('전체') }}>
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          총 {filtered.length}건의 데이터 {loading && '(불러오는 중...)'}
+          {pendingUnsaved.length > 0 && (
+            <Chip size="small" label={`미저장 ${pendingUnsaved.length}건`} color="warning" sx={{ ml: 1 }} />
+          )}
+        </Typography>
+      </Box>
 
-        <Alert severity="info" sx={{ mx: 2, mb: 1, py: 0 }}>
-          행을 클릭하면 3개년 비교/조회 화면이 팝업으로 열립니다. PDF 파일명 앞 6자리는 생년월일(YYMMDD) 비밀번호로 사용됩니다.
-        </Alert>
+      {/* Filters - Mobile */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+        <FormControl size="small" fullWidth>
+          <Select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
+            <MenuItem value="전체">전체 보기</MenuItem>
+            <MenuItem value="추적관리">추적관리</MenuItem>
+            <MenuItem value="정상">정상</MenuItem>
+          </Select>
+        </FormControl>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <ListSearchBar
+            placeholder="성명, 부서명 또는 병원명 입력"
+            value={keyword}
+            onChange={setKeyword}
+            onSearch={() => setSearchKw(keyword)}
+            fullWidth
+          />
+          <IconButton size="small" sx={{ flexShrink: 0 }}
+            onClick={() => { setKeyword(''); setSearchKw(''); setFilter('전체') }}>
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+      </Box>
 
-        <TableContainer sx={{ maxHeight: 420, overflowX: 'auto' }}>
+      <Alert severity="info" sx={{ py: 0 }}>
+        행을 클릭하면 3개년 비교/조회 화면이 팝업으로 열립니다. PDF 파일명 앞 6자리는 생년월일(YYMMDD) 비밀번호로 사용됩니다.
+      </Alert>
+
+      <Box>
+        <TableContainer component={Paper} sx={{ maxHeight: 420 }}>
 
           <Table size="small" stickyHeader sx={{ minWidth: 1300 }}>
             <TableHead>
               <TableRow>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>No</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>검진일</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap', minWidth: 67 }}>병원명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>부서명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>성명</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100', whiteSpace: 'nowrap' }}>연령</TableCell>
-                <TableCell colSpan={3} align="center" sx={{ fontWeight: 700, color: 'primary.main', borderBottom: '1px solid #ddd' }}>고혈압</TableCell>
-                <TableCell colSpan={3} align="center" sx={{ fontWeight: 700, color: 'success.dark', borderBottom: '1px solid #ddd' }}>당뇨병</TableCell>
-                <TableCell colSpan={6} align="center" sx={{ fontWeight: 700, color: 'warning.dark', borderBottom: '1px solid #ddd' }}>이상지질혈증</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>사후관리소견</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>업무적합</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>비고</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>편집</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, bgcolor: 'grey.100' }}>삭제</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap' }}>No</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap' }}>검진일</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap', minWidth: 67 }}>병원명</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap' }}>부서명</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap' }}>성명</TableCell>
+                <TableCell rowSpan={2} sx={{ whiteSpace: 'nowrap' }}>연령</TableCell>
+                <TableCell colSpan={3} align="center" sx={{ color: 'primary.main', borderBottom: 1, borderColor: 'divider' }}>고혈압</TableCell>
+                <TableCell colSpan={3} align="center" sx={{ color: 'success.dark', borderBottom: 1, borderColor: 'divider' }}>당뇨병</TableCell>
+                <TableCell colSpan={6} align="center" sx={{ color: 'warning.dark', borderBottom: 1, borderColor: 'divider' }}>이상지질혈증</TableCell>
+                <TableCell rowSpan={2}>사후관리소견</TableCell>
+                <TableCell rowSpan={2}>업무적합</TableCell>
+                <TableCell rowSpan={2}>비고</TableCell>
+                <TableCell rowSpan={2}>편집</TableCell>
+                <TableCell rowSpan={2}>삭제</TableCell>
               </TableRow>
               <TableRow>
                 {['건강구분', '약복용', 'BP'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                  <TableCell key={h}>{h}</TableCell>
                 ))}
                 {['건강구분', '약복용', 'BST'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                  <TableCell key={h}>{h}</TableCell>
                 ))}
                 {['건강구분', '약복용', 'T.C', 'TG', 'LDL', 'HDL'].map(h => (
-                  <TableCell key={h} sx={{ fontWeight: 600, fontSize: '0.75rem', bgcolor: 'grey.50' }}>{h}</TableCell>
+                  <TableCell key={h}>{h}</TableCell>
                 ))}
               </TableRow>
             </TableHead>
@@ -698,7 +722,7 @@ const AdminHealthPage: React.FC = () => {
                 >
                   <TableCell>
                     {r._pending
-                      ? <Chip size="small" label="미저장" color="warning" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
+                      ? <Chip size="small" label="미저장" color="warning" />
                       : idx - pendingUnsaved.length + 1}
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(r.checkupDate)}</TableCell>
@@ -755,32 +779,44 @@ const AdminHealthPage: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* 하단 버튼 */}
-        <Stack direction="row" justifyContent="space-between" sx={{ p: 2 }}>
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<DownloadIcon />}
+        {/* 하단 버튼 — [2026-08-03] 아이콘·크기 통일, 내보내기는 좌측 / 저장은 우측 */}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          spacing={1}
+          sx={{ mt: 2 }}
+          flexWrap="wrap"
+          useFlexGap
+        >
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button variant="outlined" size="small" startIcon={<FileDownloadIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               onClick={() => notify('엑셀 다운로드 기능은 준비 중입니다.')}>
               엑셀 다운로드
             </Button>
-            <Button variant="outlined" color="success" startIcon={<EmailIcon />}
+            <Button variant="outlined" size="small" color="success" startIcon={<EmailIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               onClick={() => notify('건강상담 메일발송 기능은 준비 중입니다.')}>
               건강상담 메일발송
             </Button>
-            <Button variant="outlined" startIcon={<EditNoteIcon />}
+            <Button variant="outlined" size="small" startIcon={<EditNoteIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               onClick={() => notify('상담내역 작성 기능은 준비 중입니다.')}>
               상담내역 작성하기
             </Button>
           </Stack>
           <Button
             variant="contained"
+            size="small"
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
             disabled={saving || pendingUnsaved.length === 0}
             onClick={handleSaveAll}
+            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
           >
             {saving ? '저장 중...' : `DB 저장하기${pendingUnsaved.length > 0 ? ` (${pendingUnsaved.length}건)` : ''}`}
           </Button>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* 비밀번호 입력 다이얼로그 */}
       <Dialog open={pwdDialogOpen} onClose={() => { setPwdDialogOpen(false); setPendingFile(null) }} maxWidth="xs" fullWidth>

@@ -24,7 +24,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
+  Pagination,
   TableRow,
   TextField,
   Tooltip,
@@ -38,8 +38,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import PrintIcon from '@mui/icons-material/Print'
-import DownloadIcon from '@mui/icons-material/Download'
 import axios from 'axios'
+import { useAlert } from '../../components/common/ConfirmDialogProvider'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as XLSX from 'xlsx'
 import { evaluationApi } from '../../api/evaluationApi'
@@ -80,14 +80,16 @@ const CompanyPopup: React.FC<{
       <IconButton size="small" onClick={onClose}><CloseIcon /></IconButton>
     </DialogTitle>
     <DialogContent dividers>
-      <Table size="small">
-        <TableBody>
-          <TableRow><TableCell sx={{ fontWeight: 600, width: 120 }}>업체명</TableCell><TableCell>{item.companyName}</TableCell></TableRow>
-          <TableRow><TableCell sx={{ fontWeight: 600 }}>사업자등록번호</TableCell><TableCell>{item.businessNumber}</TableCell></TableRow>
-          <TableRow><TableCell sx={{ fontWeight: 600 }}>평가연도</TableCell><TableCell>{item.periodYear}년 {item.periodHalf === 'H1' ? '상반기' : '하반기'}</TableCell></TableRow>
-          <TableRow><TableCell sx={{ fontWeight: 600 }}>평가자</TableCell><TableCell>{item.evaluatorName ?? '-'}</TableCell></TableRow>
-        </TableBody>
-      </Table>
+      <TableContainer>
+        <Table size="small">
+          <TableBody>
+            <TableRow><TableCell sx={{ fontWeight: 600, width: 120 }}>업체명</TableCell><TableCell>{item.companyName}</TableCell></TableRow>
+            <TableRow><TableCell sx={{ fontWeight: 600 }}>사업자등록번호</TableCell><TableCell>{item.businessNumber}</TableCell></TableRow>
+            <TableRow><TableCell sx={{ fontWeight: 600 }}>평가연도</TableCell><TableCell>{item.periodYear}년 {item.periodHalf === 'H1' ? '상반기' : '하반기'}</TableCell></TableRow>
+            <TableRow><TableCell sx={{ fontWeight: 600 }}>평가자</TableCell><TableCell>{item.evaluatorName ?? '-'}</TableCell></TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </DialogContent>
     <DialogActions><Button onClick={onClose}>닫기</Button></DialogActions>
   </Dialog>
@@ -124,26 +126,26 @@ const EvalFormPopup: React.FC<{
             <TableContainer>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 700 }}>No.</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>구분</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>평가항목</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>배점</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700 }}>점수</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>비고</TableCell>
+                  <TableRow>
+                    <TableCell>No.</TableCell>
+                    <TableCell>구분</TableCell>
+                    <TableCell>평가항목</TableCell>
+                    <TableCell align="right">배점</TableCell>
+                    <TableCell align="right">점수</TableCell>
+                    <TableCell>비고</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {detail.itemScores.map((s, i) => (
                     <TableRow key={s.itemId} hover>
                       <TableCell>{i + 1}</TableCell>
-                      <TableCell sx={{ fontSize: '0.78rem' }}>{s.itemCategory}</TableCell>
+                      <TableCell>{s.itemCategory}</TableCell>
                       <TableCell>{s.itemTitle}</TableCell>
                       <TableCell align="right">{s.maxScore}</TableCell>
                       <TableCell align="right">
                         {s.notApplicable ? <Typography variant="caption" color="text.secondary">N/A</Typography> : (s.score ?? '-')}
                       </TableCell>
-                      <TableCell sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>{s.comment ?? ''}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary' }}>{s.comment ?? ''}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -184,32 +186,34 @@ const EvidencePopup: React.FC<{
           <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>제출된 서류가 없습니다.</Typography>
         )}
         {attachments.length > 0 && (
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell sx={{ fontWeight: 700 }}>No.</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>평가항목</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>파일명</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {attachments.map((att, i) => (
-                <TableRow key={att.id} hover>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
-                    {att.itemId ? `항목 ${att.itemId}` : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Button size="small" variant="text" sx={{ p: 0, textAlign: 'left' }}
-                      href={`/api/evaluations/${id}/attachments/${att.id}/download`}
-                      target="_blank">
-                      {att.fileName}
-                    </Button>
-                  </TableCell>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>No.</TableCell>
+                  <TableCell>평가항목</TableCell>
+                  <TableCell>파일명</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {attachments.map((att, i) => (
+                  <TableRow key={att.id} hover>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>
+                      {att.itemId ? `항목 ${att.itemId}` : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button size="small" variant="text" sx={{ p: 0, textAlign: 'left' }}
+                        href={`/api/evaluations/${id}/attachments/${att.id}/download`}
+                        target="_blank">
+                        {att.fileName}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </DialogContent>
       <DialogActions><Button onClick={onClose}>닫기</Button></DialogActions>
@@ -258,6 +262,7 @@ const RejectPopup: React.FC<{
 // ── 메인 페이지 ───────────────────────────────────────────────────────────
 const AdminEvaluationReviewPage: React.FC = () => {
   const qc = useQueryClient()
+  const showAlert = useAlert()
 
   const [dateFromInput, setDateFromInput] = useState('')
   const [dateToInput, setDateToInput] = useState('')
@@ -271,7 +276,7 @@ const AdminEvaluationReviewPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('')
   const [year] = useState(new Date().getFullYear())
   const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(20)
+  const pageSize = 20
 
   const [companyPopup, setCompanyPopup] = useState<EvaluationListItem | null>(null)
   const [evalFormPopup, setEvalFormPopup] = useState<EvaluationListItem | null>(null)
@@ -347,10 +352,10 @@ const AdminEvaluationReviewPage: React.FC = () => {
       <Typography variant="h5" sx={{ fontWeight: 700 }}>협력업체 안전보건평가 검토</Typography>
 
       {/* 검색 조건 2줄 + 버튼 */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack spacing={1.5}>
           {/* 1줄: 평가일 + 구분 + 평가자 */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} flexWrap="wrap" useFlexGap>
             <Typography variant="body2" sx={{ minWidth: 52, fontWeight: 500 }}>평가일</Typography>
             <TextField type="date" size="small" value={dateFromInput}
               onChange={(e) => setDateFromInput(e.target.value)}
@@ -374,163 +379,182 @@ const AdminEvaluationReviewPage: React.FC = () => {
               sx={{ width: 130 }} />
           </Stack>
           {/* 2줄: 평가팀 + 평가회사 + 사업자등록번호 + 버튼 */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} flexWrap="wrap" useFlexGap>
             <TextField size="small" label="평가팀" value={teamInput}
               onChange={(e) => setTeamInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              sx={{ flex: 1 }} />
+              sx={{ width: { xs: '100%', sm: 220 } }} />
             <TextField size="small" label="평가회사" value={companyInput}
               onChange={(e) => setCompanyInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              sx={{ flex: 1 }} />
+              sx={{ width: { xs: '100%', sm: 220 } }} />
             <TextField size="small" label="사업자등록번호" value={bizNoInput}
               onChange={(e) => setBizNoInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
               sx={{ width: 160 }} />
+            <Button variant="contained" size="small" startIcon={<SearchIcon />} onClick={handleSearch}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+              검색
+            </Button>
+            {/* [2026-08-03] 내보내기 버튼은 우측 정렬 + 아이콘 통일 */}
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
             <Button variant="outlined" size="small" startIcon={<FileDownloadIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               onClick={handleExcel} disabled={!rows.length}>
               Excel
             </Button>
             <Button variant="outlined" size="small" startIcon={<PrintIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
               onClick={() => window.print()}>
               인쇄
             </Button>
-            <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
-              onClick={() => alert('업체List 다운로드 준비중입니다.')}>
+            <Button variant="outlined" size="small" startIcon={<FileDownloadIcon />}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+              onClick={() => showAlert('업체List 다운로드 준비중입니다.')}>
               업체List 다운로드
-            </Button>
-            <Button variant="contained" size="small" startIcon={<SearchIcon />} onClick={handleSearch}>
-              검색
             </Button>
           </Stack>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* 목록 */}
-      <Paper variant="outlined">
-        {listQuery.isError && <Alert severity="error" sx={{ m: 2 }}>목록을 불러오지 못했습니다.</Alert>}
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 96 }}>평가일</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 130 }}>사업자등록번호</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700 }}>평가업체</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>평가팀</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 80 }}>평가자</TableCell>
-                <TableCell rowSpan={2} align="center" sx={{ fontWeight: 700, width: 72 }}>평가결과</TableCell>
-                <TableCell colSpan={5} align="center" sx={{ fontWeight: 700 }}>평가결과 검토</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 72 }}>검토자</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 700, width: 90 }}>상태</TableCell>
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell rowSpan={2} sx={{ width: 96 }}>평가일</TableCell>
+              <TableCell rowSpan={2} sx={{ width: 130 }}>사업자등록번호</TableCell>
+              <TableCell rowSpan={2}>평가업체</TableCell>
+              <TableCell rowSpan={2} sx={{ width: 90 }}>평가팀</TableCell>
+              <TableCell rowSpan={2} sx={{ width: 80 }}>평가자</TableCell>
+              <TableCell rowSpan={2} align="center" sx={{ width: 72 }}>평가결과</TableCell>
+              <TableCell colSpan={5} align="center">평가결과 검토</TableCell>
+              {/* [2026-08-03] 헤더 2행의 마지막 셀(검토완료)이 :last-child 가 되어 테마 규칙에
+                  우측 보더가 지워지므로, rowSpan 된 이 셀의 왼쪽 보더로 구분선을 그림 */}
+              <TableCell
+                rowSpan={2}
+                sx={{
+                  width: 72,
+                  borderLeft: (th: any) =>
+                    `1px solid ${th.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : th.palette.divider}`,
+                }}
+              >
+                검토자
+              </TableCell>
+              <TableCell rowSpan={2} sx={{ width: 130, minWidth: 130 }}>상태</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell align="center" sx={{ width: 54 }}>평가표</TableCell>
+              <TableCell align="center" sx={{ width: 60 }}>증빙서류</TableCell>
+              <TableCell align="center" sx={{ width: 54 }}>검토중</TableCell>
+              <TableCell align="center" sx={{ width: 60 }}>개선요청</TableCell>
+              <TableCell align="center" sx={{ width: 60 }}>검토완료</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {listQuery.isLoading && (
+              <TableRow>
+                <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
+                  <CircularProgress size={28} />
+                </TableCell>
               </TableRow>
-              <TableRow sx={{ bgcolor: 'grey.50' }}>
-                <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 54 }}>평가표</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 60 }}>증빙서류</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 54 }}>검토중</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 60 }}>개선요청</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.78rem', width: 60 }}>검토완료</TableCell>
+            )}
+            {!listQuery.isLoading && rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={13} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                  조회된 데이터가 없습니다.
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {listQuery.isLoading && (
-                <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
+            )}
+            {rows.map((row) => {
+              const stage = stageCheck(row.status)
+              const locked = row.status === 'APPROVED'
+              return (
+                <TableRow key={row.id} hover>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{fmt(row.submittedAt)}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.businessNumber}</TableCell>
+                  <TableCell>
+                    <Button size="small" variant="text"
+                      sx={{ p: 0, minWidth: 0, fontWeight: 400, textAlign: 'left' }}
+                      onClick={() => setCompanyPopup(row)}>
+                      {row.companyName}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    {row.evaluationType === 'REGULAR' ? '운항운용팀' : '해사관리팀'}
+                  </TableCell>
+                  <TableCell>{row.evaluatorName ?? '-'}</TableCell>
+                  <TableCell align="center">
+                    <Chip size="small"
+                      label={row.qualified ? '적격' : '부적격'}
+                      color={row.qualified ? 'success' : 'error'}
+                      />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="평가표 보기">
+                      <IconButton size="small" color={stage.평가표 ? 'primary' : 'default'}
+                        onClick={() => setEvalFormPopup(row)}>
+                        <AssessmentIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="증빙서류 보기">
+                      <IconButton size="small" color={stage.증빙서류 ? 'primary' : 'default'}
+                        onClick={() => setEvidencePopup(row)}>
+                        <FolderOpenIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center"><StageCell checked={stage.검토중} /></TableCell>
+                  {/* 개선요청 — 항상 체크 표시, 클릭 시 사유 입력 팝업 */}
+                  <TableCell align="center">
+                    <Tooltip title="개선요청 사유 입력">
+                      <IconButton size="small" color="warning" onClick={() => setRejectPopup(row)}>
+                        <CheckBoxIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell align="center"><StageCell checked={stage.검토완료} /></TableCell>
+                  <TableCell>김환규</TableCell>
+                  {/* 비고 */}
+                  <TableCell align="center">
+                    {locked ? (
+                      <Chip size="small" label="검토완료" color="success" sx={{ fontWeight: 600 }} />
+                    ) : row.status === 'SUBMITTED' ? (
+                      // [2026-08-03] 세로 적층 → 가로 배치, 라벨 줄바꿈 방지
+                      <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ flexWrap: 'nowrap' }}>
+                        <Button size="small" variant="contained" color="success"
+                          disabled={reviewMut.isPending}
+                          sx={{ px: 1, whiteSpace: 'nowrap', flexShrink: 0 }}
+                          onClick={() => reviewMut.mutate({ id: row.id, action: 'APPROVE' })}>
+                          검토
+                        </Button>
+                        <Button size="small" variant="outlined" color="warning"
+                          disabled={reviewMut.isPending}
+                          sx={{ px: 1, whiteSpace: 'nowrap', flexShrink: 0 }}
+                          onClick={() => setRejectPopup(row)}>
+                          개선
+                        </Button>
+                      </Stack>
+                    ) : row.status === 'REJECTED' ? (
+                      <Chip size="small" label="개선요청" color="warning" sx={{ fontWeight: 600 }} />
+                    ) : null}
                   </TableCell>
                 </TableRow>
-              )}
-              {!listQuery.isLoading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 4, color: 'text.secondary' }}>
-                    조회된 데이터가 없습니다.
-                  </TableCell>
-                </TableRow>
-              )}
-              {rows.map((row) => {
-                const stage = stageCheck(row.status)
-                const locked = row.status === 'APPROVED'
-                return (
-                  <TableRow key={row.id} hover>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>{fmt(row.submittedAt)}</TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>{row.businessNumber}</TableCell>
-                    <TableCell>
-                      <Button size="small" variant="text"
-                        sx={{ p: 0, minWidth: 0, fontWeight: 400, textAlign: 'left' }}
-                        onClick={() => setCompanyPopup(row)}>
-                        {row.companyName}
-                      </Button>
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>
-                      {row.evaluationType === 'REGULAR' ? '운항운용팀' : '해사관리팀'}
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>{row.evaluatorName ?? '-'}</TableCell>
-                    <TableCell align="center">
-                      <Chip size="small"
-                        label={row.qualified ? '적격' : '부적격'}
-                        color={row.qualified ? 'success' : 'error'}
-                        sx={{ fontWeight: 700, fontSize: '0.72rem' }} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="평가표 보기">
-                        <IconButton size="small" color={stage.평가표 ? 'primary' : 'default'}
-                          onClick={() => setEvalFormPopup(row)}>
-                          <AssessmentIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="증빙서류 보기">
-                        <IconButton size="small" color={stage.증빙서류 ? 'primary' : 'default'}
-                          onClick={() => setEvidencePopup(row)}>
-                          <FolderOpenIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell align="center"><StageCell checked={stage.검토중} /></TableCell>
-                    {/* 개선요청 — 항상 체크 표시, 클릭 시 사유 입력 팝업 */}
-                    <TableCell align="center">
-                      <Tooltip title="개선요청 사유 입력">
-                        <IconButton size="small" color="warning" onClick={() => setRejectPopup(row)}>
-                          <CheckBoxIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell align="center"><StageCell checked={stage.검토완료} /></TableCell>
-                    <TableCell sx={{ fontSize: '0.78rem' }}>김환규</TableCell>
-                    {/* 비고 */}
-                    <TableCell>
-                      {locked ? (
-                        <Chip size="small" label="검토완료" color="success" sx={{ fontWeight: 600 }} />
-                      ) : row.status === 'SUBMITTED' ? (
-                        <Stack direction="column" spacing={0.5}>
-                          <Button size="small" variant="contained" color="success"
-                            disabled={reviewMut.isPending}
-                            onClick={() => reviewMut.mutate({ id: row.id, action: 'APPROVE' })}>
-                            검토
-                          </Button>
-                          <Button size="small" variant="outlined" color="warning"
-                            disabled={reviewMut.isPending}
-                            onClick={() => setRejectPopup(row)}>
-                            개선
-                          </Button>
-                        </Stack>
-                      ) : row.status === 'REJECTED' ? (
-                        <Chip size="small" label="개선요청" color="warning" sx={{ fontWeight: 600 }} />
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          component="div" count={total} page={page}
-          rowsPerPage={pageSize} rowsPerPageOptions={[10, 20, 50]}
-          onPageChange={(_, p) => setPage(p)}
-          onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0) }}
+              )
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Pagination
+          count={Math.max(1, Math.ceil(total / pageSize))}
+          page={page + 1}
+          onChange={(_, newPage) => setPage(newPage - 1)}
+          color="primary"
         />
-      </Paper>
+      </Box>
 
       {/* 팝업들 */}
       {companyPopup && <CompanyPopup item={companyPopup} onClose={() => setCompanyPopup(null)} />}

@@ -19,8 +19,9 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ color = 'white' }) => {
         size="small"
         sx={{
           color,
+          // [2026-08-03] AppBar 흰색 배경에서도 보이도록 테마 기준 hover 색상 사용
           '&:hover': {
-            backgroundColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: 'action.hover',
           },
         }}
       >

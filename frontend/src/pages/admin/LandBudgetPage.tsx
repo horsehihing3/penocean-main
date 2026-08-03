@@ -19,7 +19,8 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material'
-import DownloadIcon from '@mui/icons-material/Download'
+import SearchIcon from '@mui/icons-material/Search'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import SaveIcon from '@mui/icons-material/Save'
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 
@@ -87,16 +88,19 @@ const LandBudgetPage: React.FC = () => {
         육상안전보건 예산 및 실적
       </Typography>
 
-      {/* 조회 조건 */}
+      {/* 조회 조건 — [2026-08-03] 해상 실적 화면과 동일한 구조로 통일 */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
           조회하실 부서(팀)를 선택하시면 해당 팀의 예산 항목만 나타납니다. 실적을 입력해 주세요.
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>조회 부서 선택</InputLabel>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            조회 부서 선택 :
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>부서 선택</InputLabel>
             <Select
-              label="조회 부서 선택"
+              label="부서 선택"
               value={dept}
               onChange={(e) => setDept(e.target.value)}
             >
@@ -106,40 +110,43 @@ const LandBudgetPage: React.FC = () => {
             </Select>
           </FormControl>
 
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="body2" color="text.secondary">조회 연도 설정</Typography>
-            <FormControl size="small" sx={{ minWidth: 90 }}>
-              <Select value={year} onChange={(e) => setYear(Number(e.target.value))}>
-                {[THIS_YEAR - 1, THIS_YEAR, THIS_YEAR + 1].map(y => (
-                  <MenuItem key={y} value={y}>{y}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Typography variant="body2">년</Typography>
-            <Button variant="contained" size="small">조회</Button>
-          </Stack>
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            조회 연도 설정
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 90 }}>
+            <Select value={year} onChange={(e) => setYear(Number(e.target.value))}>
+              {[THIS_YEAR - 1, THIS_YEAR, THIS_YEAR + 1].map(y => (
+                <MenuItem key={y} value={y}>{y}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="body2">년</Typography>
+          <Button variant="contained" startIcon={<SearchIcon />}>조회</Button>
         </Stack>
       </Paper>
 
-      {/* 테이블 */}
-      <Paper variant="outlined">
-        <Box sx={{ px: 2, pt: 2, pb: 1 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'primary.main' }} />
-            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-              육상 안전보건 예산 및 실적 - [{dept}]
-            </Typography>
-            <Typography variant="body2" color="text.secondary">(단위: 원)</Typography>
-          </Stack>
-        </Box>
-        <TableContainer>
+      {/* 테이블 — [2026-08-03] 해상 실적 화면과 동일하게 제목·표·버튼을 한 박스로 */}
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <Box sx={{ width: 4, height: 20, bgcolor: 'primary.main', borderRadius: 1 }} />
+          <Typography variant="subtitle1" fontWeight={700}>
+            육상 안전보건 예산 및 실적 - [{dept}]
+          </Typography>
+          <Typography variant="caption" color="text.secondary">(단위: 원)</Typography>
+        </Stack>
+        <TableContainer
+          // Paper 내부라 테마가 자체 테두리를 제거하므로 표 외곽선을 직접 지정
+          sx={{ border: 1, borderColor: 'divider', borderRadius: 1 }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell sx={{ fontWeight: 700 }}>비용 상세 (예산 항목)</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>{year - 1}년 예산</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>{year - 1}년 실적 입력</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>집행량</TableCell>
+              <TableRow>
+                <TableCell>비용 상세 (예산 항목)</TableCell>
+                <TableCell align="right">{year - 1}년 예산</TableCell>
+                <TableCell align="right">{year - 1}년 실적 입력</TableCell>
+                <TableCell align="right">집행량</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -178,16 +185,26 @@ const LandBudgetPage: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* 버튼 */}
-        <Stack direction="row" justifyContent="space-between" sx={{ p: 2 }}>
-          <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExcel}>
+        {/* 버튼 — [2026-08-03] 크기·줄바꿈 통일 */}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          spacing={1}
+          sx={{ mt: 2 }}
+          flexWrap="wrap"
+          useFlexGap
+        >
+          <Button variant="outlined" size="small" startIcon={<FileDownloadIcon />} onClick={handleExcel}
+            sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
             엑셀 다운로드
           </Button>
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<SaveIcon />} onClick={handleTempSave}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button variant="outlined" size="small" startIcon={<SaveIcon />} onClick={handleTempSave}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
               임시 저장
             </Button>
-            <Button variant="contained" startIcon={<CheckCircleOutlineIcon />} onClick={handleSubmit}>
+            <Button variant="contained" size="small" startIcon={<CheckCircleOutlineIcon />} onClick={handleSubmit}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
               최종 제출하기
             </Button>
           </Stack>

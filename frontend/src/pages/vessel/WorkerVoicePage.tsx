@@ -29,14 +29,15 @@ import {
   useTheme,
 } from '@mui/material'
 import {
-  DataGrid,
   GridColDef,
   GridRowParams,
   GridColumnVisibilityModel,
 } from '@mui/x-data-grid'
 import CloseIcon from '@mui/icons-material/Close'
-import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
+import ListSearchBar from '../../components/common/ListSearchBar'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import ListTable from '../../components/common/ListTable'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
@@ -285,6 +286,14 @@ const WorkerVoicePage: React.FC = () => {
     setPage(0)
   }
 
+  // [2026-08-03] 목록 필터 초기화 (새로고침 버튼)
+  const resetFilters = () => {
+    setKeywordInput('')
+    setStatus('')
+    setVoiceType('')
+    setPage(0)
+  }
+
   const handleRowClick = (params: GridRowParams<WorkerVoiceListItem>) => {
     setSelectedId(params.row.id)
   }
@@ -353,7 +362,7 @@ const WorkerVoicePage: React.FC = () => {
       </Stack>
 
       {/* Filter bar */}
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
@@ -375,9 +384,8 @@ const WorkerVoicePage: React.FC = () => {
           </ToggleButtonGroup>
 
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>{t('approval.filterStatus')}</InputLabel>
             <Select
-              label={t('approval.filterStatus')}
+              displayEmpty
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value as WorkerVoiceStatus | '')
@@ -393,62 +401,38 @@ const WorkerVoicePage: React.FC = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            size="small"
-            label={t('approval.filterKeyword')}
+          <ListSearchBar
             value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') applyKeyword()
-            }}
-            sx={{ flex: 1, minWidth: 160 }}
+            onChange={setKeywordInput}
+            onSearch={applyKeyword}
+            sx={{ width: { xs: '100%', sm: 300 } }}
           />
 
-          <Button variant="contained" startIcon={<SearchIcon />} onClick={applyKeyword}>
-            {t('common.search')}
-          </Button>
+          <IconButton onClick={resetFilters} size="small">
+            <RefreshIcon />
+          </IconButton>
         </Stack>
-      </Paper>
+      </Box>
 
       {/* DataGrid */}
-      <Paper
-        variant="outlined"
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 480,
-          height: { xs: '60vh', md: '65vh' },
+      {listQuery.isError && <Alert severity="error">{t('approval.loadError')}</Alert>}
+
+      <ListTable
+        rows={listQuery.data?.content ?? []}
+        getRowId={(r) => r.id}
+        columns={columns}
+        columnVisibilityModel={columnVisibilityModel}
+        loading={listQuery.isLoading || listQuery.isFetching}
+        onRowClick={handleRowClick}
+        rowCount={listQuery.data?.totalElements ?? 0}
+        paginationModel={{ page, pageSize }}
+        onPaginationModelChange={(m) => {
+          setPage(m.page)
+          setPageSize(m.pageSize)
         }}
-      >
-        {listQuery.isError && (
-          <Alert severity="error" sx={{ m: 2 }}>
-            {t('approval.loadError')}
-          </Alert>
-        )}
-        <DataGrid
-          rows={listQuery.data?.content ?? []}
-          getRowId={(r) => r.id}
-          columns={columns}
-          columnVisibilityModel={columnVisibilityModel}
-          loading={listQuery.isLoading || listQuery.isFetching}
-          onRowClick={handleRowClick}
-          paginationMode="server"
-          rowCount={listQuery.data?.totalElements ?? 0}
-          paginationModel={{ page, pageSize }}
-          onPaginationModelChange={(m) => {
-            setPage(m.page)
-            setPageSize(m.pageSize)
-          }}
-          pageSizeOptions={[10, 20, 50]}
-          disableRowSelectionOnClick
-          localeText={{ noRowsLabel: t('approval.empty') }}
-          sx={{
-            border: 0,
-            flex: 1,
-            '& .MuiDataGrid-row': { cursor: 'pointer' },
-          }}
-        />
-      </Paper>
+        showRowNumber={false}
+        emptyMessage={t('approval.empty')}
+      />
 
       {/* Detail Dialog */}
       <Dialog

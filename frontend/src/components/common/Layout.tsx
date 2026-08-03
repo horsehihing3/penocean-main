@@ -26,6 +26,11 @@ const Layout: React.FC = () => {
 
   const currentDrawerWidth = sidebarCollapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH
 
+  // [2026-08-03] 상단 AppBar 배경 흰색 전환 — 배경 대비에 맞춰 아이콘 색상 분기
+  const appBarBg = isDarkMode ? '#09090b' : '#ffffff'
+  const appBarBorder = isDarkMode ? '#27272a' : '#e5e7eb'
+  const appBarIconColor = isDarkMode ? '#fafafa' : '#1f2937'
+
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       {/* AppBar */}
@@ -34,10 +39,10 @@ const Layout: React.FC = () => {
         sx={{
           width: '100vw',
           left: 0,
-          backgroundColor: isDarkMode ? '#09090b' : '#0f172a',
+          backgroundColor: appBarBg,
           boxShadow: 'none',
           borderRadius: 0,
-          borderBottom: isDarkMode ? '1px solid #27272a' : 'none',
+          borderBottom: `1px solid ${appBarBorder}`,
           zIndex: (t) => t.zIndex.drawer + 1,
         }}
       >
@@ -47,7 +52,7 @@ const Layout: React.FC = () => {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' }, color: 'white' }}
+            sx={{ mr: 2, display: { md: 'none' }, color: appBarIconColor }}
           >
             <MenuIcon />
           </IconButton>
@@ -62,7 +67,8 @@ const Layout: React.FC = () => {
               src="/brand/logo.png"
               alt="PAN OCEAN"
               sx={{
-                height: { xs: 36, sm: 44 },
+                // [2026-08-03] 로고 높이 30px 고정
+                height: 30,
                 display: 'block',
               }}
             />
@@ -81,8 +87,8 @@ const Layout: React.FC = () => {
             size="small"
             sx={{
               display: { xs: 'flex', md: 'none' },
-              color: 'white',
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
+              color: appBarIconColor,
+              '&:hover': { backgroundColor: 'action.hover' },
             }}
           >
             {mobileToolsOpen ? <CloseIcon /> : <MoreVertIcon />}
@@ -100,8 +106,8 @@ const Layout: React.FC = () => {
           left: 0,
           right: 0,
           zIndex: (t) => t.zIndex.drawer + 2,
-          backgroundColor: isDarkMode ? '#09090b' : '#0f172a',
-          borderBottom: isDarkMode ? '1px solid #27272a' : '1px solid rgba(255,255,255,0.15)',
+          backgroundColor: appBarBg,
+          borderBottom: `1px solid ${appBarBorder}`,
           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.3)',
         }}
       >

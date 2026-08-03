@@ -5,6 +5,8 @@
     "tagline": "Contractor Safety & Health DX Portal"
   },
   "common": {
+    "rowNo": "No",
+    "manage": "Manage",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
