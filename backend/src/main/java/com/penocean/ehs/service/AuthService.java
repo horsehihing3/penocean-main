@@ -26,11 +26,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    /** 개인정보 수집·이용 동의 문구 버전. 문구 개정 시 값을 올린다. */
+    private static final String CONSENT_VERSION = "v1";
 
     private final UserMapper userMapper;
     private final CompanyMapper companyMapper;
@@ -147,6 +151,14 @@ public class AuthService {
                 ? request.getUsername().trim()
                 : request.getEmail();
 
+        // [2026-08-04] PPT 5p — 개인정보 수집·이용 미동의 시 가입 불가
+        if (!Boolean.TRUE.equals(request.getPrivacyAgreed())) {
+            throw new BadRequestException("개인정보 수집·이용에 동의해야 가입할 수 있습니다");
+        }
+        if (!Boolean.TRUE.equals(request.getOver14Agreed())) {
+            throw new BadRequestException("만 14세 이상만 가입할 수 있습니다");
+        }
+
         if (userMapper.existsByUsername(username) == 1) {
             throw new BadRequestException("이미 사용 중인 아이디입니다");
         }
@@ -199,9 +211,15 @@ public class AuthService {
                 .roleCode("CONTRACTOR")
                 .companyId(companyId)
                 .status("PENDING")
+                .privacyAgreed(Boolean.TRUE)
+                .over14Agreed(Boolean.TRUE)
+                .privacyAgreedAt(LocalDateTime.now())
                 .build();
         userMapper.insert(newUser);
         Long userId = newUser.getId();
+
+        // [2026-08-04] 동의 이력 별도 보관 (법적 증빙 — 문구 개정 대비 버전 함께 기록)
+        userMapper.insertPrivacyConsent(userId, true, true, CONSENT_VERSION);
 
         // 3. industries
         if (request.getIndustryCodes() != null) {

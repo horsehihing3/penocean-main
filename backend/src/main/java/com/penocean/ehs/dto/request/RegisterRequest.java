@@ -66,5 +66,9 @@ public class RegisterRequest {
     private String industryOther;
 
     @NotEmpty(message = "계약팀은 한 개 이상 선택해야 합니다")
+    // [2026-08-04] 개인정보 수집·이용 동의 (PPT 5p) — 미동의 시 가입 불가
+    private Boolean privacyAgreed;
+    private Boolean over14Agreed;
+
     private List<String> contractDepartments;    // tb_department.code (복수)
 }

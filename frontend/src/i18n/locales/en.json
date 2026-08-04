@@ -115,6 +115,7 @@
     "contactPhoneShort": "Safety Contact Phone",
     "contactEmailShort": "Safety Contact E-mail",
     "submit": "Sign Up",
+    "submitComplete": "Complete Registration",
     "consent": {
       "title": "Privacy Collection & Use Agreement",
       "intro": "Pan Ocean collects and uses the following personal information to provide the Safety & Health Portal services.\nPlease read carefully and decide whether to agree.\n\nThe information you provide will only be used for the purposes listed below. It will not be used beyond the scope of your consent.\n\n[Collection and Use of Personal Information]\nWe do not share the collected information with third parties.",
@@ -126,10 +127,16 @@
       "itemsBody": "Company, Name, Title, Company phone, Mobile, Date of birth",
       "retentionBody": "3 years after withdrawal or contract termination",
       "footer": "* You may decline consent. If you decline, membership is not permitted and portal services cannot be provided. Complies with applicable laws and company policy.\n* Data is kept for 3 years for related-authority submission and automatically deleted afterwards.\n* I am 14 or older.\n\nI have read the agreement above and consent to the collection and use of personal information.",
-      "agree": "I agree to the collection and use of personal information (Required)"
+      "agree": "I agree to the collection and use of personal information (Required)",
+      "agreeColumn": "Consent",
+      "agreeYes": "Agree",
+      "agreeNo": "Decline",
+      "over14": "I am 14 years of age or older.",
+      "declineNotice": "If you decline, registration is not permitted and portal services cannot be provided."
     }
   },
   "nav": {
+    "home": "Home",
     "dashboard": "Dashboard",
     "introduction": "Introduction",
     "introPolicy": "Safety Policy",
@@ -163,6 +170,7 @@
     "seaBudget": "Sea Safety Budget & Performance",
     "landCrewStats": "Land Crew Illness/Injury Stats",
     "seaCrewStats": "Sea Crew Illness/Injury Stats",
+    "adminUserManage": "User Management",
     "adminHealth": "Health — Employee Medical Checkup Management",
     "health": "Health",
     "healthPortal": "Health",

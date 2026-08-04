@@ -1,5 +1,6 @@
 package com.penocean.ehs.mapper;
 
+import com.penocean.ehs.dto.response.UserResponse;
 import com.penocean.ehs.model.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -63,4 +64,26 @@ public interface UserMapper {
                        @Param("email") String email,
                        @Param("phone") String phone,
                        @Param("companyId") Long companyId);
+
+    /** [2026-08-04] 개인정보 수집·이용 동의 이력 기록 */
+    void insertPrivacyConsent(@Param("userId") Long userId,
+                              @Param("privacyAgreed") boolean privacyAgreed,
+                              @Param("over14Agreed") boolean over14Agreed,
+                              @Param("consentVersion") String consentVersion);
+
+    // [2026-08-04] 관리자 사용자 관리
+    List<UserResponse> searchForAdmin(@Param("roleCode") String roleCode,
+                                      @Param("status") String status,
+                                      @Param("keyword") String keyword,
+                                      @Param("offset") int offset,
+                                      @Param("size") int size);
+
+    long countForAdmin(@Param("roleCode") String roleCode,
+                       @Param("status") String status,
+                       @Param("keyword") String keyword);
+
+    void updateByAdmin(User user);
+
+    /** 비밀번호 변경 — BCrypt 해시만 전달할 것 */
+    void updatePassword(@Param("id") Long id, @Param("password") String password);
 }

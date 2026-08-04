@@ -16,6 +16,8 @@ import {
   Stack,
   FormControlLabel,
   Checkbox,
+  Radio,
+  RadioGroup,
   FormHelperText,
   Select,
   MenuItem,
@@ -95,6 +97,8 @@ const RegisterPage: React.FC = () => {
   // 재가입 링크 진입 시 동의서 건너뜀
   const [consentOpen, setConsentOpen] = useState(!reapplyToken)
   const [consentRequired, setConsentGiven] = useState(!!reapplyToken)
+  // [2026-08-04] PPT 5p 만14세 이상 확인 — 가입 요청에 함께 전송
+  const [over14Agreed, setOver14Agreed] = useState(!!reapplyToken)
 
   // [2026-04-30] 중복확인 상태
   const [usernameCheck, setUsernameCheck] = useState<'idle' | 'available' | 'taken'>('idle')
@@ -270,6 +274,7 @@ const RegisterPage: React.FC = () => {
       await registerRequest({
         ...rest,
         privacyAgreed: consentRequired,
+        over14Agreed,
       })
       setSuccess(t('register.submitSuccessApproval'))
       setTimeout(() => navigate('/login', { replace: true }), 2500)
@@ -744,7 +749,7 @@ const RegisterPage: React.FC = () => {
                   {isLoading ? (
                     <CircularProgress size={24} sx={{ color: 'white' }} />
                   ) : (
-                    t('register.submit')
+                    t('register.submitComplete')
                   )}
                 </Button>
               </Stack>
@@ -763,8 +768,9 @@ const RegisterPage: React.FC = () => {
       <ConsentDialog
         open={consentOpen}
         onClose={() => navigate('/login')}
-        onAgree={() => {
+        onAgree={(over14) => {
           setConsentGiven(true)
+          setOver14Agreed(over14)
           setConsentOpen(false)
         }}
       />
@@ -778,10 +784,13 @@ const RegisterPage: React.FC = () => {
 const ConsentDialog: React.FC<{
   open: boolean
   onClose: () => void
-  onAgree: () => void
+  onAgree: (over14: boolean) => void
 }> = ({ open, onClose, onAgree }) => {
   const { t } = useTranslation()
-  const [mandatoryChecked, setMandatoryChecked] = useState(false)
+  // [2026-08-04] PPT 5p 원문대로 동의여부(동의/동의안함) 선택 + 만14세 확인 추가
+  const [agreeChoice, setAgreeChoice] = useState<'' | 'Y' | 'N'>('')
+  const [over14, setOver14] = useState(false)
+  const canProceed = agreeChoice === 'Y' && over14
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -808,6 +817,7 @@ const ConsentDialog: React.FC<{
                   <TableCell align="center">{t('register.consent.purpose')}</TableCell>
                   <TableCell align="center">{t('register.consent.items')}</TableCell>
                   <TableCell align="center">{t('register.consent.retention')}</TableCell>
+                  <TableCell align="center">{t('register.consent.agreeColumn')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -815,8 +825,26 @@ const ConsentDialog: React.FC<{
                   <TableCell sx={{ whiteSpace: 'pre-line' }}>
                     {t('register.consent.purposeBody')}
                   </TableCell>
-                  <TableCell>{t('register.consent.itemsBody')}</TableCell>
-                  <TableCell>{t('register.consent.retentionBody')}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'normal' }}>{t('register.consent.itemsBody')}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'normal' }}>{t('register.consent.retentionBody')}</TableCell>
+                  {/* PPT 5p 원문의 동의 / 동의안함 선택 */}
+                  <TableCell sx={{ width: 130 }}>
+                    <RadioGroup
+                      value={agreeChoice}
+                      onChange={(e) => setAgreeChoice(e.target.value as 'Y' | 'N')}
+                    >
+                      <FormControlLabel
+                        value="Y"
+                        control={<Radio size="small" />}
+                        label={t('register.consent.agreeYes')}
+                      />
+                      <FormControlLabel
+                        value="N"
+                        control={<Radio size="small" />}
+                        label={t('register.consent.agreeNo')}
+                      />
+                    </RadioGroup>
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -828,21 +856,22 @@ const ConsentDialog: React.FC<{
 
           <FormControlLabel
             control={
-              <Checkbox
-                checked={mandatoryChecked}
-                onChange={(e) => setMandatoryChecked(e.target.checked)}
-              />
+              <Checkbox checked={over14} onChange={(e) => setOver14(e.target.checked)} />
             }
-            label={t('register.consent.agree')}
+            label={t('register.consent.over14')}
           />
+
+          {agreeChoice === 'N' && (
+            <Alert severity="warning">{t('register.consent.declineNotice')}</Alert>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t('common.cancel')}</Button>
         <Button
           variant="contained"
-          disabled={!mandatoryChecked}
-          onClick={onAgree}
+          disabled={!canProceed}
+          onClick={() => onAgree(over14)}
           sx={{ bgcolor: 'primary.dark' }}
         >
           {t('common.next')}

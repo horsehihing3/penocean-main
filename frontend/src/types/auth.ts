@@ -43,6 +43,8 @@ export interface RegisterRequest {
   industryOther?: string            // 기타업종 자유 입력
   contractDepartments: string[]
   privacyAgreed: boolean
+  // [2026-08-04] PPT 5p 만 14세 이상 확인
+  over14Agreed: boolean
 }
 
 export interface AuthResponse {

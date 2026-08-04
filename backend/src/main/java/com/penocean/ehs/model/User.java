@@ -29,6 +29,10 @@ public class User {
     private LocalDateTime approvedAt;
     private Long approvedBy;
     private LocalDateTime lastLoginAt;
+    // [2026-08-04] 개인정보 수집·이용 동의 (PPT 5p)
+    private Boolean privacyAgreed;    // [필수] 개인정보 수집·이용 동의
+    private Boolean over14Agreed;     // 만 14세 이상 확인
+    private LocalDateTime privacyAgreedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Boolean deleted;

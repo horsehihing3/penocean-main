@@ -25,6 +25,10 @@ public class UserResponse {
     private String industryName;      // [2026-05-04] 업종명 (코드 라벨 또는 기타)
     private Long departmentId;
     private String status;
+    // [2026-08-04] 관리자 사용자 관리 화면용
+    private String title;             // 직책
+    private String departmentName;    // 계약부서명
+    private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
 
     public static UserResponse from(User user) {

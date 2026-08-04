@@ -6,6 +6,7 @@ import RoleRoute from './components/common/RoleRoute'
 
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import HomePage from './pages/HomePage'
 import Dashboard from './pages/Dashboard'
 import ProfilePage from './pages/ProfilePage'
 import PolicyPage from './pages/introduction/PolicyPage'
@@ -41,6 +42,7 @@ import LandBudgetPage from './pages/admin/LandBudgetPage'
 import SeaCrewStatsPage from './pages/admin/SeaCrewStatsPage'
 import AdminHealthPage from './pages/admin/AdminHealthPage'
 import AdminQrEducationPage from './pages/admin/AdminQrEducationPage'
+import UserManagePage from './pages/admin/UserManagePage'
 import DevQnAPage from './pages/admin/DevQnAPage'
 import QrEducationPage from './pages/qr/QrEducationPage'
 import UploadByTokenPage from './pages/UploadByTokenPage'
@@ -63,7 +65,9 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        {/* [2026-08-04] PPT 슬라이드 3 첫 화면 = Home. 기존 대시보드는 /dashboard 로 유지 */}
+        <Route index element={<HomePage />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<ProfilePage />} />
 
         {/* Introduction */}
@@ -283,6 +287,14 @@ function App() {
           element={
             <RoleRoute allowedRoles={['ADMIN']}>
               <AdminQrEducationPage />
+            </RoleRoute>
+          }
+        />
+        <Route
+          path="admin/user-manage"
+          element={
+            <RoleRoute allowedRoles={['ADMIN']}>
+              <UserManagePage />
             </RoleRoute>
           }
         />

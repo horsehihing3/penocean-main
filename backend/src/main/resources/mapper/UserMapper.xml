@@ -80,10 +80,13 @@
     INSERT INTO tb_user (
       username, password, name, title, email, phone,
       role_code, company_id, department_id, status,
+      privacy_agreed, over14_agreed, privacy_agreed_at,
       created_at, updated_at, deleted
     ) VALUES (
       #{username}, #{password}, #{name}, #{title}, #{email}, #{phone},
       #{roleCode}, #{companyId}, #{departmentId}, #{status},
+      #{privacyAgreed,jdbcType=BIT}, #{over14Agreed,jdbcType=BIT},
+      #{privacyAgreedAt,jdbcType=TIMESTAMP},
       SYSUTCDATETIME(), SYSUTCDATETIME(), 0
     )
   </insert>
@@ -207,6 +210,91 @@
         approved_by      = NULL,
         updated_at       = SYSUTCDATETIME()
     WHERE id = #{id}
+  </update>
+
+
+  <!-- [2026-08-04] 개인정보 수집·이용 동의 이력 -->
+  <insert id="insertPrivacyConsent">
+    INSERT INTO tb_privacy_consent (
+      user_id, privacy_agreed, over14_agreed, consent_version, agreed_at, created_at
+    ) VALUES (
+      #{userId}, #{privacyAgreed}, #{over14Agreed}, #{consentVersion},
+      SYSUTCDATETIME(), SYSUTCDATETIME()
+    )
+  </insert>
+
+
+  <!-- ================================================================= -->
+  <!-- [2026-08-04] 관리자 사용자 관리 — 검색 / 수정 / 비밀번호 변경 / 탈퇴 -->
+  <!-- ================================================================= -->
+  <sql id="adminUserSearchWhere">
+    WHERE u.deleted = 0
+    <if test="roleCode != null and roleCode != ''">
+      AND u.role_code = #{roleCode}
+    </if>
+    <if test="status != null and status != ''">
+      AND u.status = #{status}
+    </if>
+    <if test="keyword != null and keyword != ''">
+      AND (
+        u.username LIKE '%' + #{keyword} + '%'
+        OR u.name   LIKE '%' + #{keyword} + '%'
+        OR u.email  LIKE '%' + #{keyword} + '%'
+        OR c.name   LIKE '%' + #{keyword} + '%'
+      )
+    </if>
+  </sql>
+
+  <select id="searchForAdmin" resultType="com.penocean.ehs.dto.response.UserResponse">
+    SELECT
+      u.id            AS id,
+      u.username      AS username,
+      u.name          AS name,
+      u.title         AS title,
+      u.email         AS email,
+      u.phone         AS phone,
+      u.role_code     AS role,
+      u.company_id    AS companyId,
+      c.name          AS companyName,
+      u.department_id AS departmentId,
+      d.name          AS departmentName,
+      u.status        AS status,
+      u.last_login_at AS lastLoginAt,
+      u.created_at    AS createdAt
+    FROM tb_user u
+    LEFT JOIN tb_company    c ON c.id = u.company_id
+    LEFT JOIN tb_department d ON d.id = u.department_id
+    <include refid="adminUserSearchWhere"/>
+    ORDER BY u.created_at DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+  </select>
+
+  <select id="countForAdmin" resultType="long">
+    SELECT COUNT(*)
+    FROM tb_user u
+    LEFT JOIN tb_company c ON c.id = u.company_id
+    <include refid="adminUserSearchWhere"/>
+  </select>
+
+  <!-- 관리자 정보 수정. 비밀번호는 이 쿼리로 절대 변경하지 않는다. -->
+  <update id="updateByAdmin">
+    UPDATE tb_user
+       SET name       = #{name,jdbcType=NVARCHAR},
+           title      = #{title,jdbcType=NVARCHAR},
+           email      = #{email,jdbcType=VARCHAR},
+           phone      = #{phone,jdbcType=VARCHAR},
+           role_code  = #{roleCode},
+           status     = #{status},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
+  </update>
+
+  <!-- 비밀번호 변경. 반드시 BCrypt 해시가 넘어온다. -->
+  <update id="updatePassword">
+    UPDATE tb_user
+       SET password   = #{password},
+           updated_at = SYSUTCDATETIME()
+     WHERE id = #{id} AND deleted = 0
   </update>
 
 </mapper>

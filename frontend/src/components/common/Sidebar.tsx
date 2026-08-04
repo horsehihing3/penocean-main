@@ -14,6 +14,8 @@ import {
 } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '../../api/dashboardApi'
+import HomeIcon from '@mui/icons-material/Home'
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
 import InfoIcon from '@mui/icons-material/Info'
 import DirectionsBoatIcon from '@mui/icons-material/DirectionsBoat'
 import BusinessIcon from '@mui/icons-material/Business'
@@ -51,6 +53,8 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  // [2026-08-04] PPT 슬라이드 3 "첫 화면" — 로그인 후 기본 진입 화면
+  { textKey: 'nav.home', icon: <HomeIcon />, path: '/' },
   {
     textKey: 'nav.introduction',
     icon: <InfoIcon />,
@@ -114,6 +118,8 @@ const menuItems: MenuItem[] = [
       { textKey: 'nav.adminHealth', icon: <MedicalServicesIcon />, path: '/admin/health' },
       { textKey: 'nav.adminQrEducation', icon: <QrCode2Icon />, path: '/admin/qr-education' },
       { textKey: 'nav.adminDevQnA', icon: <ArticleIcon />, path: '/admin/dev-qna' },
+      // [2026-08-04] 관리자 메뉴 최하단 — 전체 사용자 관리
+      { textKey: 'nav.adminUserManage', icon: <ManageAccountsIcon />, path: '/admin/user-manage' },
     ],
   },
 ]
